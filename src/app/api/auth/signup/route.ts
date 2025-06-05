@@ -18,7 +18,6 @@ export async function POST(request: Request) {
 
     const user = await createUser(email, password, name);
     const token = generateToken(user);
-    console.log('users', await readAllUsers());
 
     return NextResponse.json({ token, user });
   } catch (error) {

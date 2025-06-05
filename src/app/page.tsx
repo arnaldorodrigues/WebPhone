@@ -1,103 +1,413 @@
-import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <main className="min-h-screen relative overflow-hidden bg-white">
+      {/* Background Pattern */}
+      <div className="absolute inset-0">
+        <svg
+          className="w-full h-full"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+        >
+          <defs>
+            <pattern
+              id="curve-pattern"
+              width="100"
+              height="100"
+              patternUnits="userSpaceOnUse"
+            >
+              {/* Main curved lines */}
+              <path
+                d="M0 50 Q25 25, 50 50 T100 50"
+                stroke="#E5E7EB"
+                strokeWidth="0.5"
+                fill="none"
+                strokeOpacity="0.2"
+              />
+              <path
+                d="M0 30 Q25 5, 50 30 T100 30"
+                stroke="#E5E7EB"
+                strokeWidth="0.5"
+                fill="none"
+                strokeOpacity="0.15"
+              />
+              <path
+                d="M0 70 Q25 45, 50 70 T100 70"
+                stroke="#E5E7EB"
+                strokeWidth="0.5"
+                fill="none"
+                strokeOpacity="0.15"
+              />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+              {/* Additional curved elements */}
+              <path
+                d="M0 20 C20 0, 80 0, 100 20"
+                stroke="#E5E7EB"
+                strokeWidth="0.3"
+                fill="none"
+                strokeOpacity="0.1"
+              />
+              <path
+                d="M0 80 C20 100, 80 100, 100 80"
+                stroke="#E5E7EB"
+                strokeWidth="0.3"
+                fill="none"
+                strokeOpacity="0.1"
+              />
+
+              {/* New curved elements */}
+              <path
+                d="M0 40 C30 20, 70 20, 100 40"
+                stroke="#E5E7EB"
+                strokeWidth="0.4"
+                fill="none"
+                strokeOpacity="0.12"
+              />
+              <path
+                d="M0 60 C30 80, 70 80, 100 60"
+                stroke="#E5E7EB"
+                strokeWidth="0.4"
+                fill="none"
+                strokeOpacity="0.12"
+              />
+
+              {/* Diagonal curves */}
+              <path
+                d="M0 0 Q50 50, 100 0"
+                stroke="#E5E7EB"
+                strokeWidth="0.3"
+                fill="none"
+                strokeOpacity="0.08"
+              />
+              <path
+                d="M0 100 Q50 50, 100 100"
+                stroke="#E5E7EB"
+                strokeWidth="0.3"
+                fill="none"
+                strokeOpacity="0.08"
+              />
+
+              {/* Small decorative curves */}
+              <path
+                d="M20 0 C30 10, 40 10, 50 0"
+                stroke="#E5E7EB"
+                strokeWidth="0.2"
+                fill="none"
+                strokeOpacity="0.05"
+              />
+              <path
+                d="M50 0 C60 10, 70 10, 80 0"
+                stroke="#E5E7EB"
+                strokeWidth="0.2"
+                fill="none"
+                strokeOpacity="0.05"
+              />
+              <path
+                d="M20 100 C30 90, 40 90, 50 100"
+                stroke="#E5E7EB"
+                strokeWidth="0.2"
+                fill="none"
+                strokeOpacity="0.05"
+              />
+              <path
+                d="M50 100 C60 90, 70 90, 80 100"
+                stroke="#E5E7EB"
+                strokeWidth="0.2"
+                fill="none"
+                strokeOpacity="0.05"
+              />
+
+              {/* Additional intricate curves */}
+              <path
+                d="M0 15 C15 5, 35 5, 50 15"
+                stroke="#E5E7EB"
+                strokeWidth="0.2"
+                fill="none"
+                strokeOpacity="0.06"
+              />
+              <path
+                d="M50 15 C65 5, 85 5, 100 15"
+                stroke="#E5E7EB"
+                strokeWidth="0.2"
+                fill="none"
+                strokeOpacity="0.06"
+              />
+              <path
+                d="M0 85 C15 95, 35 95, 50 85"
+                stroke="#E5E7EB"
+                strokeWidth="0.2"
+                fill="none"
+                strokeOpacity="0.06"
+              />
+              <path
+                d="M50 85 C65 95, 85 95, 100 85"
+                stroke="#E5E7EB"
+                strokeWidth="0.2"
+                fill="none"
+                strokeOpacity="0.06"
+              />
+
+              {/* Vertical curves */}
+              <path
+                d="M10 0 C10 20, 10 40, 10 60"
+                stroke="#E5E7EB"
+                strokeWidth="0.2"
+                fill="none"
+                strokeOpacity="0.04"
+              />
+              <path
+                d="M30 0 C30 20, 30 40, 30 60"
+                stroke="#E5E7EB"
+                strokeWidth="0.2"
+                fill="none"
+                strokeOpacity="0.04"
+              />
+              <path
+                d="M70 0 C70 20, 70 40, 70 60"
+                stroke="#E5E7EB"
+                strokeWidth="0.2"
+                fill="none"
+                strokeOpacity="0.04"
+              />
+              <path
+                d="M90 0 C90 20, 90 40, 90 60"
+                stroke="#E5E7EB"
+                strokeWidth="0.2"
+                fill="none"
+                strokeOpacity="0.04"
+              />
+
+              {/* Wave patterns */}
+              <path
+                d="M0 25 Q10 20, 20 25 T40 25 T60 25 T80 25 T100 25"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.03"
+              />
+              <path
+                d="M0 75 Q10 70, 20 75 T40 75 T60 75 T80 75 T100 75"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.03"
+              />
+
+              {/* Circular elements */}
+              <path
+                d="M25 25 Q25 15, 35 15 T45 25 T35 35 T25 25"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.02"
+              />
+              <path
+                d="M75 25 Q75 15, 85 15 T95 25 T85 35 T75 25"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.02"
+              />
+              <path
+                d="M25 75 Q25 65, 35 65 T45 75 T35 85 T25 75"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.02"
+              />
+              <path
+                d="M75 75 Q75 65, 85 65 T95 75 T85 85 T75 75"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.02"
+              />
+
+              {/* 20 New Curves */}
+              {/* Spiral-like curves */}
+              <path
+                d="M50 50 Q60 40, 70 50 T90 50 T110 50"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.025"
+              />
+              <path
+                d="M50 50 Q40 60, 50 70 T50 90 T50 110"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.025"
+              />
+
+              {/* Concentric curves */}
+              <path
+                d="M50 50 Q60 40, 70 50 T90 50 T110 50 T130 50"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.02"
+              />
+              <path
+                d="M50 50 Q40 60, 50 70 T50 90 T50 110 T50 130"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.02"
+              />
+
+              {/* Additional wave patterns */}
+              <path
+                d="M0 35 Q10 30, 20 35 T40 35 T60 35 T80 35 T100 35"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.025"
+              />
+              <path
+                d="M0 65 Q10 60, 20 65 T40 65 T60 65 T80 65 T100 65"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.025"
+              />
+
+              {/* Diagonal wave patterns */}
+              <path
+                d="M0 0 Q25 25, 50 0 T100 0"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.02"
+              />
+              <path
+                d="M0 100 Q25 75, 50 100 T100 100"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.02"
+              />
+
+              {/* Small circular patterns */}
+              <path
+                d="M15 15 Q15 5, 25 5 T35 15 T25 25 T15 15"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.015"
+              />
+              <path
+                d="M85 15 Q85 5, 95 5 T105 15 T95 25 T85 15"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.015"
+              />
+              <path
+                d="M15 85 Q15 75, 25 75 T35 85 T25 95 T15 85"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.015"
+              />
+              <path
+                d="M85 85 Q85 75, 95 75 T105 85 T95 95 T85 85"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.015"
+              />
+
+              {/* Additional vertical curves */}
+              <path
+                d="M20 0 C20 15, 20 30, 20 45"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.015"
+              />
+              <path
+                d="M40 0 C40 15, 40 30, 40 45"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.015"
+              />
+              <path
+                d="M60 0 C60 15, 60 30, 60 45"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.015"
+              />
+              <path
+                d="M80 0 C80 15, 80 30, 80 45"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.015"
+              />
+
+              {/* Additional horizontal curves */}
+              <path
+                d="M0 45 C15 45, 30 45, 45 45"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.015"
+              />
+              <path
+                d="M55 45 C70 45, 85 45, 100 45"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.015"
+              />
+              <path
+                d="M0 55 C15 55, 30 55, 45 55"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.015"
+              />
+              <path
+                d="M55 55 C70 55, 85 55, 100 55"
+                stroke="#E5E7EB"
+                strokeWidth="0.15"
+                fill="none"
+                strokeOpacity="0.015"
+              />
+            </pattern>
+          </defs>
+          <rect width="100" height="100" fill="url(#curve-pattern)" />
+        </svg>
+      </div>
+
+      {/* Content */}
+      <div className="relative min-h-screen flex flex-col">
+        <div className="text-center pt-16">
+          <h1 className="text-6xl font-bold text-indigo-600">
+            3CDN Browser Phone
+          </h1>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="space-x-4">
+            <Link
+              href="/signin"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-lg font-semibold transition-colors text-lg"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/signup"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-lg font-semibold transition-colors text-lg"
+            >
+              Sign Up
+            </Link>
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }
