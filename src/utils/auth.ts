@@ -1,20 +1,15 @@
+import Cookies from 'js-cookie';
+
 export const setToken = (token: string) => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('token', token);
-  }
+  Cookies.set('authToken', token, { expires: 1, secure: true, sameSite: 'strict'});
 };
 
 export const getToken = () => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('token');
-  }
-  return null;
+  return Cookies.get('authToken');
 };
 
 export const removeToken = () => {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('token');
-  }
+  Cookies.removeItem('authToken');
 };
 
 export const isAuthenticated = () => {

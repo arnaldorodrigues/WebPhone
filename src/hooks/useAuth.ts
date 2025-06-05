@@ -25,16 +25,13 @@ export const useAuth = () => {
 
       const data = await res.json();
 
-      console.log('data', data);
-
       if (!res.ok) {
         throw new Error(data.error || 'Something went wrong');
       }
 
       setToken(data.token);
       setIsAuthenticated(true);
-      router.push('/dashboard');
-      console.log(isAuthenticated)
+      router.push('/phone');
       return data;
     } catch (error) {
       throw error;
@@ -49,16 +46,17 @@ export const useAuth = () => {
         body: JSON.stringify({ email, password, name }),
       });
 
+      if (!res) {
+        throw new Error('The user exist already.');
+      }
+
       const data = await res.json();
 
       if (!res.ok) {
         throw new Error(data.error || 'Something went wrong');
       }
 
-      setToken(data.token);
-      setIsAuthenticated(true);
-      console.log(data.token, isAuthenticated);
-      router.push('/dashboard');
+      router.push('/signin');
       return data;
     } catch (error) {
       throw error;
