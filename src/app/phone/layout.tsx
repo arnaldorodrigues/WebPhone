@@ -1,4 +1,4 @@
-import Sidebar from "@/components/feature/dashboard/sidebar/sidebar";
+import Sidebar from "@/components/feature/phone/sidebar/sidebar";
 
 interface Props {}
 

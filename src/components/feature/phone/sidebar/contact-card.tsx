@@ -4,7 +4,7 @@ import Link from "next/link";
 const ContactCard = () => {
   return (
     <Link
-      href={"/dashboard/1"}
+      href={"/phone/1"}
       className="w-full p-2 flex rounded-md gap-3 hover:bg-gray-300 hover:border-indigo-500 hover:border-0 hover:border-l-4 cursor-pointer"
     >
       <div className="rounded-full w-13 h-13 mr-1 bg-green-300" />

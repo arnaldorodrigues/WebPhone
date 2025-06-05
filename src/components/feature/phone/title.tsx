@@ -13,7 +13,7 @@ const Title = () => {
   return (
     <div className="w-full p-3 flex gap-3 shadow-md bg-gray-100">
       <div className="flex-1 flex items-center gap-4">
-        <Link href={"/dashboard"} className="cursor-pointer">
+        <Link href={"/phone"} className="cursor-pointer">
           <ChevronLeftIcon className="w-8 h-8 text-indigo-500" />
         </Link>
         <div className="rounded-full w-13 h-13 bg-green-300" />

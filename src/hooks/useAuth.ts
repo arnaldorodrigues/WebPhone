@@ -31,7 +31,7 @@ export const useAuth = () => {
 
       setToken(data.token);
       setIsAuthenticated(true);
-      router.push('/dashboard');
+      router.push('/phone');
       return data;
     } catch (error) {
       throw error;

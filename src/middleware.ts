@@ -10,8 +10,6 @@ export function middleware(request: NextRequest) {
   // Define public paths that don't require authentication
   const isPublicPath = path === '/signin' || path === '/signup';
 
-  console.log('ddd', path, isPublicPath)
-
   // Get auth token from Cookies
   const token = request.cookies.get('authToken')?.value || '';
 
@@ -20,8 +18,8 @@ export function middleware(request: NextRequest) {
 
   // Redirect logic
   if (isPublicPath && verifiedToken) {
-    // If user is authenticated and tries to access public paths, redirect to dashboard
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    // If user is authenticated and tries to access public paths, redirect to phone
+    return NextResponse.redirect(new URL('/phone', request.url));
   }
 
   if (!isPublicPath && !!verifiedToken) {
@@ -35,7 +33,7 @@ export function middleware(request: NextRequest) {
 // Configure which paths the middleware should run on
 export const config = {
   matcher: [
-    '/dashboard/:path*',
+    '/phone/:path*',
     '/signin',
     '/signup',
   ],
