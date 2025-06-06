@@ -109,14 +109,14 @@ export default function SignIn() {
             </button>
           </div>
 
-          {/* <div className="text-sm text-center">
+          <div className="text-sm text-center">
             <Link
               href="/signup"
               className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors duration-200"
             >
               Don't have an account? Sign up
             </Link>
-          </div> */}
+          </div>
         </div>
       </div>
     </div>

@@ -187,10 +187,18 @@ class SipClient {
     }
 
     try {
-      // Try to get audio stream, but continue even if it fails
+      // Check if we have any audio input devices
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const audioInputs = devices.filter(device => device.kind === 'audioinput');
+      
+      if (audioInputs.length === 0) {
+        // throw new Error('No microphone found. Please connect a microphone and try again.');
+      }
+
+      // Try to get audio stream with specific device
       const audioStream = await this.requestAudioPermissions();
       if (!audioStream) {
-        console.warn('Proceeding with call without audio permissions');
+        // throw new Error('Could not access microphone. Please check your browser permissions and try again.');
       }
 
       const target = new URI('sip', number, this.config.server);
@@ -219,6 +227,15 @@ class SipClient {
       }
     } catch (error) {
       console.error('Failed to make call:', error);
+      if (error instanceof Error) {
+        if (error.name === 'NotFoundError') {
+          throw new Error('No microphone found. Please connect a microphone and try again.');
+        } else if (error.name === 'NotAllowedError') {
+          throw new Error('Microphone access denied. Please allow microphone access in your browser settings.');
+        } else if (error.name === 'NotReadableError') {
+          throw new Error('Could not access microphone. It may be in use by another application.');
+        }
+      }
       throw error;
     }
   }
