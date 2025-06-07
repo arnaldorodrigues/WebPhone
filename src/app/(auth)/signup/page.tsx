@@ -11,7 +11,7 @@ export default function SignUp() {
   const { signup } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
+    extensionNumber: "",
     password: "",
     confirmPassword: "",
   });
@@ -29,7 +29,8 @@ export default function SignUp() {
     }
 
     try {
-      await signup(formData.email, formData.password, formData.name);
+      console.log(formData);
+      await signup(formData.extensionNumber, formData.password, formData.name);
     } catch (err) {
       setError("Registration failed. Please try again.");
     } finally {
@@ -73,21 +74,24 @@ export default function SignUp() {
             </div>
             <div>
               <label
-                htmlFor="email"
+                htmlFor="extensionNumber"
                 className="block text-sm font-medium text-gray-700"
               >
-                Email address
+                Extension Number
               </label>
               <div className="mt-1">
                 <Input
-                  id="email"
-                  name="email"
-                  type="email"
+                  id="extensionNumber"
+                  name="extensionNumber"
+                  type="text"
                   required={true}
-                  placeholder="Enter your email"
-                  value={formData.email}
+                  placeholder="Enter your extension number"
+                  value={formData.extensionNumber}
                   onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
+                    setFormData({
+                      ...formData,
+                      extensionNumber: e.target.value,
+                    })
                   }
                 />
               </div>
@@ -118,7 +122,7 @@ export default function SignUp() {
                 htmlFor="confirmPassword"
                 className="block text-sm font-medium text-gray-700"
               >
-                Confirm password
+                Confirm Password
               </label>
               <div className="mt-1">
                 <Input
@@ -156,7 +160,7 @@ export default function SignUp() {
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                "Create Account"
+                "Sign up"
               )}
             </button>
           </div>

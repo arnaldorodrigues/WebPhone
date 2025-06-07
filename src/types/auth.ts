@@ -1,19 +1,19 @@
 export interface User {
   _id: string;
-  email: string;
+  extensionNumber: string;
   password: string;
   name: string;
   createdAt: Date;
 }
 
 export interface SignUpRequest {
-  email: string;
+  extensionNumber: string;
   password: string;
   name: string;
 }
 
 export interface SignInRequest {
-  email: string;
+  extensionNumber: string;
   password: string;
 }
 

@@ -68,6 +68,16 @@ export function useSip(config?: SipConfig) {
     }
   }, []);
 
+  const decline = useCallback(async () => {
+    try {
+      await sipClient.decline();
+      setCallState(sipClient.getCallState());
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to decline call'));
+    }
+  }, []);
+
   // Update call state periodically
   useEffect(() => {
     if (callState.isCallActive) {
@@ -85,5 +95,6 @@ export function useSip(config?: SipConfig) {
     error,
     makeCall,
     hangup,
+    decline
   };
 } 

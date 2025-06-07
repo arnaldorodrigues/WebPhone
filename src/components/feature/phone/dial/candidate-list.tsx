@@ -20,9 +20,9 @@ const CandidateList = ({ candidates = [], onSelect }: CandidateListProps) => {
           <button
             key={index}
             onClick={() => onSelect?.(candidate)}
-            className="w-full p-2 bg-white/10 hover:bg-white/20 rounded-xl text-left transition-colors duration-150 ease-in-out flex items-center gap-3"
+            className="w-full p-3 bg-white/10 hover:bg-white/20 rounded-xl text-left transition-all duration-200 ease-in-out flex items-center gap-3 transform hover:scale-[1.02]"
           >
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
+            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center overflow-hidden shadow-md">
               {/* {candidate.photo ? (
                 <img
                   src={candidate.photo}

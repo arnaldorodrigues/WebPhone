@@ -1,15 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
+import { getParsedToken, getToken } from "@/utils/auth";
 import { Dialog } from "@/components/ui/dialogs/dialog";
 import { TabView } from "@/components/ui/views/tab-view";
 import Input from "@/components/ui/inputs/input";
-import { Settings, settingsStorage } from "@/lib/storage";
+import { Settings, settingsAction } from "@/lib/action";
 
 import { UserCircleIcon } from "@heroicons/react/24/solid";
 import { CheckButton } from "@/components/ui/buttons/check-button";
 import { RadioButtonGroup } from "@/components/ui/buttons/radio-button-group";
+import { useSettings } from "@/hooks/use-settings";
+
+type ChatEngine = "SIP" | "XMPP";
 
 const InputRow = ({
   name,
@@ -18,6 +21,7 @@ const InputRow = ({
   required = true,
   formData,
   setFormData,
+  readOnly = false,
 }: {
   name: string;
   label: string;
@@ -25,6 +29,7 @@ const InputRow = ({
   required?: boolean;
   formData: Settings;
   setFormData: (s: string) => void;
+  readOnly?: boolean;
 }) => {
   return (
     <div>
@@ -40,6 +45,8 @@ const InputRow = ({
           placeholder={placeholder}
           value={String(formData[name as keyof Settings] || "")}
           onChange={(e) => setFormData(e.target.value)}
+          readOnly={readOnly}
+          className={readOnly ? "bg-gray-100 cursor-not-allowed" : ""}
         />
       </div>
     </div>
@@ -52,10 +59,58 @@ interface SettingDialogProps {
 }
 
 const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
-  const [formData, setFormData] = useState<Settings>(settingsStorage.get());
-  const [isSTV, setIsSTV] = useState(formData.isSTV);
-  const [chatEngine, setChatEngine] = useState(formData.chatEngine);
+  const { settings, updateSettings } = useSettings();
+  const [formData, setFormData] = useState<Settings>(settings);
+  const [isSTV, setIsSTV] = useState(false);
+  const [chatEngine, setChatEngine] = useState<ChatEngine>("SIP");
   const [isDirty, setIsDirty] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setFormData(settings);
+  }, [settings]);
+  // Load settings and auth token
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        setError(null);
+        const token = getParsedToken();
+        if (!token?.extensionNumber) {
+          throw new Error("No extension number found in token");
+        }
+
+        // Set extension number in form data
+        // setFormData((prev) => ({
+        //   ...prev,
+        //   extensionNumber: token.extensionNumber,
+        //   sipUsername: token.extensionNumber,
+        // }));
+
+        // Load settings from database
+        const savedSettings = settings;
+        if (savedSettings) {
+          setFormData({
+            ...savedSettings,
+            sipUsername: token?.extensionNumber,
+          });
+          setIsSTV(savedSettings.isSTV);
+          setChatEngine(savedSettings.chatEngine as ChatEngine);
+        }
+      } catch (error) {
+        console.error("Error loading settings:", error);
+        setError(
+          error instanceof Error ? error.message : "Failed to load settings"
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (isOpen) {
+      loadSettings();
+    }
+  }, [isOpen]);
 
   // Track changes to detect if form is dirty
   useEffect(() => {
@@ -64,30 +119,53 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
       isSTV,
       chatEngine,
     };
-    const savedSettings = settingsStorage.get();
+    const savedSettings = settings;
     setIsDirty(
       JSON.stringify(currentSettings) !== JSON.stringify(savedSettings)
     );
   }, [formData, isSTV, chatEngine]);
 
-  const handleSave = () => {
-    settingsStorage.set({
-      ...formData,
-      isSTV,
-      chatEngine,
-    });
-    setIsDirty(false);
-    onClose();
+  const handleSave = async () => {
+    try {
+      setError(null);
+      const token = getParsedToken();
+      if (!token?.extensionNumber) {
+        throw new Error("No extension number found in token");
+      }
+
+      await updateSettings({
+        ...formData,
+        isSTV,
+        chatEngine,
+        extensionNumber: token.extensionNumber,
+        sipUsername: token.extensionNumber,
+      });
+
+      setIsDirty(false);
+      onClose();
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to save settings"
+      );
+    }
   };
 
-  const handleCancel = () => {
-    // Reset form to saved settings
-    const savedSettings = settingsStorage.get();
-    setFormData(savedSettings);
-    setIsSTV(savedSettings.isSTV);
-    setChatEngine(savedSettings.chatEngine);
-    setIsDirty(false);
-    onClose();
+  const handleCancel = async () => {
+    try {
+      setError(null);
+      const savedSettings = settings;
+      setFormData(savedSettings);
+      setIsSTV(savedSettings.isSTV);
+      setChatEngine(savedSettings.chatEngine as ChatEngine);
+      setIsDirty(false);
+      onClose();
+    } catch (error) {
+      console.error("Error loading settings:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to load settings"
+      );
+    }
   };
 
   const handleFormDataChange = (field: keyof Settings, value: string) => {
@@ -107,6 +185,11 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
     ),
     content: (
       <div className="w-full space-y-2">
+        {error && (
+          <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+            {error}
+          </div>
+        )}
         <InputRow
           name="wsServer"
           label="Secure WebSocket Server (TLS):"
@@ -148,6 +231,7 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
           placeholder="eg: webrtc"
           formData={formData}
           setFormData={(value) => handleFormDataChange("sipUsername", value)}
+          readOnly={true}
         />
         <InputRow
           name="sipPassword"
@@ -187,7 +271,7 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
             Chat Engine:
           </label>
           <div className="ml-2">
-            <RadioButtonGroup
+            <RadioButtonGroup<ChatEngine>
               name="chatEngine"
               options={[
                 {
@@ -249,12 +333,23 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
               setFormData={(value) =>
                 handleFormDataChange("extensionNumber", value)
               }
+              readOnly={true}
             />
           </div>
         )}
       </div>
     ),
   };
+
+  if (isLoading) {
+    return (
+      <Dialog isOpen={isOpen} onClose={onClose} title="Settings" maxWidth="xl">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-gray-500">Loading settings...</div>
+        </div>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog isOpen={isOpen} onClose={onClose} title="Settings" maxWidth="xl">

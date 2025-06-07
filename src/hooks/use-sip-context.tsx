@@ -10,6 +10,7 @@ interface SipContextType {
   error: Error | null;
   makeCall: (number: string) => Promise<void>;
   hangup: () => Promise<void>;
+  decline: () => Promise<void>;
   isConfigLoaded: boolean;
 }
 
@@ -17,7 +18,7 @@ const SipContext = createContext<SipContextType | null>(null);
 
 export function SipProvider({ children }: { children: ReactNode }) {
   const { sipConfig, isConfigLoaded } = useSettings();
-  const { callState, isInitialized, error, makeCall, hangup } =
+  const { callState, isInitialized, error, makeCall, hangup, decline } =
     useSip(sipConfig);
 
   return (
@@ -28,6 +29,7 @@ export function SipProvider({ children }: { children: ReactNode }) {
         error,
         makeCall,
         hangup,
+        decline,
         isConfigLoaded,
       }}
     >

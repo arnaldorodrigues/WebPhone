@@ -3,17 +3,17 @@
 import { ReactNode } from "react";
 import { RadioButton } from "./radio-button";
 
-interface RadioOption {
-  value: string;
+interface RadioOption<T> {
+  value: T;
   label: string;
   description?: string;
   disabled?: boolean;
 }
 
-interface RadioButtonGroupProps {
-  options: RadioOption[];
-  value?: string;
-  onChange?: (value: string) => void;
+interface RadioButtonGroupProps<T> {
+  options: RadioOption<T>[];
+  value?: T;
+  onChange?: (value: T) => void;
   name: string;
   size?: "sm" | "md" | "lg";
   variant?: "primary" | "secondary" | "success" | "warning" | "error";
@@ -24,7 +24,7 @@ interface RadioButtonGroupProps {
   description?: string;
 }
 
-export function RadioButtonGroup({
+export function RadioButtonGroup<T>({
   options,
   value,
   onChange,
@@ -36,8 +36,8 @@ export function RadioButtonGroup({
   orientation = "vertical",
   label,
   description,
-}: RadioButtonGroupProps) {
-  const handleChange = (optionValue: string) => {
+}: RadioButtonGroupProps<T>) {
+  const handleChange = (optionValue: T) => {
     if (!disabled && onChange) {
       onChange(optionValue);
     }
@@ -81,9 +81,9 @@ export function RadioButtonGroup({
       >
         {options.map((option) => (
           <RadioButton
-            key={option.value}
+            key={String(option.value)}
             name={name}
-            value={option.value}
+            value={String(option.value)}
             label={option.label}
             description={option.description}
             checked={value === option.value}

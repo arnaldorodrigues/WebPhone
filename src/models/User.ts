@@ -2,7 +2,7 @@ import mongoose, { Schema } from 'mongoose';
 import { User } from '../types/auth';
 
 const userSchema: Schema = new Schema({
-  email: {
+  extensionNumber: {
     type: String,
     required: true,
     unique: true,

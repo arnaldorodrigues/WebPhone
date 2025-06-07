@@ -8,7 +8,7 @@ interface DialDisplayProps {
 
 const DialDisplay = ({ value, candidates = [] }: DialDisplayProps) => {
   return (
-    <div className="w-full h-full p-4 flex flex-col gap-4 bg-gradient-to-b from-indigo-500 to-indigo-600 rounded-t-2xl">
+    <div className="w-full h-full p-6 flex flex-col gap-4 bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-t-2xl shadow-lg">
       <NumberDisplay value={value} />
       <CandidateList candidates={candidates} />
     </div>

@@ -1,27 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { settingsStorage } from "@/lib/storage";
+import { settingsAction } from "@/lib/action";
 import { SipConfig } from "@/lib/sip-client";
 
-const SETTINGS_KEY = 'settings';
-
 export function useSettings() {
-  const [settings, setSettings] = useState(settingsStorage.get());
+  const [settings, setSettings] = useState(settingsAction.defaultSettings);
   const [sipConfig, setSipConfig] = useState<SipConfig | undefined>(undefined);
   const [isConfigLoaded, setIsConfigLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  // Listen for storage changes
+  // Load settings on mount
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === SETTINGS_KEY) {
-        const newSettings = settingsStorage.get();
-        setSettings(newSettings);
+    const loadSettings = async () => {
+      try {
+        setIsLoading(true);
+        const loadedSettings = await settingsAction.get();
+        setSettings(loadedSettings);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Failed to load settings'));
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    loadSettings();
   }, []);
 
   // Update SIP config when settings change
@@ -39,15 +44,26 @@ export function useSettings() {
     setIsConfigLoaded(true);
   }, [settings]);
 
-  const updateSettings = (newSettings: typeof settings) => {
-    settingsStorage.set(newSettings);
-    setSettings(newSettings);
+  const updateSettings = async (newSettings: typeof settings) => {
+    try {
+      setIsLoading(true);
+      await settingsAction.set(newSettings);
+      setSettings(newSettings);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to update settings'));
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return {
     settings,
     sipConfig,
     isConfigLoaded,
+    isLoading,
+    error,
     updateSettings,
   };
 } 

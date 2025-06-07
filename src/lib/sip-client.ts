@@ -60,6 +60,10 @@ class SipClient {
   }
 
   private handleRemoteMedia(session: Session): void {
+    const remoteMedia = document.getElementById(
+      "remoteAudio"
+    ) as HTMLAudioElement;
+
     const pc = (session.sessionDescriptionHandler as WebSessionDescriptionHandler)?.peerConnection;
     if (!pc) return;
 
@@ -72,6 +76,9 @@ class SipClient {
 
     // Update call state with the remote stream
     this.callState.remoteStream = stream;
+
+    remoteMedia.srcObject = stream;
+    remoteMedia.play();
   }
 
   async initialize(config: SipConfig): Promise<void> {
@@ -112,11 +119,12 @@ class SipClient {
           },
           iceGatheringTimeout: 5000,
           constraints: {
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true
-            },
+            // audio: {
+            //   echoCancellation: true,
+            //   noiseSuppression: true,
+            //   autoGainControl: true
+            // },
+            audio: true,
             video: false
           }
         }
@@ -188,7 +196,7 @@ class SipClient {
 
     try {
       // Check if we have any audio input devices
-      const devices = await navigator.mediaDevices.enumerateDevices();
+      const devices = await navigator.mediaDevices?.enumerateDevices() || [];
       const audioInputs = devices.filter(device => device.kind === 'audioinput');
       
       if (audioInputs.length === 0) {
@@ -281,6 +289,19 @@ class SipClient {
       this.endCall();
     } catch (error) {
       console.error('Failed to hangup call:', error);
+      throw error;
+    }
+  }
+
+  async decline(): Promise<void> {
+    if (!this.currentSession || !(this.currentSession instanceof Invitation)) {
+      throw new Error('No active session to answer');
+    }
+
+    try{
+      this.currentSession.reject();
+    } catch(error) {
+      console.error("Filed to decline call", error);
       throw error;
     }
   }

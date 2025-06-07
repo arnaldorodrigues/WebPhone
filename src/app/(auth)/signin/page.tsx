@@ -11,7 +11,7 @@ export default function SignIn() {
   const { signin } = useAuth();
 
   const [formData, setFormData] = useState({
-    email: "",
+    extensionNumber: "",
     password: "",
   });
   const [error, setError] = useState("");
@@ -22,9 +22,9 @@ export default function SignIn() {
     setIsLoading(true);
 
     try {
-      await signin(formData.email, formData.password);
+      await signin(formData.extensionNumber, formData.password);
     } catch (err) {
-      setError("Incorrect email or password");
+      setError("Incorrect extension number or password");
     } finally {
       setIsLoading(false);
     }
@@ -45,21 +45,24 @@ export default function SignIn() {
           <div className="space-y-4">
             <div>
               <label
-                htmlFor="email"
+                htmlFor="extensionNumber"
                 className="block text-sm font-medium text-gray-700"
               >
-                Email address
+                Extension Number
               </label>
               <div className="mt-1">
                 <Input
-                  id="email"
-                  name="email"
-                  type="email"
+                  id="extensionNumber"
+                  name="extensionNumber"
+                  type="text"
                   required={true}
-                  placeholder="Enter your email"
-                  value={formData.email}
+                  placeholder="Enter your extension number"
+                  value={formData.extensionNumber}
                   onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
+                    setFormData({
+                      ...formData,
+                      extensionNumber: e.target.value,
+                    })
                   }
                 />
               </div>

@@ -7,7 +7,7 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 interface DialogProps {
   isOpen: boolean;
   onClose: () => void;
-  title: string;
+  title?: string;
   children: ReactNode;
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl";
   showCloseButton?: boolean;
@@ -64,30 +64,30 @@ export function Dialog({
               leaveTo="opacity-0 scale-95"
             >
               <HeadlessDialog.Panel
-                className={`w-full ${maxWidthClasses[maxWidth]} transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all`}
+                className={`w-full ${maxWidthClasses[maxWidth]} transform overflow-hidden rounded-2xl bg-white p-3 text-left align-middle shadow-2xl transition-all`}
               >
                 {/* Header */}
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-1">
                   <HeadlessDialog.Title
                     as="h3"
-                    className="text-lg font-semibold leading-6 text-gray-900"
+                    className="text-2xl font-semibold leading-7 text-gray-900"
                   >
                     {title}
                   </HeadlessDialog.Title>
                   {showCloseButton && (
                     <button
                       type="button"
-                      className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                      className="rounded-full p-2.5 bg-gray-50 text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
                       onClick={onClose}
                     >
                       <span className="sr-only">Close</span>
-                      <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                      <XMarkIcon className="h-5 w-5" aria-hidden="true" />
                     </button>
                   )}
                 </div>
 
                 {/* Content */}
-                <div className="mt-2">{children}</div>
+                <div className="mt-4">{children}</div>
               </HeadlessDialog.Panel>
             </Transition.Child>
           </div>

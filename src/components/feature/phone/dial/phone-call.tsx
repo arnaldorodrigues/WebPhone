@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import { Dialog } from "@/components/ui/dialogs/dialog";
 import DialDisplay from "@/components/feature/phone/dial/dial-display";
 import DialPad from "@/components/feature/phone/dial/dial-pad";
+import { PhoneIcon } from "@heroicons/react/24/solid";
 
-import { SipConfig } from "@/lib/sip-client";
-import { settingsStorage } from "@/lib/storage";
 import { useSipContext } from "@/hooks/use-sip-context";
+import { usePhoneState } from "@/hooks/use-phonestate-context";
 
 interface PhoneCallProps {
   isOpen: boolean;
@@ -15,18 +15,16 @@ interface PhoneCallProps {
 }
 
 export function PhoneCallDialog({ isOpen, onClose }: PhoneCallProps) {
-  const settings = settingsStorage.get();
-  const config: SipConfig | null = {
-    wsServer: settings.wsServer,
-    wsPort: settings.wsPort,
-    wsPath: settings.wsPath,
-    server: settings.domain,
-    username: settings.sipUsername,
-    password: settings.sipPassword,
-    displayName: settings.fullName,
-  };
-  const { callState, isInitialized, error, makeCall, hangup, isConfigLoaded } =
-    useSipContext();
+  const { phoneState, setPhoneState } = usePhoneState();
+  const {
+    callState,
+    isInitialized,
+    error,
+    makeCall,
+    hangup,
+    isConfigLoaded,
+    decline,
+  } = useSipContext();
   const [number, setNumber] = useState("");
 
   useEffect(() => {
@@ -38,7 +36,7 @@ export function PhoneCallDialog({ isOpen, onClose }: PhoneCallProps) {
   const handleDial = (c: string) => {
     if (c === "backspace") {
       setNumber(number.slice(0, number.length - 1));
-    } else if (number.length < 15) {
+    } else if (number.length < 12) {
       setNumber(number + c);
     }
   };
@@ -52,28 +50,9 @@ export function PhoneCallDialog({ isOpen, onClose }: PhoneCallProps) {
   };
 
   let dialogContent = null;
-
-  dialogContent = (
-    <div className="w-full flex flex-col gap-4">
-      {callState.isCallActive ? (
-        <div className="space-y-4">
-          <div className="text-center">
-            <div className="text-lg font-medium">Call in progress</div>
-            <div className="text-sm text-gray-500">
-              {callState.remoteNumber}
-            </div>
-            <div className="text-2xl font-mono mt-2">
-              {formatDuration(callState.callDuration)}
-            </div>
-          </div>
-          <button
-            onClick={hangup}
-            className="w-full py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-          >
-            End Call
-          </button>
-        </div>
-      ) : (
+  switch (phoneState) {
+    case "dialing":
+      dialogContent = (
         <>
           <div className="flex-1">
             <DialDisplay value={number} />
@@ -85,21 +64,144 @@ export function PhoneCallDialog({ isOpen, onClose }: PhoneCallProps) {
             />
           </div>
         </>
-      )}
-    </div>
-  );
+      );
+      break;
+    case "sending":
+      dialogContent = (
+        <div className="flex flex-col items-center justify-center gap-6 py-12">
+          <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center shadow-lg">
+            <PhoneIcon className="w-10 h-10 text-blue-500 animate-pulse" />
+          </div>
+          <div className="text-center space-y-2">
+            <p className="text-xl font-semibold text-gray-800">Calling...</p>
+            <p className="text-base text-gray-600 font-medium">
+              {callState.remoteNumber || number}
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              hangup();
+              setPhoneState("ended");
+            }}
+            className="px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+          >
+            Cancel Call
+          </button>
+        </div>
+      );
+      break;
+    case "receiving":
+      dialogContent = (
+        <div className="flex flex-col items-center justify-center gap-6 py-12">
+          <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center shadow-lg">
+            <PhoneIcon className="w-10 h-10 text-green-500 animate-bounce" />
+          </div>
+          <div className="text-center space-y-2">
+            <p className="text-xl font-semibold text-gray-800">Incoming Call</p>
+            <p className="text-base text-gray-600 font-medium">
+              {callState.remoteNumber || number}
+            </p>
+          </div>
+          <div className="flex gap-4">
+            <button
+              onClick={() => {
+                // Accept call logic here
+                setPhoneState("calling");
+              }}
+              className="px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+            >
+              Accept
+            </button>
+            <button
+              onClick={async () => {
+                try {
+                  await decline();
+                  setPhoneState("ended");
+                } catch (error) {
+                  console.error("Failed to decline call:", error);
+                }
+              }}
+              className="px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+            >
+              Decline
+            </button>
+          </div>
+        </div>
+      );
+      break;
+    case "calling":
+      dialogContent = (
+        <div className="flex flex-col items-center justify-center gap-6 py-12">
+          <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center shadow-lg">
+            <PhoneIcon className="w-10 h-10 text-blue-500" />
+          </div>
+          <div className="text-center space-y-2">
+            <p className="text-xl font-semibold text-gray-800">
+              Call in Progress
+            </p>
+            <p className="text-base text-gray-600 font-medium">
+              {callState.remoteNumber || number}
+            </p>
+            <p className="text-sm text-gray-500 font-medium mt-2">
+              {formatDuration(callState.callDuration)}
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              hangup();
+              setPhoneState("ended");
+            }}
+            className="px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+          >
+            End Call
+          </button>
+        </div>
+      );
+      break;
+    case "ended":
+      dialogContent = (
+        <div className="flex flex-col items-center justify-center gap-6 py-12">
+          <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center shadow-lg">
+            <PhoneIcon className="w-10 h-10 text-gray-500" />
+          </div>
+          <div className="text-center space-y-2">
+            <p className="text-xl font-semibold text-gray-800">Call Ended</p>
+            <p className="text-base text-gray-600 font-medium">
+              {callState.remoteNumber || number}
+            </p>
+            {callState.callDuration > 0 && (
+              <p className="text-sm text-gray-500 font-medium mt-2">
+                Duration: {formatDuration(callState.callDuration)}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => {
+              setPhoneState("dialing");
+              setNumber("");
+            }}
+            className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+          >
+            New Call
+          </button>
+        </div>
+      );
+      break;
+    default:
+      break;
+  }
 
   return (
     <Dialog
       isOpen={isOpen}
       onClose={() => {
         onClose();
-        hangup();
       }}
-      title="Call"
       maxWidth="xl"
     >
-      {dialogContent}
+      <div className="w-full flex flex-col gap-4 bg-white rounded-lg p-6">
+        {dialogContent}
+      </div>
     </Dialog>
   );
 }

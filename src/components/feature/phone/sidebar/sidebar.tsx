@@ -4,12 +4,14 @@ import { Me } from "./me";
 const Sidebar = ({ hidden = false }: { hidden?: boolean }) => {
   return (
     <div
-      className={`w-full h-full flex flex-col sm:block sm:w-md bg-white ${
+      className={`w-full h-[calc(100vh-4rem)] pb-5 sm:block sm:w-80 bg-white border-r border-gray-100 shadow-sm ${
         hidden && "hidden"
       }`}
     >
-      <Me />
-      <ContactList />
+      <div className="h-full flex flex-col">
+        <Me />
+        <ContactList />
+      </div>
     </div>
   );
 };
