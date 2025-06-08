@@ -19,15 +19,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <SipProvider>
-          <PhoneStateProvider>
+        <PhoneStateProvider>
+          <SipProvider>
             <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
               <div className="max-w-7xl min-h-screen flex flex-col mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {children}
               </div>
             </div>
-          </PhoneStateProvider>
-        </SipProvider>
+          </SipProvider>
+        </PhoneStateProvider>
       </body>
     </html>
   );

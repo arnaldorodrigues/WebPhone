@@ -11,7 +11,7 @@ export type PhoneStateType =
   | "ended"
   | null;
 
-interface PhoneStateContextType {
+export interface PhoneStateContextType {
   phoneState: PhoneStateType;
   setPhoneState: (state: PhoneStateType) => void;
   extensionNumber: string;
@@ -44,7 +44,7 @@ export function PhoneStateProvider({
   };
 
   useEffect(() => {
-    console.log(phoneState);
+    console.log("Phone state changed:", phoneState);
   }, [phoneState]);
 
   return (
@@ -56,7 +56,7 @@ export function PhoneStateProvider({
 
 export function usePhoneState() {
   const context = useContext(PhoneStateContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("usePhoneState must be used within a PhoneStateProvider");
   }
   return context;

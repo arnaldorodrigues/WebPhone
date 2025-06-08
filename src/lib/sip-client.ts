@@ -18,6 +18,18 @@ export interface CallState {
   callDuration: number;
   callStartTime?: Date;
   remoteStream?: MediaStream;
+  incomingCall?: boolean;
+  isMuted?: boolean;
+  isOnHold?: boolean;
+  localStream?: MediaStream;
+}
+
+// Add callback interface for UI updates
+export interface SipCallbacks {
+  onIncomingCall?: (remoteNumber: string, invitation: Invitation) => void;
+  onCallStateChanged?: (state: CallState) => void;
+  onRegistrationStateChanged?: (isRegistered: boolean) => void;
+  onError?: (error: Error) => void;
 }
 
 class SipClient {
@@ -29,12 +41,21 @@ class SipClient {
     isRegistered: false,
     isCallActive: false,
     callDuration: 0,
+    incomingCall: false,
+    isMuted: false,
+    isOnHold: false,
   };
   private callTimer: NodeJS.Timeout | null = null;
   private isInitializing: boolean = false;
+  private callbacks: SipCallbacks = {};
 
   constructor() {
     // No initialization needed in constructor
+  }
+
+  // Add method to set callbacks
+  setCallbacks(callbacks: SipCallbacks): void {
+    this.callbacks = callbacks;
   }
 
   private async requestAudioPermissions(): Promise<MediaStream | null> {
@@ -45,6 +66,7 @@ class SipClient {
     }
 
     try {
+      console.log('Requesting microphone permissions...');
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -52,9 +74,11 @@ class SipClient {
           autoGainControl: true
         }
       });
+      console.log('Microphone permissions granted successfully');
       return stream;
     } catch (error) {
-      console.warn('Failed to get audio permissions:', error);
+      console.warn('Microphone access failed (this is OK for outgoing calls):', error);
+      // Don't throw error - just return null and continue
       return null;
     }
   }
@@ -119,12 +143,8 @@ class SipClient {
           },
           iceGatheringTimeout: 5000,
           constraints: {
-            // audio: {
-            //   echoCancellation: true,
-            //   noiseSuppression: true,
-            //   autoGainControl: true
-            // },
-            audio: true,
+            // Make audio optional - calls can work without microphone
+            audio: false, // Set to false to not require microphone
             video: false
           }
         }
@@ -135,10 +155,58 @@ class SipClient {
       
       // Set up event handlers before starting
       userAgent.delegate = {
-        onInvite: async (invitation: Invitation) => {
+        onInvite: (invitation: Invitation) => {
+          console.log('INCOMING CALL DETECTED');
+          console.log('From:', invitation.remoteIdentity?.uri?.toString());
+          console.log('Remote number:', invitation.remoteIdentity?.uri?.user);
+          
           this.currentSession = invitation;
-          await this.answerCall();
+          
+          // Extract remote number from invitation
+          const remoteNumber = invitation.remoteIdentity?.uri?.user || 'Unknown';
+          
+          // Update call state
+          this.callState.incomingCall = true;
+          this.callState.remoteNumber = remoteNumber;
+          
+          console.log('Call state updated:', this.callState);
+          
+          // Set up invitation event handlers
+          invitation.stateChange.addListener((state: SessionState) => {
+            console.log('Incoming call state changed:', state);
+            switch (state) {
+              case SessionState.Established:
+                console.log('Incoming call established successfully');
+                this.callState.isCallActive = true;
+                this.callState.incomingCall = false;
+                this.startCallTimer();
+                this.handleRemoteMedia(invitation);
+                this.callbacks.onCallStateChanged?.(this.callState);
+                break;
+              case SessionState.Terminating:
+                console.log('Incoming call terminating (remote party ending call)...');
+                break;
+              case SessionState.Terminated:
+                console.log('Incoming call terminated by remote party');
+                this.endCall();
+                break;
+            }
+          });
+
+          console.log('Notifying UI about incoming call...');
+          // Notify UI about incoming call - DON'T auto-answer
+          this.callbacks.onIncomingCall?.(remoteNumber, invitation);
+          this.callbacks.onCallStateChanged?.(this.callState);
         },
+        onConnect: () => {
+          console.log('SIP UserAgent connected');
+        },
+        onDisconnect: (error?: Error) => {
+          console.log('SIP UserAgent disconnected', error);
+          if (error) {
+            this.callbacks.onError?.(error);
+          }
+        }
       };
 
       console.log('Starting UserAgent...');
@@ -150,6 +218,15 @@ class SipClient {
       
       // Create registerer after userAgent is started
       this.registerer = new Registerer(this.userAgent);
+      
+      // Add registration state change handler
+      this.registerer.stateChange.addListener((state) => {
+        console.log('Registration state changed:', state);
+        const isRegistered = state === 'Registered';
+        this.callState.isRegistered = isRegistered;
+        this.callbacks.onRegistrationStateChanged?.(isRegistered);
+        this.callbacks.onCallStateChanged?.(this.callState);
+      });
       
       console.log('Registering...');
       if (this.registerer) {
@@ -176,6 +253,7 @@ class SipClient {
   }
 
   async makeCall(number: string): Promise<void> {
+    console.log('MAKING CALL to:', number);
     console.log('Making call with state:', {
       userAgent: !!this.userAgent,
       isRegistered: this.callState.isRegistered,
@@ -195,46 +273,86 @@ class SipClient {
     }
 
     try {
-      // Check if we have any audio input devices
+      // Update call state to show we're making a call
+      this.callState.remoteNumber = number;
+      console.log('Updated call state for outgoing call:', this.callState);
+      this.callbacks.onCallStateChanged?.(this.callState);
+
+      console.log('Checking audio devices (optional for outgoing calls)...');
+      
+      // Check if we have any audio input devices (but don't require them)
       const devices = await navigator.mediaDevices?.enumerateDevices() || [];
       const audioInputs = devices.filter(device => device.kind === 'audioinput');
+
+      console.log("Audio devices found:", devices.length, "Audio inputs:", audioInputs.length);
       
       if (audioInputs.length === 0) {
-        // throw new Error('No microphone found. Please connect a microphone and try again.');
+        console.warn('No microphone found, but proceeding with call anyway...');
       }
 
-      // Try to get audio stream with specific device
-      const audioStream = await this.requestAudioPermissions();
-      if (!audioStream) {
-        // throw new Error('Could not access microphone. Please check your browser permissions and try again.');
+      // Try to get audio stream, but don't fail if we can't
+      let audioStream: MediaStream | null = null;
+      try {
+        audioStream = await this.requestAudioPermissions();
+        if (audioStream) {
+          console.log('Microphone access granted');
+        } else {
+          console.warn('No microphone access, but continuing without it');
+        }
+      } catch (error) {
+        console.warn('Failed to get microphone permissions, continuing without audio:', error);
       }
 
+      console.log('Creating SIP INVITE (microphone not required)...');
       const target = new URI('sip', number, this.config.server);
+      console.log('Creating SIP URI:', target.toString());
+      
       const inviter = new Inviter(this.userAgent, target);
       this.currentSession = inviter;
       
       inviter.stateChange.addListener((state: SessionState) => {
+        console.log('Outgoing call state changed:', state);
         switch (state) {
+          case SessionState.Establishing:
+            console.log('Call establishing...');
+            break;
           case SessionState.Established:
+            console.log('Outgoing call established successfully');
             this.callState.isCallActive = true;
             this.callState.remoteNumber = number;
+            
+            // Keep the audio stream for mute functionality
+            if (audioStream) {
+              this.callState.localStream = audioStream;
+              console.log('Local audio stream stored for mute functionality');
+            }
+            
             this.startCallTimer();
             this.handleRemoteMedia(inviter);
+            this.callbacks.onCallStateChanged?.(this.callState);
+            break;
+          case SessionState.Terminating:
+            console.log('Outgoing call terminating (remote party ending call)...');
             break;
           case SessionState.Terminated:
+            console.log('Outgoing call terminated by remote party');
             this.endCall();
             break;
         }
       });
 
+      console.log('Sending INVITE...');
       await inviter.invite();
+      console.log('INVITE sent successfully', inviter);
 
-      // Clean up audio stream if we got one
-      if (audioStream) {
-        audioStream.getTracks().forEach(track => track.stop());
-      }
+      // DON'T clean up audio stream here - keep it for the call
     } catch (error) {
       console.error('Failed to make call:', error);
+      
+      // Reset call state on error
+      this.callState.remoteNumber = undefined;
+      this.callbacks.onCallStateChanged?.(this.callState);
+      
       if (error instanceof Error) {
         if (error.name === 'NotFoundError') {
           throw new Error('No microphone found. Please connect a microphone and try again.');
@@ -254,21 +372,34 @@ class SipClient {
     }
 
     try {
+      console.log('Answering incoming call...');
+      
       // Try to get audio stream, but continue even if it fails
-      const audioStream = await this.requestAudioPermissions();
-      if (!audioStream) {
-        console.warn('Proceeding with call without audio permissions');
+      let audioStream: MediaStream | null = null;
+      try {
+        audioStream = await this.requestAudioPermissions();
+        if (!audioStream) {
+          console.warn('Proceeding with call without microphone (listen-only mode)');
+        }
+      } catch (error) {
+        console.warn('Failed to get microphone for incoming call, proceeding in listen-only mode:', error);
       }
 
       await this.currentSession.accept();
+      console.log('Incoming call accepted successfully');
+      
       this.callState.isCallActive = true;
+      
+      // Keep the audio stream for mute functionality
+      if (audioStream) {
+        this.callState.localStream = audioStream;
+        console.log('Local audio stream stored for mute functionality');
+      }
+      
       this.startCallTimer();
       this.handleRemoteMedia(this.currentSession);
 
-      // Clean up audio stream if we got one
-      if (audioStream) {
-        audioStream.getTracks().forEach(track => track.stop());
-      }
+      // DON'T clean up audio stream here - keep it for the call
     } catch (error) {
       console.error('Failed to answer call:', error);
       throw error;
@@ -276,21 +407,138 @@ class SipClient {
   }
 
   async hangup(): Promise<void> {
+    console.log('=== HANGUP FUNCTION CALLED ===');
+    
     if (!this.currentSession) {
+      console.log('ERROR: No active session to hangup');
       throw new Error('No active session to hangup');
     }
 
+    console.log('Session details:', {
+      state: this.currentSession.state,
+      type: this.currentSession instanceof Inviter ? 'Inviter' : 'Invitation',
+      hasSession: !!this.currentSession
+    });
+    
+    const currentDuration = this.callState.callDuration;
+
     try {
       if (this.currentSession instanceof Inviter) {
-        await this.currentSession.bye();
+        console.log('Processing outgoing call termination...');
+        
+        if (this.currentSession.state === SessionState.Initial || this.currentSession.state === SessionState.Establishing) {
+          console.log('Attempting to cancel outgoing call (not yet established)...');
+          console.log('Session state before cancel:', this.currentSession.state);
+          
+          try {
+            await this.currentSession.cancel();
+            console.log('✅ Call canceled successfully');
+          } catch (cancelError) {
+            console.error('❌ Cancel method failed:', cancelError);
+            // Try alternative termination
+            console.log('Trying alternative termination with bye()...');
+            try {
+              await this.currentSession.bye();
+              console.log('✅ Alternative bye() worked');
+            } catch (byeError) {
+              console.error('❌ Alternative bye() also failed:', byeError);
+              throw cancelError; // Throw original cancel error
+            }
+          }
+        } else if (this.currentSession.state === SessionState.Established) {
+          console.log('Hanging up established outgoing call...');
+          await this.currentSession.bye();
+          console.log('✅ Established call hung up successfully');
+        } else {
+          console.log('Call is in state:', this.currentSession.state, '- attempting forced termination');
+          // For any other state, try to force termination
+          try {
+            await this.currentSession.bye();
+            console.log('✅ Forced termination successful');
+          } catch (forceError) {
+            console.log('Forced termination failed, cleaning up manually:', forceError);
+          }
+        }
       } else if (this.currentSession instanceof Invitation) {
-        await this.currentSession.bye();
+        console.log('Processing incoming call termination...');
+        
+        if (this.currentSession.state === SessionState.Established) {
+          console.log('Hanging up established incoming call...');
+          await this.currentSession.bye();
+          console.log('✅ Established incoming call hung up successfully');
+        } else {
+          console.log('Declining incoming call...');
+          await this.currentSession.reject();
+          console.log('✅ Incoming call declined successfully');
+        }
       }
-      this.endCall();
+      
+      console.log('Call termination successful, cleaning up state...');
+      // For user-initiated hangup, we want to preserve duration like remote termination
+      this.endCallWithDuration(currentDuration);
+      console.log('=== HANGUP COMPLETED SUCCESSFULLY ===');
+      
     } catch (error) {
-      console.error('Failed to hangup call:', error);
-      throw error;
+      console.error('=== HANGUP FAILED ===');
+      console.error('Error details:', error);
+      console.error('Error name:', error instanceof Error ? error.name : 'Unknown');
+      console.error('Error message:', error instanceof Error ? error.message : error);
+      
+      // Even on error, clean up state and preserve duration for UI
+      console.log('Cleaning up state despite error...');
+      this.endCallWithDuration(currentDuration);
+      
+      // Don't throw the error - let the UI handle the state cleanup
+      console.log('=== HANGUP ERROR HANDLED ===');
     }
+  }
+
+  // New method to end call while preserving duration for UI
+  private endCallWithDuration(preservedDuration: number): void {
+    console.log('Ending call (user initiated) - preserving duration for UI:', preservedDuration);
+    
+    if (this.callTimer) {
+      clearInterval(this.callTimer);
+      this.callTimer = null;
+      console.log('Call timer stopped');
+    }
+    
+    // Clean up local stream
+    if (this.callState.localStream) {
+      this.callState.localStream.getTracks().forEach(track => track.stop());
+      console.log('Local media stream stopped');
+    }
+    
+    this.callState.isCallActive = false;
+    this.callState.incomingCall = false;
+    this.callState.remoteNumber = undefined;
+    this.callState.callStartTime = undefined;
+    this.callState.remoteStream = undefined;
+    this.callState.localStream = undefined;
+    this.callState.isMuted = false;
+    this.callState.isOnHold = false;
+    this.currentSession = null;
+    
+    // For canceled calls (duration = 0), set a minimal duration to trigger UI transition
+    if (preservedDuration === 0) {
+      console.log('Call was canceled - setting minimal duration to trigger UI transition');
+      this.callState.callDuration = 1; // Set to 1 second to trigger UI transition
+    } else {
+      this.callState.callDuration = preservedDuration;
+    }
+    
+    console.log('Call state reset. Call duration set to:', this.callState.callDuration, 'seconds');
+    
+    // Notify UI of state change - this should trigger phoneState to 'ended'
+    this.callbacks.onCallStateChanged?.(this.callState);
+    console.log('UI notified of user-initiated call termination');
+    
+    // Reset call duration after a delay to allow UI to process the ended state
+    setTimeout(() => {
+      this.callState.callDuration = 0;
+      this.callbacks.onCallStateChanged?.(this.callState);
+      console.log('Call duration reset after UI processing');
+    }, 100);
   }
 
   async decline(): Promise<void> {
@@ -303,6 +551,94 @@ class SipClient {
     } catch(error) {
       console.error("Filed to decline call", error);
       throw error;
+    }
+  }
+
+  // New method to enable microphone during an active call
+  async enableMicrophone(): Promise<boolean> {
+    if (!this.callState.isCallActive || !this.currentSession) {
+      console.warn('No active call to enable microphone for');
+      return false;
+    }
+
+    try {
+      console.log('Enabling microphone for active call...');
+      const audioStream = await this.requestAudioPermissions();
+      
+      if (audioStream) {
+        console.log('Microphone enabled successfully');
+        this.callState.localStream = audioStream;
+        this.callbacks.onCallStateChanged?.(this.callState);
+        return true;
+      } else {
+        console.warn('Failed to enable microphone');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error enabling microphone:', error);
+      return false;
+    }
+  }
+
+  // Mute/Unmute functionality
+  async toggleMute(): Promise<boolean> {
+    if (!this.callState.isCallActive || !this.currentSession) {
+      console.warn('No active call to mute/unmute');
+      return false;
+    }
+
+    try {
+      const newMuteState = !this.callState.isMuted;
+      
+      if (this.callState.localStream) {
+        // Mute/unmute all audio tracks
+        this.callState.localStream.getAudioTracks().forEach(track => {
+          track.enabled = !newMuteState;
+        });
+      }
+
+      this.callState.isMuted = newMuteState;
+      console.log(newMuteState ? 'Call muted' : 'Call unmuted');
+      this.callbacks.onCallStateChanged?.(this.callState);
+      return true;
+    } catch (error) {
+      console.error('Error toggling mute:', error);
+      return false;
+    }
+  }
+
+  // Hold/Resume functionality
+  async toggleHold(): Promise<boolean> {
+    if (!this.callState.isCallActive || !this.currentSession) {
+      console.warn('No active call to hold/resume');
+      return false;
+    }
+
+    try {
+      const newHoldState = !this.callState.isOnHold;
+
+      if (newHoldState) {
+        // Put call on hold
+        console.log('Putting call on hold...');
+        await (this.currentSession as any).hold();
+        console.log('Call put on hold successfully');
+      } else {
+        // Resume call from hold
+        console.log('Resuming call from hold...');
+        await (this.currentSession as any).unhold();
+        console.log('Call resumed from hold successfully');
+      }
+
+      this.callState.isOnHold = newHoldState;
+      this.callbacks.onCallStateChanged?.(this.callState);
+      return true;
+    } catch (error) {
+      console.error('Error toggling hold:', error);
+      // Fallback: manually manage hold state for basic functionality
+      this.callState.isOnHold = !this.callState.isOnHold;
+      console.log(this.callState.isOnHold ? 'Call marked as on hold (manual)' : 'Call marked as resumed (manual)');
+      this.callbacks.onCallStateChanged?.(this.callState);
+      return true;
     }
   }
 
@@ -319,16 +655,47 @@ class SipClient {
   }
 
   private endCall(): void {
+    console.log('Ending call (remote termination) - cleaning up call state and notifying UI');
+    console.log('Call duration before cleanup:', this.callState.callDuration);
+    
     if (this.callTimer) {
       clearInterval(this.callTimer);
       this.callTimer = null;
+      console.log('Call timer stopped');
     }
+    
+    // Clean up local stream
+    if (this.callState.localStream) {
+      this.callState.localStream.getTracks().forEach(track => track.stop());
+      console.log('Local media stream stopped');
+    }
+    
+    // Store duration for UI display - DON'T reset it immediately
+    const finalDuration = this.callState.callDuration;
+    
     this.callState.isCallActive = false;
+    this.callState.incomingCall = false;
     this.callState.remoteNumber = undefined;
-    this.callState.callDuration = 0;
     this.callState.callStartTime = undefined;
     this.callState.remoteStream = undefined;
+    this.callState.localStream = undefined;
+    // Keep callDuration for UI to detect call termination
+    this.callState.isMuted = false;
+    this.callState.isOnHold = false;
     this.currentSession = null;
+    
+    console.log('Call state reset. Final call duration:', finalDuration, 'seconds');
+    
+    // Notify UI of state change - this should trigger phoneState to 'ended'
+    this.callbacks.onCallStateChanged?.(this.callState);
+    console.log('UI notified of remote call termination');
+    
+    // Reset call duration after a delay to allow UI to process the ended state
+    setTimeout(() => {
+      this.callState.callDuration = 0;
+      this.callbacks.onCallStateChanged?.(this.callState);
+      console.log('Call duration reset after UI processing');
+    }, 100);
   }
 
   getCallState(): CallState {

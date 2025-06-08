@@ -343,7 +343,13 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
 
   if (isLoading) {
     return (
-      <Dialog isOpen={isOpen} onClose={onClose} title="Settings" maxWidth="xl">
+      <Dialog
+        isOpen={isOpen}
+        onClose={onClose}
+        title="Settings"
+        maxWidth="xl"
+        closeOnOutsideClick={false}
+      >
         <div className="flex items-center justify-center h-64">
           <div className="text-gray-500">Loading settings...</div>
         </div>
@@ -352,7 +358,13 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
   }
 
   return (
-    <Dialog isOpen={isOpen} onClose={onClose} title="Settings" maxWidth="xl">
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Settings"
+      maxWidth="xl"
+      closeOnOutsideClick={false}
+    >
       <div className="flex flex-col h-full">
         <div className="flex-grow">
           <TabView tabs={[accountTab]} />
