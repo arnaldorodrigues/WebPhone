@@ -1,22 +1,31 @@
 import { NextResponse } from 'next/server';
-import { findUserByExtensionNumber, validatePassword } from '@/lib/users';
+import { findUserByEmail, validatePassword } from '@/lib/users';
 import { generateToken } from '@/utils/jwt';
 import { SignInRequest } from '@/types/auth';
 
 export async function POST(request: Request) {
   try {
     const body: SignInRequest = await request.json();
-    const { extensionNumber, password } = body;
+    const { email, password } = body;
 
     // Basic validation
-    if (!extensionNumber || !password) {
+    if (!email || !password) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    const user = await findUserByExtensionNumber(extensionNumber);
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'Invalid email format' },
+        { status: 400 }
+      );
+    }
+
+    const user = await findUserByEmail(email.toLowerCase());
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid credentials' },

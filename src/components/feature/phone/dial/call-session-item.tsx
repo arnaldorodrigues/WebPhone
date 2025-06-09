@@ -32,7 +32,6 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
   } = sessionCall || {};
 
   useEffect(() => {
-    console.log("123123123123123 ", session?.state, direction);
     if (
       session?.state &&
       [SessionState.Terminating, SessionState.Terminated].includes(

@@ -11,6 +11,8 @@ import { UserCircleIcon } from "@heroicons/react/24/solid";
 import { CheckButton } from "@/components/ui/buttons/check-button";
 import { RadioButtonGroup } from "@/components/ui/buttons/radio-button-group";
 import { useSettings } from "@/hooks/use-settings";
+import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
+import { SipConfig } from "@/types/sip-type";
 
 type ChatEngine = "SIP" | "XMPP";
 
@@ -66,6 +68,8 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
   const [isDirty, setIsDirty] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const { connectAndRegister } = useSIPProvider();
 
   useEffect(() => {
     setFormData(settings);
@@ -141,6 +145,7 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
         sipUsername: token.extensionNumber,
       });
 
+      connectAndRegister(formData as unknown as SipConfig);
       setIsDirty(false);
       onClose();
     } catch (error) {

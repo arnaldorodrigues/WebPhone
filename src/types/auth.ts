@@ -1,5 +1,6 @@
 export interface User {
   _id: string;
+  email: string;
   extensionNumber: string;
   password: string;
   name: string;
@@ -10,14 +11,15 @@ export interface SignUpRequest {
   extensionNumber: string;
   password: string;
   name: string;
+  email: string;
 }
 
 export interface SignInRequest {
-  extensionNumber: string;
+  email: string;
   password: string;
 }
 
 export interface AuthResponse {
   token: string;
-  user: Omit<User, 'password'>;
-} 
+  user: Omit<User, "password">;
+}

@@ -642,7 +642,6 @@ class SipClient {
             console.log("Call put on hold successfully", newHoldState);
             this.callState.isOnHold = newHoldState;
             this.callbacks.onCallStateChanged?.(this.callState);
-            console.log("123123123213 ", this.currentSession?.sessionDescriptionHandler?.getDescription())
           })
           .catch((error) => {
             // Handle error

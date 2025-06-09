@@ -15,12 +15,12 @@ export const useAuth = () => {
     setIsLoading(false);
   }, []);
 
-  const signin = async (extensionNumber: string, password: string) => {
+  const signin = async (email: string, password: string) => {
     try {
       const res = await fetch('/api/auth/signin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ extensionNumber, password }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
@@ -38,12 +38,12 @@ export const useAuth = () => {
     }
   };
 
-  const signup = async (extensionNumber: string, password: string, name: string) => {
+  const signup = async (extensionNumber: string, password: string, name: string, email: string) => {
     try {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ extensionNumber, password, name }),
+        body: JSON.stringify({ extensionNumber, password, name, email }),
       });
 
       if (!res) {
