@@ -9,7 +9,7 @@ export const getToken = () => {
 };
 
 export const removeToken = () => {
-  Cookies.removeItem('authToken');
+  Cookies.remove('authToken');
 };
 
 export const isAuthenticated = () => {
@@ -19,7 +19,7 @@ export const isAuthenticated = () => {
 export const getParsedToken = () => {
   const token = getToken();
   
-  return _parse_token(token)
+  return token ? _parse_token(token) : null
 };
 
 export const _parse_token = (t:string) => {
