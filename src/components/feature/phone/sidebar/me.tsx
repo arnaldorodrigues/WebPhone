@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { PhoneCallDialog } from "@/components/feature/phone/dial/phone-call";
 import { useSettings } from "@/hooks/use-settings";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Cog8ToothIcon,
   MagnifyingGlassIcon,
   PhoneIcon,
   UserPlusIcon,
+  ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/solid";
 import SettingDialog from "@/components/feature/setting/setting-dialog";
 import { usePhoneState } from "@/hooks/use-phonestate-context";
@@ -22,6 +24,7 @@ export function Me() {
     useSIPProvider();
   const { sipConfig, settings, isConfigLoaded, refreshSettings } =
     useSettings();
+  const { logout } = useAuth();
   const { phoneState, setPhoneState } = usePhoneState();
 
   useEffect(() => {
@@ -76,6 +79,18 @@ export function Me() {
     setRefreshKey((prev) => prev + 1);
   }, [settings, sipConfig]);
 
+  // Keyboard shortcut for logout (Ctrl+Shift+Q)
+  useEffect(() => {
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.shiftKey && event.key === "Q") {
+        event.preventDefault();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeydown);
+    return () => document.removeEventListener("keydown", handleKeydown);
+  }, []);
+
   // if (phoneState !== "dialing") {
   //   if (sessions && Object.keys(sessions).length > 0) {
   //     setPhoneState("calling");
@@ -97,6 +112,34 @@ export function Me() {
     // Force a refresh when settings dialog closes (in case settings were saved)
     await refreshSettings();
     setRefreshKey((prev) => prev + 1);
+  };
+
+  const handleSignout = async () => {
+    try {
+      // Disconnect all active SIP sessions before logging out
+      if (sessions && Object.keys(sessions).length > 0) {
+        Object.values(sessions).forEach((session) => {
+          if (session && session.state !== SessionState.Terminated) {
+            session.bye?.();
+          }
+        });
+      }
+
+      // Disconnect from SIP server if connected
+      if (registerStatus === RegisterStatus.REGISTERED) {
+        // The session manager should handle unregistration
+      }
+
+      await logout();
+    } catch (error) {
+      console.error("Error during signout:", error);
+      // Still proceed with logout even if SIP disconnection fails
+      await logout();
+    }
+  };
+
+  const confirmSignout = () => {
+    handleSignout();
   };
 
   return (
@@ -149,12 +192,22 @@ export function Me() {
             </p>
           )}
         </div>
-        <button
-          onClick={() => setIsShowSettingDialog(true)}
-          className="p-2 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 transition-colors duration-200"
-        >
-          <Cog8ToothIcon className="w-5 h-5" />
-        </button>
+        <div className="flex gap-1">
+          <button
+            onClick={() => setIsShowSettingDialog(true)}
+            className="p-2 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 transition-colors duration-200"
+            title="Settings"
+          >
+            <Cog8ToothIcon className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => handleSignout()}
+            className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors duration-200"
+            title="Sign out"
+          >
+            <ArrowRightOnRectangleIcon className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Action Buttons */}

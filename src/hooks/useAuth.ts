@@ -63,10 +63,27 @@ export const useAuth = () => {
     }
   };
 
-  const logout = () => {
-    removeToken();
-    setIsAuthenticated(false);
-    router.push('/signin');
+  const logout = async () => {
+    try {
+      // Clear authentication state
+      removeToken();
+      setIsAuthenticated(false);
+      
+      // Clear any local storage or session storage if needed
+      if (typeof window !== 'undefined') {
+        // Clear any cached data that might be stored locally
+        localStorage.removeItem('sipConfig');
+        localStorage.removeItem('userSettings');
+        sessionStorage.clear();
+      }
+      
+      // Redirect to signin page
+      router.push('/signin');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if there's an error, still redirect to signin
+      router.push('/signin');
+    }
   };
 
   return {
