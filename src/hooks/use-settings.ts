@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { settingsAction } from "@/lib/action";
-import { SipConfig } from "@/lib/sip-client";
+import { SipConfig } from "@/types/sip-type";
 
 export function useSettings() {
   const [settings, setSettings] = useState(settingsAction.defaultSettings);
