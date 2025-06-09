@@ -2,18 +2,20 @@ module.exports = {
   apps: [
     {
       name: 'WebPhone',
-      script: 'npm',
-      args: 'start',
+      script: 'node',
+      args: './node_modules/.bin/next start',
       cwd: '/var/www/WebPhone',
       instances: 1, // Start with 1 instance for debugging
       exec_mode: 'fork', // Use fork mode for debugging
       env: {
         NODE_ENV: 'production',
         PORT: 3000,
+        PATH: process.env.PATH,
       },
       env_production: {
         NODE_ENV: 'production',
         PORT: 3000,
+        PATH: process.env.PATH,
       },
       // Logging
       log_file: '/var/log/pm2/WebPhone.log',
