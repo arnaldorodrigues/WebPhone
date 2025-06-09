@@ -17,9 +17,11 @@ import { SessionState } from "sip.js";
 
 export function Me() {
   const [isShowSettingDialog, setIsShowSettingDialog] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const { connectAndRegister, registerStatus, sessions, connectStatus } =
     useSIPProvider();
-  const { sipConfig, settings, isConfigLoaded } = useSettings();
+  const { sipConfig, settings, isConfigLoaded, refreshSettings } =
+    useSettings();
   const { phoneState, setPhoneState } = usePhoneState();
 
   useEffect(() => {
@@ -69,6 +71,11 @@ export function Me() {
     }
   }, [sessions, setPhoneState]);
 
+  // Force refresh when settings change
+  useEffect(() => {
+    setRefreshKey((prev) => prev + 1);
+  }, [settings, sipConfig]);
+
   // if (phoneState !== "dialing") {
   //   if (sessions && Object.keys(sessions).length > 0) {
   //     setPhoneState("calling");
@@ -85,8 +92,18 @@ export function Me() {
   const userDisplayText =
     isConfigLoaded && username ? `${displayName}` : "Not Configured";
 
+  const handleSettingsClose = async () => {
+    setIsShowSettingDialog(false);
+    // Force a refresh when settings dialog closes (in case settings were saved)
+    await refreshSettings();
+    setRefreshKey((prev) => prev + 1);
+  };
+
   return (
-    <div className="w-full p-4 flex flex-col gap-4 bg-white border-b border-gray-100">
+    <div
+      key={refreshKey}
+      className="w-full p-4 flex flex-col gap-4 bg-white border-b border-gray-100"
+    >
       {/* Profile Section */}
       <div className="flex items-center">
         <div className="relative">
@@ -171,7 +188,7 @@ export function Me() {
       {isShowSettingDialog && (
         <SettingDialog
           isOpen={isShowSettingDialog}
-          onClose={() => setIsShowSettingDialog(false)}
+          onClose={handleSettingsClose}
         />
       )}
     </div>

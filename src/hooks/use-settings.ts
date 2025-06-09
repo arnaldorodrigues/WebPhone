@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { settingsAction } from "@/lib/action";
 import { SipConfig } from "@/lib/sip-client";
 
@@ -11,23 +11,24 @@ export function useSettings() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  // Load settings function
+  const loadSettings = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const loadedSettings = await settingsAction.get();
+      setSettings(loadedSettings);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to load settings'));
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   // Load settings on mount
   useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        setIsLoading(true);
-        const loadedSettings = await settingsAction.get();
-        setSettings(loadedSettings);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to load settings'));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     loadSettings();
-  }, []);
+  }, [loadSettings]);
 
   // Update SIP config when settings change
   useEffect(() => {
@@ -50,6 +51,11 @@ export function useSettings() {
       await settingsAction.set(newSettings);
       setSettings(newSettings);
       setError(null);
+      
+      // Trigger a fresh load after update to ensure consistency
+      setTimeout(() => {
+        loadSettings();
+      }, 100);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to update settings'));
       throw err;
@@ -58,6 +64,11 @@ export function useSettings() {
     }
   };
 
+  // Refresh function to manually reload settings
+  const refreshSettings = useCallback(async () => {
+    await loadSettings();
+  }, [loadSettings]);
+
   return {
     settings,
     sipConfig,
@@ -65,5 +76,6 @@ export function useSettings() {
     isLoading,
     error,
     updateSettings,
+    refreshSettings,
   };
 } 

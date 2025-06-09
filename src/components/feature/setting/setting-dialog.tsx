@@ -68,6 +68,8 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
   const [isDirty, setIsDirty] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const { connectAndRegister } = useSIPProvider();
 
@@ -132,27 +134,40 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
   const handleSave = async () => {
     try {
       setError(null);
+      setSaveSuccess(false);
+      setIsSaving(true);
       const token = getParsedToken();
       if (!token?.extensionNumber) {
         throw new Error("No extension number found in token");
       }
 
-      await updateSettings({
+      const updatedSettings = {
         ...formData,
         isSTV,
         chatEngine,
         extensionNumber: token.extensionNumber,
         sipUsername: token.extensionNumber,
-      });
+      };
 
+      await updateSettings(updatedSettings);
+
+      // Re-establish connection with new settings
       connectAndRegister(formData as unknown as SipConfig);
+
       setIsDirty(false);
-      onClose();
+      setSaveSuccess(true);
+
+      // Close dialog after successful save
+      setTimeout(() => {
+        onClose();
+      }, 1000);
     } catch (error) {
       console.error("Error saving settings:", error);
       setError(
         error instanceof Error ? error.message : "Failed to save settings"
       );
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -193,6 +208,11 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
         {error && (
           <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
             {error}
+          </div>
+        )}
+        {saveSuccess && (
+          <div className="p-3 mb-4 text-sm text-green-700 bg-green-100 rounded-lg">
+            Settings saved successfully! The dialog will close shortly.
           </div>
         )}
         <InputRow
@@ -383,14 +403,23 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
           </button>
           <button
             onClick={handleSave}
-            disabled={!isDirty}
+            disabled={!isDirty || isSaving}
             className={`px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-              isDirty
+              isDirty && !isSaving
                 ? "bg-indigo-600 hover:bg-indigo-700"
                 : "bg-gray-400 cursor-not-allowed"
             }`}
           >
-            Save
+            {isSaving ? (
+              <div className="flex items-center">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                Saving...
+              </div>
+            ) : saveSuccess ? (
+              "Saved ✓"
+            ) : (
+              "Save"
+            )}
           </button>
         </div>
       </div>
