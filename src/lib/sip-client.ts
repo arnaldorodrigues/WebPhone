@@ -1,4 +1,4 @@
-import { UserAgent, UserAgentOptions, Registerer, Session, SessionState, Inviter, Invitation, URI, SessionDescriptionHandler } from 'sip.js';
+import { UserAgent, UserAgentOptions, Registerer, Session, SessionState, Inviter, Invitation, URI, Web } from 'sip.js';
 import type { SessionDescriptionHandler as WebSessionDescriptionHandler } from 'sip.js/lib/platform/web/session-description-handler';
 
 export interface SipConfig {
@@ -596,6 +596,7 @@ class SipClient {
           track.enabled = !newMuteState;
         });
       }
+      // this.currentSession.muted = newMuteState;
 
       this.callState.isMuted = newMuteState;
       console.log(newMuteState ? 'Call muted' : 'Call unmuted');
@@ -616,17 +617,37 @@ class SipClient {
 
     try {
       const newHoldState = !this.callState.isOnHold;
-
-      if (newHoldState) {
-        // Put call on hold
-        console.log('Putting call on hold...');
-        await (this.currentSession as any).hold();
-        console.log('Call put on hold successfully');
-      } else {
-        // Resume call from hold
-        console.log('Resuming call from hold...');
-        await (this.currentSession as any).unhold();
-        console.log('Call resumed from hold successfully');
+      // if (newHoldState) {
+      //   // Put call on hold
+      //   console.log('Putting call on hold...');
+      //   // const sessionDescriptionHandler = this.currentSession?.sessionDescriptionHandler as any;
+      //   // sessionDescriptionHandler.hold();
+      //   await (this.currentSession as any).hold({ modifiers: [Web.holdModifier] });
+      //   console.log('Call put on hold successfully');
+      // } else {
+      //   // Resume call from hold
+      //   console.log('Resuming call from hold...');
+      //   // const sessionDescriptionHandler = this.currentSession?.sessionDescriptionHandler as any;
+      //   // sessionDescriptionHandler.unhold();
+      //   await (this.currentSession as any).unhold();
+      //   console.log('Call resumed from hold successfully');
+      // }
+      if (this.currentSession) {
+        const options = {
+          sessionDescriptionHandlerModifiers: newHoldState ? [Web.holdModifier] : [],
+        };
+        this.currentSession.invite(options)
+          .then(() => {
+            // Handle success
+            console.log("Call put on hold successfully", newHoldState);
+            this.callState.isOnHold = newHoldState;
+            this.callbacks.onCallStateChanged?.(this.callState);
+            console.log("123123123213 ", this.currentSession?.sessionDescriptionHandler?.getDescription())
+          })
+          .catch((error) => {
+            // Handle error
+            console.error("Error putting call on hold:", error);
+          });
       }
 
       this.callState.isOnHold = newHoldState;

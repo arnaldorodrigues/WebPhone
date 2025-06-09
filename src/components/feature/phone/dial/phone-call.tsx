@@ -87,8 +87,6 @@ export function PhoneCallDialog({ isOpen, onClose }: PhoneCallProps) {
       .padStart(2, "0")}`;
   };
 
-  console.log("123123123", callState.remoteNumber, number);
-
   let dialogContent = null;
   switch (phoneState) {
     case "dialing":
