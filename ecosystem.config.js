@@ -5,8 +5,8 @@ module.exports = {
       script: 'npm',
       args: 'start',
       cwd: '/var/www/WebPhone',
-      instances: 'max', // Use all CPU cores
-      exec_mode: 'cluster',
+      instances: 1, // Start with 1 instance for debugging
+      exec_mode: 'fork', // Use fork mode for debugging
       env: {
         NODE_ENV: 'production',
         PORT: 3000,
@@ -28,6 +28,14 @@ module.exports = {
       // Process management
       min_uptime: '10s',
       max_restarts: 10,
+      
+      // Increase timeouts
+      kill_timeout: 5000,
+      listen_timeout: 3000,
+      
+      // Environment variables
+      merge_logs: true,
+      combine_logs: true,
     }
   ]
 }; 
