@@ -29,19 +29,6 @@ const settingsSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  vmNumber: String,
-  sxServer: String,
-  xwPort: String,
-  xwPath: String, 
-  xDomain: String,
-  isSTV: {
-    type: Boolean,
-    default: false,
-  },
-  chatEngine: {
-    type: String,
-    default: 'SIP',
-  },
   createdAt: {
     type: Date,
     default: Date.now,

@@ -4,7 +4,7 @@ import { Me } from "./me";
 const Sidebar = ({ hidden = false }: { hidden?: boolean }) => {
   return (
     <div
-      className={`w-full h-[calc(100vh-4rem)] pb-5 sm:block sm:w-90 bg-white border-r border-gray-100 shadow-sm ${
+      className={`w-full h-[calc(100vh-4rem)] pb-5 sm:block sm:w-80 bg-white border-r border-gray-100 shadow-sm ${
         hidden && "hidden"
       }`}
     >

@@ -174,27 +174,6 @@ export function Me() {
         </div>
         <div className="flex gap-1">
           <button
-            onClick={() => {
-              if (sipConfig && isConfigLoaded) {
-                connectAndRegister(sipConfig);
-              }
-            }}
-            disabled={
-              !sipConfig ||
-              !isConfigLoaded ||
-              registerStatus === RegisterStatus.REGISTERED
-            }
-            className={`p-2 rounded-lg transition-colors duration-200 ${
-              registerStatus === RegisterStatus.REGISTERED
-                ? "text-green-500 bg-green-50 cursor-not-allowed"
-                : !sipConfig || !isConfigLoaded
-                ? "text-gray-300 cursor-not-allowed"
-                : "text-gray-600 hover:text-blue-500 hover:bg-blue-50"
-            }`}
-          >
-            <LinkIcon className="w-5 h-5" />
-          </button>
-          <button
             onClick={() => setIsShowSettingDialog(true)}
             className="p-2 rounded-lg text-gray-600 hover:text-indigo-500 hover:bg-indigo-50 transition-colors duration-200"
             title="Settings"
@@ -212,6 +191,28 @@ export function Me() {
       </div>
 
       <div className="flex items-center gap-2 px-1">
+        <button
+          onClick={() => {
+            if (sipConfig && isConfigLoaded) {
+              connectAndRegister(sipConfig);
+            }
+          }}
+          disabled={
+            !sipConfig ||
+            !isConfigLoaded ||
+            registerStatus === RegisterStatus.REGISTERED
+          }
+          className={`flex-1 p-2.5 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2 ${
+            registerStatus === RegisterStatus.REGISTERED
+              ? "bg-green-500 text-white cursor-not-allowed"
+              : !sipConfig || !isConfigLoaded
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700"
+          }`}
+        >
+          <LinkIcon className="w-5 h-5" />
+          <span className="text-sm font-medium">Register</span>
+        </button>
         <button
           onClick={() => setPhoneState("dialing")}
           className="flex-1 p-2.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2"

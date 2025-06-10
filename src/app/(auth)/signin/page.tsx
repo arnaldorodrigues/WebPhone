@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 import Input from "@/components/ui/inputs/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,7 +15,6 @@ export default function SignIn() {
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [validationErrors, setValidationErrors] = useState({
     email: "",
     password: "",
@@ -136,35 +134,20 @@ export default function SignIn() {
               >
                 Password
               </label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  required={true}
-                  placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={(e) =>
-                    handleInputChange("password", e.target.value)
-                  }
-                  className={
-                    validationErrors.password
-                      ? "border-red-500 focus:border-red-500 focus:ring-red-500 pr-10"
-                      : "pr-10"
-                  }
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  )}
-                </button>
-              </div>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                required={true}
+                placeholder="Enter your password"
+                value={formData.password}
+                onChange={(e) => handleInputChange("password", e.target.value)}
+                className={
+                  validationErrors.password
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    : ""
+                }
+              />
               {validationErrors.password && (
                 <p className="mt-1 text-sm text-red-600">
                   {validationErrors.password}

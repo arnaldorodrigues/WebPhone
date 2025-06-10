@@ -8,8 +8,6 @@ import Input from "@/components/ui/inputs/input";
 import { Settings, settingsAction } from "@/lib/action";
 
 import { UserCircleIcon } from "@heroicons/react/24/solid";
-import { CheckButton } from "@/components/ui/buttons/check-button";
-import { RadioButtonGroup } from "@/components/ui/buttons/radio-button-group";
 import { useSettings } from "@/hooks/use-settings";
 import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
 import { SipConfig } from "@/types/sip-type";
@@ -30,6 +28,7 @@ const InputRow = ({
   setFormData,
   readOnly = false,
   error,
+  type = "text",
 }: {
   name: string;
   label: string;
@@ -39,6 +38,7 @@ const InputRow = ({
   setFormData: (s: string) => void;
   readOnly?: boolean;
   error?: string;
+  type?: string;
 }) => {
   const hasError = !!error;
 
@@ -52,7 +52,7 @@ const InputRow = ({
         <Input
           id={name}
           name={name}
-          type="text"
+          type={type}
           required={required}
           placeholder={placeholder}
           value={String(formData[name as keyof Settings] || "")}
@@ -78,8 +78,6 @@ interface SettingDialogProps {
 const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
   const { settings, updateSettings } = useSettings();
   const [formData, setFormData] = useState<Settings>(settings);
-  const [isSTV, setIsSTV] = useState(false);
-  const [chatEngine, setChatEngine] = useState<ChatEngine>("SIP");
   const [isDirty, setIsDirty] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -111,8 +109,6 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
           setFormData({
             ...savedSettings,
           });
-          setIsSTV(savedSettings.isSTV);
-          setChatEngine(savedSettings.chatEngine as ChatEngine);
         }
       } catch (error) {
         console.error("Error loading settings:", error);
@@ -133,14 +129,12 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
   useEffect(() => {
     const currentSettings = {
       ...formData,
-      isSTV,
-      chatEngine,
     };
     const savedSettings = settings;
     setIsDirty(
       JSON.stringify(currentSettings) !== JSON.stringify(savedSettings)
     );
-  }, [formData, isSTV, chatEngine]);
+  }, [formData]);
 
   // Validation function
   const validateForm = (): boolean => {
@@ -154,16 +148,6 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
       "sipUsername",
       "sipPassword",
     ];
-
-    // Add XMPP required fields if XMPP is selected
-    if (chatEngine === "XMPP") {
-      requiredFields.push("sxServer", "xwPort", "xwPath", "xDomain");
-    }
-
-    // Add voicemail number if STV is enabled
-    if (isSTV) {
-      requiredFields.push("vmNumber");
-    }
 
     // Check each required field
     requiredFields.forEach((field) => {
@@ -195,8 +179,6 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
 
       const updatedSettings = {
         ...formData,
-        isSTV,
-        chatEngine,
       };
 
       await updateSettings(updatedSettings);
@@ -231,8 +213,6 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
       setError(null);
       const savedSettings = settings;
       setFormData(savedSettings);
-      setIsSTV(savedSettings.isSTV);
-      setChatEngine(savedSettings.chatEngine as ChatEngine);
       setIsDirty(false);
       setValidationErrors({});
       onClose();
@@ -342,116 +322,8 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
           required={true}
           setFormData={(value) => handleFormDataChange("sipPassword", value)}
           error={validationErrors.sipPassword}
+          type="password"
         />
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Subscribe to VoiceMail (MWI):
-          </label>
-          <div className="ml-2">
-            <CheckButton
-              checked={isSTV}
-              label={"Yes"}
-              onChange={(c) => {
-                setIsSTV(c);
-                handleFormDataChange("vmNumber", "");
-              }}
-            />
-          </div>
-          {isSTV && (
-            <div className="mt-3 pl-10">
-              <InputRow
-                name="vmNumber"
-                label="VoiceMail Management Number:"
-                placeholder="eg: 100 or John"
-                formData={formData}
-                required={true}
-                setFormData={(value) => handleFormDataChange("vmNumber", value)}
-                error={validationErrors.vmNumber}
-              />
-            </div>
-          )}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Chat Engine:
-          </label>
-          <div className="ml-2">
-            <RadioButtonGroup<ChatEngine>
-              name="chatEngine"
-              options={[
-                {
-                  value: "SIP",
-                  label: "SIP",
-                },
-                {
-                  value: "XMPP",
-                  label: "XMPP",
-                },
-              ]}
-              value={chatEngine}
-              onChange={(v) => {
-                setChatEngine(v);
-                handleFormDataChange("sxServer", "");
-                handleFormDataChange("xwPort", "");
-                handleFormDataChange("xwPath", "");
-                handleFormDataChange("xDomain", "");
-                handleFormDataChange("extensionNumber", "");
-              }}
-            />
-          </div>
-        </div>
-        {chatEngine === "XMPP" && (
-          <div className="pl-10 space-y-2">
-            <InputRow
-              name="sxServer"
-              label="Secure XMPP Server (TLS):"
-              placeholder="eg: xmpp.devone.telemojo.net"
-              formData={formData}
-              required={true}
-              setFormData={(value) => handleFormDataChange("sxServer", value)}
-              error={validationErrors.sxServer}
-            />
-            <InputRow
-              name="xwPort"
-              label="XMPP WebSocket Port:"
-              placeholder="eg: 5222"
-              formData={formData}
-              required={true}
-              setFormData={(value) => handleFormDataChange("xwPort", value)}
-              error={validationErrors.xwPort}
-            />
-            <InputRow
-              name="xwPath"
-              label="XMPP WebSocket Path:"
-              placeholder="/xmpp-websocket"
-              formData={formData}
-              required={true}
-              setFormData={(value) => handleFormDataChange("xwPath", value)}
-              error={validationErrors.xwPath}
-            />
-            <InputRow
-              name="xDomain"
-              label="XMPP Domain:"
-              placeholder="eg: xmpp.devone.telemojo.net"
-              formData={formData}
-              required={true}
-              setFormData={(value) => handleFormDataChange("xDomain", value)}
-              error={validationErrors.xDomain}
-            />
-            <InputRow
-              name="extensionNumber"
-              label="Extension Number:"
-              placeholder="eg: 100"
-              formData={formData}
-              required={false}
-              setFormData={(value) =>
-                handleFormDataChange("extensionNumber", value)
-              }
-              readOnly={true}
-              error={validationErrors.extensionNumber}
-            />
-          </div>
-        )}
       </div>
     ),
   };

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getToken, setToken, removeToken } from '@/utils/auth';
 
+const SETTINGS_STORAGE_KEY = 'user_settings';
+
 export const useAuth = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
@@ -68,6 +70,15 @@ export const useAuth = () => {
       // Clear authentication state
       removeToken();
       setIsAuthenticated(false);
+      
+      // Clear stored settings from localStorage
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem(SETTINGS_STORAGE_KEY);
+        } catch (error) {
+          console.error('Error clearing settings from localStorage:', error);
+        }
+      }
       
       // Redirect to signin page
       router.push('/signin');

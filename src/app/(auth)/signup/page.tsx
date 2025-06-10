@@ -2,12 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import {
-  EyeIcon,
-  EyeSlashIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-} from "@heroicons/react/24/outline";
+import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 
 import Input from "@/components/ui/inputs/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,8 +18,6 @@ export default function SignUp() {
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [validationErrors, setValidationErrors] = useState({
     name: "",
     email: "",
@@ -242,35 +235,20 @@ export default function SignUp() {
               >
                 Password
               </label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  required={true}
-                  placeholder="Create a strong password"
-                  value={formData.password}
-                  onChange={(e) =>
-                    handleInputChange("password", e.target.value)
-                  }
-                  className={
-                    validationErrors.password
-                      ? "border-red-500 focus:border-red-500 focus:ring-red-500 pr-10"
-                      : "pr-10"
-                  }
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  )}
-                </button>
-              </div>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                required={true}
+                placeholder="Create a strong password"
+                value={formData.password}
+                onChange={(e) => handleInputChange("password", e.target.value)}
+                className={
+                  validationErrors.password
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    : ""
+                }
+              />
               {validationErrors.password && (
                 <p className="mt-1 text-sm text-red-600">
                   {validationErrors.password}
@@ -351,35 +329,22 @@ export default function SignUp() {
               >
                 Confirm Password
               </label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  required={true}
-                  placeholder="Confirm your password"
-                  value={formData.confirmPassword}
-                  onChange={(e) =>
-                    handleInputChange("confirmPassword", e.target.value)
-                  }
-                  className={
-                    validationErrors.confirmPassword
-                      ? "border-red-500 focus:border-red-500 focus:ring-red-500 pr-10"
-                      : "pr-10"
-                  }
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  {showConfirmPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  )}
-                </button>
-              </div>
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                required={true}
+                placeholder="Confirm your password"
+                value={formData.confirmPassword}
+                onChange={(e) =>
+                  handleInputChange("confirmPassword", e.target.value)
+                }
+                className={
+                  validationErrors.confirmPassword
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    : ""
+                }
+              />
               {validationErrors.confirmPassword && (
                 <p className="mt-1 text-sm text-red-600">
                   {validationErrors.confirmPassword}

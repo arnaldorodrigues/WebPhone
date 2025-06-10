@@ -57,13 +57,13 @@ export function PhoneCallDialog({ isOpen, onClose }: PhoneCallProps) {
 
             try {
               console.log("UI: Initiating call to:", number);
-              setPhoneState("sending");
               setLastRemoteNumber(number); // Store the number we're calling
               await sessionManager?.call(`sip:${number}@${settings.domain}`);
+              setPhoneState("sending");
               console.log("UI: Call initiated successfully");
             } catch (error) {
               console.error("UI: Failed to make call:", error);
-              setPhoneState("ended");
+              // setPhoneState("ended");
               // Show error to user
               if (error instanceof Error) {
                 alert(`Call failed: ${error.message}`);
