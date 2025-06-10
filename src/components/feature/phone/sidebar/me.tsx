@@ -11,6 +11,7 @@ import {
   UserPlusIcon,
   ArrowRightOnRectangleIcon,
   LinkIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/solid";
 import SettingDialog from "@/components/feature/setting/setting-dialog";
 import { usePhoneState } from "@/hooks/use-phonestate-context";
@@ -205,7 +206,11 @@ export function Me() {
                 : "Register"
             }
           >
-            <LinkIcon className="w-5 h-5" />
+            <ArrowPathIcon
+              className={`w-5 h-5 transition-transform duration-300 ${
+                refreshKey ? "rotate-180" : ""
+              }`}
+            />
           </button>
           <button
             onClick={() => setIsShowSettingDialog(true)}
