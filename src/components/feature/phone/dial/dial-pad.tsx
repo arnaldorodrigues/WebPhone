@@ -22,7 +22,7 @@ const DialPad = ({ onPressButton, onCall }: DialPadProps) => {
 
   return (
     <div className="w-full h-full grid grid-cols-3 grid-rows-5 gap-4 p-6">
-      {[...Array.from({ length: 9 }, (_, i) => i + 1), "'", 0, "#"].map(
+      {[...Array.from({ length: 9 }, (_, i) => i + 1), "*", 0, "#"].map(
         (num) => (
           <button
             key={num}

@@ -202,12 +202,12 @@ export function Me() {
             !isConfigLoaded ||
             registerStatus === RegisterStatus.REGISTERED
           }
-          className={`flex-1 p-2.5 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2 ${
+          className={`flex-1 p-2.5 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 ${
             registerStatus === RegisterStatus.REGISTERED
-              ? "bg-green-500 text-white cursor-not-allowed"
+              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
               : !sipConfig || !isConfigLoaded
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700"
+              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+              : "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 shadow-md hover:shadow-lg transform hover:scale-105"
           }`}
         >
           <LinkIcon className="w-5 h-5" />
