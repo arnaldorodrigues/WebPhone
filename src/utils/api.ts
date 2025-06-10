@@ -5,7 +5,7 @@ export const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   
   const headers = {
     'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(token ? { cookies: `token=${token}` } : {}),
     ...options.headers,
   };
 

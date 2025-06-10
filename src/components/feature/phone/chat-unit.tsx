@@ -10,13 +10,22 @@ const ChatUnit = ({
   return (
     <div className={`w-full flex ${isMe ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-md p-3 rounded-md break-words ${
-          isMe ? "bg-indigo-200" : "bg-green-200"
-        }`}
+        className={`
+          max-w-md p-4 rounded-2xl break-words shadow-sm
+          ${
+            isMe
+              ? "bg-indigo-500 text-white"
+              : "bg-white text-gray-900 border border-gray-100"
+          }
+        `}
       >
-        <p className="text-sm font-semibold">{text}</p>
-        <div className="mt-2 flex">
-          <p className="text-sm text-gray-500">{date}</p>
+        <p className="text-sm leading-relaxed whitespace-pre-wrap">{text}</p>
+        <div className="mt-2 flex justify-end">
+          <p
+            className={`text-xs ${isMe ? "text-indigo-100" : "text-gray-400"}`}
+          >
+            {date}
+          </p>
         </div>
       </div>
     </div>

@@ -6,6 +6,7 @@ const userSchema: Schema = new Schema({
     type: String,
     required: true,
     unique: true,
+    lowercase: true,
   },
   password: {
     type: String,
@@ -19,6 +20,10 @@ const userSchema: Schema = new Schema({
     type: Date,
     default: Date.now,
   },
+  settings:{
+    type: Schema.Types.ObjectId,
+    ref: 'Settings'
+  }
 });
 
 const UserModel = mongoose.models.User || mongoose.model<User>('User', userSchema);
