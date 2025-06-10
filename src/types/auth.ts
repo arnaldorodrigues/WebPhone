@@ -1,15 +1,17 @@
 export interface User {
   _id: string;
   email: string;
+  extensionNumber: string;
   password: string;
   name: string;
   createdAt: Date;
 }
 
 export interface SignUpRequest {
-  email: string;
+  extensionNumber: string;
   password: string;
   name: string;
+  email: string;
 }
 
 export interface SignInRequest {
@@ -19,5 +21,5 @@ export interface SignInRequest {
 
 export interface AuthResponse {
   token: string;
-  user: Omit<User, 'password'>;
-} 
+  user: Omit<User, "password">;
+}

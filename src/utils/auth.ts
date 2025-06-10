@@ -1,22 +1,37 @@
+import Cookies from 'js-cookie';
+
 export const setToken = (token: string) => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('token', token);
-  }
+  Cookies.set('authToken', token, { expires: 1, secure: true, sameSite: 'strict'});
 };
 
 export const getToken = () => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('token');
-  }
-  return null;
+  return Cookies.get('authToken');
 };
 
 export const removeToken = () => {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('token');
-  }
+  Cookies.remove('authToken');
 };
 
 export const isAuthenticated = () => {
   return !!getToken();
 }; 
+
+export const getParsedToken = () => {
+  const token = getToken();
+  
+  return token ? _parse_token(token) : null
+};
+
+export const _parse_token = (t:string) => {
+  try {
+    // Split the JWT token into its parts
+    const [, payload] = t.split('.');
+    // Decode the base64 payload
+    const decodedPayload = atob(payload);
+    // Parse the JSON payload
+    return JSON.parse(decodedPayload);
+  } catch (error) {
+    console.error('Error parsing token:', error);
+    return null;
+  }
+}
