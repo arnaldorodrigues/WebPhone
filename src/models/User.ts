@@ -2,11 +2,6 @@ import mongoose, { Schema } from 'mongoose';
 import { User } from '../types/auth';
 
 const userSchema: Schema = new Schema({
-  extensionNumber: {
-    type: String,
-    required: true,
-    unique: true,
-  },
   email: {
     type: String,
     required: true,
@@ -25,6 +20,10 @@ const userSchema: Schema = new Schema({
     type: Date,
     default: Date.now,
   },
+  settings:{
+    type: Schema.Types.ObjectId,
+    ref: 'Settings'
+  }
 });
 
 const UserModel = mongoose.models.User || mongoose.model<User>('User', userSchema);

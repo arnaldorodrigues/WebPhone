@@ -60,7 +60,10 @@ export default function SignIn() {
     setIsLoading(true);
 
     try {
-      await signin(formData.email, formData.password);
+      await signin({
+        email: formData.email,
+        password: formData.password,
+      });
     } catch (err: any) {
       setError(err.message || "Invalid email or password. Please try again.");
     } finally {

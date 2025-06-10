@@ -17,7 +17,7 @@ export default function SignUp() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    extensionNumber: "",
+    // extensionNumber: "",
     password: "",
     confirmPassword: "",
   });
@@ -28,7 +28,7 @@ export default function SignUp() {
   const [validationErrors, setValidationErrors] = useState({
     name: "",
     email: "",
-    extensionNumber: "",
+    // extensionNumber: "",
     password: "",
     confirmPassword: "",
   });
@@ -53,7 +53,7 @@ export default function SignUp() {
     const errors = {
       name: "",
       email: "",
-      extensionNumber: "",
+      // extensionNumber: "",
       password: "",
       confirmPassword: "",
     };
@@ -70,11 +70,11 @@ export default function SignUp() {
       errors.email = "Please enter a valid email address";
     }
 
-    if (!formData.extensionNumber) {
-      errors.extensionNumber = "Extension number is required";
-    } else if (!/^\d+$/.test(formData.extensionNumber)) {
-      errors.extensionNumber = "Extension number must contain only numbers";
-    }
+    // if (!formData.extensionNumber) {
+    //   errors.extensionNumber = "Extension number is required";
+    // } else if (!/^\d+$/.test(formData.extensionNumber)) {
+    //   errors.extensionNumber = "Extension number must contain only numbers";
+    // }
 
     if (!formData.password) {
       errors.password = "Password is required";
@@ -106,12 +106,11 @@ export default function SignUp() {
     setIsLoading(true);
 
     try {
-      await signup(
-        formData.extensionNumber,
-        formData.password,
-        formData.name.trim(),
-        formData.email
-      );
+      await signup({
+        password: formData.password,
+        name: formData.name.trim(),
+        email: formData.email,
+      });
     } catch (err: any) {
       setError(err.message || "Registration failed. Please try again.");
     } finally {
@@ -206,7 +205,7 @@ export default function SignUp() {
               )}
             </div>
 
-            <div>
+            {/* <div>
               <label
                 htmlFor="extensionNumber"
                 className="block text-sm font-medium text-gray-700 mb-2"
@@ -234,7 +233,7 @@ export default function SignUp() {
                   {validationErrors.extensionNumber}
                 </p>
               )}
-            </div>
+            </div> */}
 
             <div>
               <label

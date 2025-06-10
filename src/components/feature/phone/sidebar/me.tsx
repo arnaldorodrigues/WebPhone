@@ -10,6 +10,7 @@ import {
   PhoneIcon,
   UserPlusIcon,
   ArrowRightOnRectangleIcon,
+  LinkIcon,
 } from "@heroicons/react/24/solid";
 import SettingDialog from "@/components/feature/setting/setting-dialog";
 import { usePhoneState } from "@/hooks/use-phonestate-context";
@@ -20,8 +21,13 @@ import { SessionState } from "sip.js";
 export function Me() {
   const [isShowSettingDialog, setIsShowSettingDialog] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const { connectAndRegister, registerStatus, sessions, connectStatus } =
-    useSIPProvider();
+  const {
+    connectAndRegister,
+    registerStatus,
+    sessions,
+    connectStatus,
+    disconnect,
+  } = useSIPProvider();
   const { sipConfig, settings, isConfigLoaded, refreshSettings } =
     useSettings();
   const { logout } = useAuth();
@@ -79,28 +85,8 @@ export function Me() {
     setRefreshKey((prev) => prev + 1);
   }, [settings, sipConfig]);
 
-  // Keyboard shortcut for logout (Ctrl+Shift+Q)
-  useEffect(() => {
-    const handleKeydown = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.shiftKey && event.key === "Q") {
-        event.preventDefault();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeydown);
-    return () => document.removeEventListener("keydown", handleKeydown);
-  }, []);
-
-  // if (phoneState !== "dialing") {
-  //   if (sessions && Object.keys(sessions).length > 0) {
-  //     setPhoneState("calling");
-  //   } else {
-  //     setPhoneState(null);
-  //   }
-  // }
-
   // Get display name and username from settings
-  const displayName = sipConfig?.displayName || settings.fullName || "User";
+  const displayName = sipConfig?.displayName || settings.name || "User";
   const username = sipConfig?.username || settings.sipUsername || "";
   const server = sipConfig?.server || settings.domain || "";
 
@@ -125,10 +111,8 @@ export function Me() {
         });
       }
 
-      // Disconnect from SIP server if connected
-      if (registerStatus === RegisterStatus.REGISTERED) {
-        // The session manager should handle unregistration
-      }
+      // Properly disconnect and unregister from SIP server
+      await disconnect();
 
       await logout();
     } catch (error) {
@@ -138,14 +122,10 @@ export function Me() {
     }
   };
 
-  const confirmSignout = () => {
-    handleSignout();
-  };
-
   return (
     <div
       key={refreshKey}
-      className="w-full p-4 flex flex-col gap-4 bg-white border-b border-gray-100"
+      className="w-full p-5 flex flex-col gap-10 bg-white border-b border-gray-100"
     >
       {/* Profile Section */}
       <div className="flex items-center">
@@ -194,15 +174,36 @@ export function Me() {
         </div>
         <div className="flex gap-1">
           <button
+            onClick={() => {
+              if (sipConfig && isConfigLoaded) {
+                connectAndRegister(sipConfig);
+              }
+            }}
+            disabled={
+              !sipConfig ||
+              !isConfigLoaded ||
+              registerStatus === RegisterStatus.REGISTERED
+            }
+            className={`p-2 rounded-lg transition-colors duration-200 ${
+              registerStatus === RegisterStatus.REGISTERED
+                ? "text-green-500 bg-green-50 cursor-not-allowed"
+                : !sipConfig || !isConfigLoaded
+                ? "text-gray-300 cursor-not-allowed"
+                : "text-gray-600 hover:text-blue-500 hover:bg-blue-50"
+            }`}
+          >
+            <LinkIcon className="w-5 h-5" />
+          </button>
+          <button
             onClick={() => setIsShowSettingDialog(true)}
-            className="p-2 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 transition-colors duration-200"
+            className="p-2 rounded-lg text-gray-600 hover:text-indigo-500 hover:bg-indigo-50 transition-colors duration-200"
             title="Settings"
           >
             <Cog8ToothIcon className="w-5 h-5" />
           </button>
           <button
             onClick={() => handleSignout()}
-            className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors duration-200"
+            className="p-2 rounded-lg text-gray-600 hover:text-red-500 hover:bg-red-50 transition-colors duration-200"
             title="Sign out"
           >
             <ArrowRightOnRectangleIcon className="w-5 h-5" />
@@ -210,12 +211,7 @@ export function Me() {
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex items-center gap-2 px-1">
-        {/* <button className="flex-1 p-2.5 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 transition-all duration-200 flex items-center justify-center gap-2">
-          <MagnifyingGlassIcon className="w-5 h-5" />
-          <span className="text-sm font-medium">Search</span>
-        </button> */}
         <button
           onClick={() => setPhoneState("dialing")}
           className="flex-1 p-2.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2"
@@ -223,13 +219,7 @@ export function Me() {
           <PhoneIcon className="w-5 h-5" />
           <span className="text-sm font-medium">Call</span>
         </button>
-        {/* <button className="flex-1 p-2.5 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 transition-all duration-200 flex items-center justify-center gap-2">
-          <UserPlusIcon className="w-5 h-5" />
-          <span className="text-sm font-medium">Add</span>
-        </button> */}
       </div>
-
-      {/* Dialogs */}
 
       {!!phoneState && (
         <PhoneCallDialog

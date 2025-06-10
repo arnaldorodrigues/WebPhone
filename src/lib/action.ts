@@ -5,7 +5,7 @@ export interface Settings {
   wsServer: string;
   wsPort: string;
   wsPath: string;
-  fullName: string;
+  name: string;
   domain: string;
   sipUsername: string;
   sipPassword: string;
@@ -24,7 +24,7 @@ export const defaultSettings: Settings = {
   wsServer: "",
   wsPort: "",
   wsPath: "",
-  fullName: "",
+  name: "",
   domain: "",
   sipUsername: "",
   sipPassword: "",

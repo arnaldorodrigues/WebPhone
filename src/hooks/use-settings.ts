@@ -39,7 +39,7 @@ export function useSettings() {
       server: settings.domain,
       username: settings.sipUsername,
       password: settings.sipPassword,
-      displayName: settings.fullName,
+      displayName: settings.name,
     };
     setSipConfig(config);
     setIsConfigLoaded(true);

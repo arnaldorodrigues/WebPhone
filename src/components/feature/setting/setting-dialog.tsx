@@ -16,6 +16,11 @@ import { SipConfig } from "@/types/sip-type";
 
 type ChatEngine = "SIP" | "XMPP";
 
+// Validation errors type
+type ValidationErrors = {
+  [key in keyof Settings]?: string;
+};
+
 const InputRow = ({
   name,
   label,
@@ -24,6 +29,7 @@ const InputRow = ({
   formData,
   setFormData,
   readOnly = false,
+  error,
 }: {
   name: string;
   label: string;
@@ -32,11 +38,15 @@ const InputRow = ({
   formData: Settings;
   setFormData: (s: string) => void;
   readOnly?: boolean;
+  error?: string;
 }) => {
+  const hasError = !!error;
+
   return (
     <div>
       <label htmlFor={name} className="block text-sm font-medium text-gray-700">
         {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
       </label>
       <div className="mt-1">
         <Input
@@ -48,8 +58,13 @@ const InputRow = ({
           value={String(formData[name as keyof Settings] || "")}
           onChange={(e) => setFormData(e.target.value)}
           readOnly={readOnly}
-          className={readOnly ? "bg-gray-100 cursor-not-allowed" : ""}
+          className={`${readOnly ? "bg-gray-100 cursor-not-allowed" : ""} ${
+            hasError
+              ? "border-red-500 ring-red-500 focus:border-red-500 focus:ring-red-500"
+              : ""
+          }`}
         />
+        {hasError && <p className="mt-1 text-sm text-red-600">{error}</p>}
       </div>
     </div>
   );
@@ -70,35 +85,31 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
 
   const { connectAndRegister } = useSIPProvider();
 
   useEffect(() => {
     setFormData(settings);
   }, [settings]);
+
   // Load settings and auth token
   useEffect(() => {
     const loadSettings = async () => {
       try {
         setError(null);
         const token = getParsedToken();
-        if (!token?.extensionNumber) {
-          throw new Error("No extension number found in token");
+        if (!token?.email) {
+          throw new Error("No email found in token");
         }
-
-        // Set extension number in form data
-        // setFormData((prev) => ({
-        //   ...prev,
-        //   extensionNumber: token.extensionNumber,
-        //   sipUsername: token.extensionNumber,
-        // }));
 
         // Load settings from database
         const savedSettings = settings;
         if (savedSettings) {
           setFormData({
             ...savedSettings,
-            sipUsername: token?.extensionNumber,
           });
           setIsSTV(savedSettings.isSTV);
           setChatEngine(savedSettings.chatEngine as ChatEngine);
@@ -131,31 +142,75 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
     );
   }, [formData, isSTV, chatEngine]);
 
+  // Validation function
+  const validateForm = (): boolean => {
+    const errors: ValidationErrors = {};
+
+    // Define required fields based on current state
+    const requiredFields: (keyof Settings)[] = [
+      "wsServer",
+      "wsPort",
+      "domain",
+      "sipUsername",
+      "sipPassword",
+    ];
+
+    // Add XMPP required fields if XMPP is selected
+    if (chatEngine === "XMPP") {
+      requiredFields.push("sxServer", "xwPort", "xwPath", "xDomain");
+    }
+
+    // Add voicemail number if STV is enabled
+    if (isSTV) {
+      requiredFields.push("vmNumber");
+    }
+
+    // Check each required field
+    requiredFields.forEach((field) => {
+      const value = formData[field];
+      if (!value || (typeof value === "string" && value.trim() === "")) {
+        errors[field] = "This field is required";
+      }
+    });
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSave = async () => {
     try {
       setError(null);
       setSaveSuccess(false);
+
+      // Validate form before saving
+      if (!validateForm()) {
+        return;
+      }
+
       setIsSaving(true);
       const token = getParsedToken();
-      if (!token?.extensionNumber) {
-        throw new Error("No extension number found in token");
+      if (!token?.email) {
+        throw new Error("No email found in token");
       }
 
       const updatedSettings = {
         ...formData,
         isSTV,
         chatEngine,
-        extensionNumber: token.extensionNumber,
-        sipUsername: token.extensionNumber,
       };
 
       await updateSettings(updatedSettings);
 
       // Re-establish connection with new settings
-      connectAndRegister(formData as unknown as SipConfig);
+      try {
+        connectAndRegister(formData as unknown as SipConfig);
+      } catch (error) {
+        console.error("Error connecting and registering:", error);
+      }
 
       setIsDirty(false);
       setSaveSuccess(true);
+      setValidationErrors({});
 
       // Close dialog after successful save
       setTimeout(() => {
@@ -179,6 +234,7 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
       setIsSTV(savedSettings.isSTV);
       setChatEngine(savedSettings.chatEngine as ChatEngine);
       setIsDirty(false);
+      setValidationErrors({});
       onClose();
     } catch (error) {
       console.error("Error loading settings:", error);
@@ -193,6 +249,15 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
       ...prev,
       [field]: value,
     }));
+
+    // Clear validation error for this field when user starts typing
+    if (validationErrors[field]) {
+      setValidationErrors((prev) => {
+        const updated = { ...prev };
+        delete updated[field];
+        return updated;
+      });
+    }
   };
 
   const accountTab = {
@@ -220,50 +285,63 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
           label="Secure WebSocket Server (TLS):"
           placeholder="eg: ws://devone.telemojo.net"
           formData={formData}
+          required={true}
           setFormData={(value) => handleFormDataChange("wsServer", value)}
+          error={validationErrors.wsServer}
         />
         <InputRow
           name="wsPort"
           label="WebSocket Port:"
           placeholder="eg: 4443"
           formData={formData}
+          required={true}
           setFormData={(value) => handleFormDataChange("wsPort", value)}
+          error={validationErrors.wsPort}
         />
         <InputRow
           name="wsPath"
           label="WebSocket Path:"
           placeholder="/"
           formData={formData}
+          required={false}
           setFormData={(value) => handleFormDataChange("wsPath", value)}
+          error={validationErrors.wsPath}
         />
         <InputRow
-          name="fullName"
+          name="name"
           label="Full Name:"
           placeholder="eg: Keyla James"
           formData={formData}
-          setFormData={(value) => handleFormDataChange("fullName", value)}
+          required={false}
+          setFormData={(value) => handleFormDataChange("name", value)}
+          error={validationErrors.name}
         />
         <InputRow
           name="domain"
           label="Domain:"
           placeholder="eg: devone.telemojo.net"
           formData={formData}
+          required={true}
           setFormData={(value) => handleFormDataChange("domain", value)}
+          error={validationErrors.domain}
         />
         <InputRow
           name="sipUsername"
           label="SIP Username:"
           placeholder="eg: webrtc"
           formData={formData}
+          required={true}
           setFormData={(value) => handleFormDataChange("sipUsername", value)}
-          readOnly={true}
+          error={validationErrors.sipUsername}
         />
         <InputRow
           name="sipPassword"
           label="SIP Password:"
           placeholder="eg: 1234"
           formData={formData}
+          required={true}
           setFormData={(value) => handleFormDataChange("sipPassword", value)}
+          error={validationErrors.sipPassword}
         />
         <div>
           <label className="block text-sm font-medium text-gray-700">
@@ -286,7 +364,9 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
                 label="VoiceMail Management Number:"
                 placeholder="eg: 100 or John"
                 formData={formData}
+                required={true}
                 setFormData={(value) => handleFormDataChange("vmNumber", value)}
+                error={validationErrors.vmNumber}
               />
             </div>
           )}
@@ -327,38 +407,48 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
               label="Secure XMPP Server (TLS):"
               placeholder="eg: xmpp.devone.telemojo.net"
               formData={formData}
+              required={true}
               setFormData={(value) => handleFormDataChange("sxServer", value)}
+              error={validationErrors.sxServer}
             />
             <InputRow
               name="xwPort"
               label="XMPP WebSocket Port:"
               placeholder="eg: 5222"
               formData={formData}
+              required={true}
               setFormData={(value) => handleFormDataChange("xwPort", value)}
+              error={validationErrors.xwPort}
             />
             <InputRow
               name="xwPath"
               label="XMPP WebSocket Path:"
               placeholder="/xmpp-websocket"
               formData={formData}
+              required={true}
               setFormData={(value) => handleFormDataChange("xwPath", value)}
+              error={validationErrors.xwPath}
             />
             <InputRow
               name="xDomain"
               label="XMPP Domain:"
               placeholder="eg: xmpp.devone.telemojo.net"
               formData={formData}
+              required={true}
               setFormData={(value) => handleFormDataChange("xDomain", value)}
+              error={validationErrors.xDomain}
             />
             <InputRow
               name="extensionNumber"
               label="Extension Number:"
               placeholder="eg: 100"
               formData={formData}
+              required={false}
               setFormData={(value) =>
                 handleFormDataChange("extensionNumber", value)
               }
               readOnly={true}
+              error={validationErrors.extensionNumber}
             />
           </div>
         )}

@@ -14,6 +14,7 @@ import { Inviter } from "sip.js";
 export const ProviderContext = createContext<IProviderContext>({
   sessionManager: null,
   connectAndRegister: () => {},
+  disconnect: async () => {},
   connectStatus: CONNECT_STATUS.WAIT_REQUEST_CONNECT,
   registerStatus: RegisterStatus.UNREGISTERED,
   sessions: {},

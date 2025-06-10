@@ -6,10 +6,10 @@ import { SignUpRequest } from '@/types/auth';
 export async function POST(request: Request) {
   try {
     const body: SignUpRequest = await request.json();
-    const { extensionNumber, password, name, email } = body;
+    const { password, name, email } = body;
 
     // Basic validation
-    if (!extensionNumber || !password || !name || !email) {
+    if (!password || !name || !email) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -26,14 +26,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Extension number validation
-    if (!/^\d+$/.test(extensionNumber)) {
-      return NextResponse.json(
-        { error: 'Extension number must contain only numbers' },
-        { status: 400 }
-      );
-    }
-
     // Password validation
     if (password.length < 6) {
       return NextResponse.json(
@@ -42,10 +34,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const user = await createUser(extensionNumber, password, name.trim(), email.toLowerCase());
+    const user = await createUser(password, name.trim(), email.toLowerCase());
     if (!user) {
       return NextResponse.json(
-        { error: 'Extension number or email already exists' },
+        { error: 'Email already exists' },
         { status: 400 }
       );
     }

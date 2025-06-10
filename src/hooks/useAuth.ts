@@ -15,7 +15,7 @@ export const useAuth = () => {
     setIsLoading(false);
   }, []);
 
-  const signin = async (email: string, password: string) => {
+  const signin = async ({email, password}: {email: string, password: string}) => {
     try {
       const res = await fetch('/api/auth/signin', {
         method: 'POST',
@@ -38,12 +38,12 @@ export const useAuth = () => {
     }
   };
 
-  const signup = async (extensionNumber: string, password: string, name: string, email: string) => {
+  const signup = async ( {password, name, email}: {password: string, name: string, email: string}) => {
     try {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ extensionNumber, password, name, email }),
+        body: JSON.stringify({ password, name, email }),
       });
 
       if (!res) {
@@ -68,14 +68,6 @@ export const useAuth = () => {
       // Clear authentication state
       removeToken();
       setIsAuthenticated(false);
-      
-      // Clear any local storage or session storage if needed
-      if (typeof window !== 'undefined') {
-        // Clear any cached data that might be stored locally
-        localStorage.removeItem('sipConfig');
-        localStorage.removeItem('userSettings');
-        sessionStorage.clear();
-      }
       
       // Redirect to signin page
       router.push('/signin');

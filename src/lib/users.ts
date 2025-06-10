@@ -3,19 +3,17 @@ import bcrypt from 'bcryptjs';
 import connectDB from '@/lib/mongodb';
 import UserModel from '@/models/User';
 
-export const createUser = async (extensionNumber: string, password: string, name: string, email: string): Promise<Omit<User, 'password'> | null> => {
+export const createUser = async (password: string, name: string, email: string): Promise<Omit<User, 'password'> | null> => {
   await connectDB();
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const checkExtensionDuplication = !!(await findUserByExtensionNumber(extensionNumber));
   const checkEmailDuplication = !!(await findUserByEmail(email));
 
-  if (checkExtensionDuplication || checkEmailDuplication) {
+  if (checkEmailDuplication) {
     return null;
   }
 
   const user = await UserModel.create({
-    extensionNumber,
     email,
     password: hashedPassword,
     name,
@@ -24,12 +22,6 @@ export const createUser = async (extensionNumber: string, password: string, name
   const userObject = user.toJSON();
   const { password: _, ...userWithoutPassword } = userObject;
   return userWithoutPassword as Omit<User, 'password'>;
-};
-
-export const findUserByExtensionNumber = async (extensionNumber: string): Promise<User | null> => {
-  await connectDB();
-  const user = await UserModel.findOne({ extensionNumber }).lean();
-  return user as User | null;
 };
 
 export const findUserByEmail = async (email: string): Promise<User | null> => {

@@ -45,7 +45,9 @@ export const SIPProvider = (props: {
 
   const connectAndRegister = useCallback((sipConfig: SipConfig) => {
     const sessionManager = new SessionManager(
-      sipConfig.wsServer + ":" + sipConfig.wsPort + sipConfig.wsPath,
+      `${sipConfig?.wsServer || ""}:${sipConfig?.wsPort || ""}${
+        sipConfig?.wsPath || ""
+      }`,
       {
         aor: `sip:${sipConfig.username}@${sipConfig.server}`,
         userAgentOptions: {
@@ -132,14 +134,51 @@ export const SIPProvider = (props: {
       }
     );
     setSessionManager(sessionManager);
+
     sessionManager.connect();
   }, []);
+
+  const disconnect = useCallback(async () => {
+    if (sessionManager) {
+      try {
+        // Unregister if currently registered
+        if (registerStatus === RegisterStatus.REGISTERED) {
+          await sessionManager.unregister();
+        }
+
+        // Disconnect from the SIP server
+        await sessionManager.disconnect();
+
+        // Reset session manager
+        setSessionManager(null);
+
+        // Clear sessions
+        setSessions({});
+        setSessionTimer({});
+
+        // Update status
+        setStatus(CONNECT_STATUS.WAIT_REQUEST_CONNECT);
+        setRegisterStatus(RegisterStatus.UNREGISTERED);
+
+        console.log("SIP Provider: Successfully disconnected and unregistered");
+      } catch (error) {
+        console.error("SIP Provider: Error during disconnect:", error);
+        // Force reset even if there's an error
+        setSessionManager(null);
+        setSessions({});
+        setSessionTimer({});
+        setStatus(CONNECT_STATUS.DISCONNECTED);
+        setRegisterStatus(RegisterStatus.UNREGISTERED);
+      }
+    }
+  }, [sessionManager, registerStatus]);
 
   return (
     <>
       <ProviderContext.Provider
         value={{
           connectAndRegister,
+          disconnect,
           sessionManager,
           connectStatus,
           registerStatus,

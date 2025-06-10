@@ -1,22 +1,38 @@
 import mongoose from 'mongoose';
 
 const settingsSchema = new mongoose.Schema({
-  extensionNumber: {
+  email:{
+    type: String,
+    require: true,
+  },
+  wsServer: {
     type: String,
     required: true,
-    unique: true,
   },
-  wsServer: String,
-  wsPort: String,
-  wsPath: String,
-  fullName: String,
-  domain: String,
-  sipUsername: String,
-  sipPassword: String,
+  wsPort: {
+    type: String,
+    required: true,
+  },
+  wsPath: {
+    type: String,
+    default: '/',
+  },
+  domain: {
+    type: String,
+    required: true,
+  },
+  sipUsername: {
+    type: String,
+    required: true,
+  },
+  sipPassword: {
+    type: String,
+    required: true,
+  },
   vmNumber: String,
   sxServer: String,
   xwPort: String,
-  xwPath: String,
+  xwPath: String, 
   xDomain: String,
   isSTV: {
     type: Boolean,

@@ -32,6 +32,7 @@ export interface SipConfig {
 export interface IProviderContext {
   sessionManager: SessionManager | null;
   connectAndRegister: (sipConfig: SipConfig) => void;
+  disconnect: () => Promise<void>;
   connectStatus: CONNECT_STATUS;
   registerStatus: RegisterStatus;
   sessions: Record<string, Session>;
