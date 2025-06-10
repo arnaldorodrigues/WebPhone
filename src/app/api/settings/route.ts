@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     });
 
     if (existingSettings) {
-      throw new Error('Extension number already in use');
+      return NextResponse.json({ error: 'Extension number already in use' }, { status: 409 });
     }
 
     // Update or create settings

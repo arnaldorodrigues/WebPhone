@@ -68,7 +68,8 @@ export const settingsAction = {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save settings');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save settings');
       }
     } catch (error) {
       console.error('Error saving settings:', error);
