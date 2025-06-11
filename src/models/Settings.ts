@@ -7,19 +7,19 @@ const settingsSchema = new mongoose.Schema({
   },
   wsServer: {
     type: String,
-    required: true,
+    // required: true,
   },
   wsPort: {
     type: String,
-    required: true,
+    // required: true,
   },
   wsPath: {
     type: String,
-    default: '/',
+    // default: '/',
   },
   domain: {
     type: String,
-    required: true,
+    // required: true,
   },
   sipUsername: {
     type: String,

@@ -138,7 +138,7 @@ const UsersPage = () => {
         />
 
         {/* Filters */}
-        <div className="flex gap-2">
+        {/* <div className="flex gap-2">
           <DropdownSelect
             value={roleFilter}
             onChange={setRoleFilter}
@@ -162,7 +162,7 @@ const UsersPage = () => {
             placeholder="All Status"
             className="w-32"
           />
-        </div>
+        </div> */}
 
         {/* Add User Button */}
         <button
@@ -175,7 +175,7 @@ const UsersPage = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
           <div className="text-sm font-medium text-gray-500">Total Users</div>
           <div className="text-2xl font-bold text-gray-900">
@@ -202,7 +202,7 @@ const UsersPage = () => {
             {stats.extensionNumbers}
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Users Table */}
       <div className="mt-10 bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">

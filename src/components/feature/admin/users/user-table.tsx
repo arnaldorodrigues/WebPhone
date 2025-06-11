@@ -144,12 +144,12 @@ const UserTable = ({ users, onRefresh }: UserTableProps) => {
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               User
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Role
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Status
-            </th>
+            </th> */}
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Extension Number
             </th>
@@ -185,12 +185,12 @@ const UserTable = ({ users, onRefresh }: UserTableProps) => {
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                {/* <td className="px-6 py-4 whitespace-nowrap">
                   {getRoleBadge(user.role)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {getStatusBadge(user.status)}
-                </td>
+                </td> */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
                     {user.settings?.sipUsername}

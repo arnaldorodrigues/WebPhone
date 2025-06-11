@@ -126,30 +126,30 @@ const UserEditDialog = ({
     }
 
     if (!formData.settings.sipUsername.trim()) {
-      newErrors.sipUsername = "SIP Username is required";
+      newErrors.sipUsername = "Extensin Number is required";
     }
 
     if (!formData.settings.sipPassword.trim()) {
       newErrors.sipPassword = "SIP Password is required";
     }
 
-    if (!formData.settings.domain.trim()) {
-      newErrors.domain = "Domain is required";
-    }
+    //   if (!formData.settings.domain.trim()) {
+    //     newErrors.domain = "Domain is required";
+    //   }
 
-    if (!formData.settings.wsServer.trim()) {
-      newErrors.wsServer = "WS Server is required";
-    }
+    //   if (!formData.settings.wsServer.trim()) {
+    //     newErrors.wsServer = "WS Server is required";
+    //   }
 
-    if (!formData.settings.wsPort.trim()) {
-      newErrors.wsPort = "WS Port is required";
-    } else if (!/^\d+$/.test(formData.settings.wsPort)) {
-      newErrors.wsPort = "WS Port must be a number";
-    }
+    //   if (!formData.settings.wsPort.trim()) {
+    //     newErrors.wsPort = "WS Port is required";
+    //   } else if (!/^\d+$/.test(formData.settings.wsPort)) {
+    //     newErrors.wsPort = "WS Port must be a number";
+    //   }
 
-    if (!formData.settings.wsPath.trim()) {
-      newErrors.wsPath = "WS Path is required";
-    }
+    //   if (!formData.settings.wsPath.trim()) {
+    //     newErrors.wsPath = "WS Path is required";
+    //   }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -182,7 +182,9 @@ const UserEditDialog = ({
   };
 
   const handleSubmit = async () => {
+    console.log("1");
     if (!validateForm()) return;
+    console.log("2");
 
     setIsSubmitting(true);
     try {
@@ -245,7 +247,7 @@ const UserEditDialog = ({
       isOpen={isOpen}
       onClose={handleCancel}
       title={dialogTitle}
-      maxWidth="xl"
+      maxWidth="sm"
       closeOnOutsideClick={false}
     >
       <div className="space-y-6">
@@ -269,7 +271,7 @@ const UserEditDialog = ({
         </div>
 
         {/* Form Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 px-4">
           {/* Personal Information */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -319,7 +321,7 @@ const UserEditDialog = ({
               </div>
 
               {/* Role Field */}
-              <div>
+              {/* <div>
                 <DropdownSelect
                   label="Role *"
                   value={formData.role}
@@ -334,7 +336,7 @@ const UserEditDialog = ({
                 {errors.role && (
                   <p className="mt-1 text-sm text-red-600">{errors.role}</p>
                 )}
-              </div>
+              </div> */}
 
               {/* Password Field */}
               <div>
@@ -381,7 +383,7 @@ const UserEditDialog = ({
               {/* SIP Username */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  SIP Username *
+                  Extension Number *
                 </label>
                 <Input
                   id="sipUsername"
@@ -427,102 +429,6 @@ const UserEditDialog = ({
                   </p>
                 )}
               </div>
-
-              {/* Domain */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Domain *
-                </label>
-                <Input
-                  id="domain"
-                  name="domain"
-                  type="text"
-                  required={true}
-                  placeholder="Enter domain"
-                  value={formData.settings.domain}
-                  onChange={(e) =>
-                    handleInputChange("settings.domain", e.target.value)
-                  }
-                  className={`font-mono ${
-                    errors.domain ? "border-red-300" : ""
-                  }`}
-                />
-                {errors.domain && (
-                  <p className="mt-1 text-sm text-red-600">{errors.domain}</p>
-                )}
-              </div>
-
-              {/* WS Server */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  WS Server *
-                </label>
-                <Input
-                  id="wsServer"
-                  name="wsServer"
-                  type="text"
-                  required={true}
-                  placeholder="Enter WebSocket server"
-                  value={formData.settings.wsServer}
-                  onChange={(e) =>
-                    handleInputChange("settings.wsServer", e.target.value)
-                  }
-                  className={`font-mono ${
-                    errors.wsServer ? "border-red-300" : ""
-                  }`}
-                />
-                {errors.wsServer && (
-                  <p className="mt-1 text-sm text-red-600">{errors.wsServer}</p>
-                )}
-              </div>
-
-              {/* WS Port */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  WS Port *
-                </label>
-                <Input
-                  id="wsPort"
-                  name="wsPort"
-                  type="text"
-                  required={true}
-                  placeholder="Enter WebSocket port"
-                  value={formData.settings.wsPort}
-                  onChange={(e) =>
-                    handleInputChange("settings.wsPort", e.target.value)
-                  }
-                  className={`font-mono ${
-                    errors.wsPort ? "border-red-300" : ""
-                  }`}
-                />
-                {errors.wsPort && (
-                  <p className="mt-1 text-sm text-red-600">{errors.wsPort}</p>
-                )}
-              </div>
-
-              {/* WS Path */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  WS Path *
-                </label>
-                <Input
-                  id="wsPath"
-                  name="wsPath"
-                  type="text"
-                  required={true}
-                  placeholder="Enter WebSocket path"
-                  value={formData.settings.wsPath}
-                  onChange={(e) =>
-                    handleInputChange("settings.wsPath", e.target.value)
-                  }
-                  className={`font-mono ${
-                    errors.wsPath ? "border-red-300" : ""
-                  }`}
-                />
-                {errors.wsPath && (
-                  <p className="mt-1 text-sm text-red-600">{errors.wsPath}</p>
-                )}
-              </div>
             </div>
           </div>
         </div>
@@ -559,5 +465,4 @@ const UserEditDialog = ({
     </Dialog>
   );
 };
-
 export default UserEditDialog;
