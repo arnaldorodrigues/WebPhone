@@ -129,9 +129,9 @@ const UserEditDialog = ({
       newErrors.sipUsername = "Extensin Number is required";
     }
 
-    if (!formData.settings.sipPassword.trim()) {
-      newErrors.sipPassword = "SIP Password is required";
-    }
+    // if (!formData.settings.sipPassword.trim()) {
+    //   newErrors.sipPassword = "SIP Password is required";
+    // }
 
     //   if (!formData.settings.domain.trim()) {
     //     newErrors.domain = "Domain is required";
@@ -182,9 +182,7 @@ const UserEditDialog = ({
   };
 
   const handleSubmit = async () => {
-    console.log("1");
     if (!validateForm()) return;
-    console.log("2");
 
     setIsSubmitting(true);
     try {
@@ -407,7 +405,7 @@ const UserEditDialog = ({
               </div>
 
               {/* SIP Password */}
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   SIP Password *
                 </label>
@@ -428,7 +426,7 @@ const UserEditDialog = ({
                     {errors.sipPassword}
                   </p>
                 )}
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
