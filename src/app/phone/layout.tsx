@@ -2,6 +2,7 @@
 
 import Sidebar from "@/components/feature/phone/sidebar/sidebar";
 import { usePathname } from "next/navigation";
+import ProtectedRoute from "@/components/ui/ProtectedRoute";
 
 interface Props {}
 
@@ -14,10 +15,14 @@ const RootLayout = ({
   const sidebarVisible = pathname.endsWith("phone");
 
   return (
-    <div className="w-full h-full flex-1 flex flex-row ">
-      <Sidebar hidden={!sidebarVisible} />
-      <div className={`flex-1 ${sidebarVisible && "hidden"}}`}>{children}</div>
-    </div>
+    <ProtectedRoute requiredRole="user">
+      <div className="w-full h-full flex-1 flex flex-row ">
+        <Sidebar hidden={!sidebarVisible} />
+        <div className={`flex-1 ${sidebarVisible && "hidden"}}`}>
+          {children}
+        </div>
+      </div>
+    </ProtectedRoute>
   );
 };
 

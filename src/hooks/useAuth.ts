@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getToken, setToken, removeToken } from '@/utils/auth';
+import { useSettings } from './use-settings';
 
 const SETTINGS_STORAGE_KEY = 'user_settings';
 
@@ -10,7 +11,8 @@ export const useAuth = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
+  const { refreshSettings } = useSettings();
+  
   useEffect(() => {
     const token = getToken();
     setIsAuthenticated(!!token);
@@ -33,7 +35,14 @@ export const useAuth = () => {
 
       setToken(data.token);
       setIsAuthenticated(true);
-      router.push('/phone');
+      
+      // Role-based routing
+      if (data.user?.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/phone');
+      }
+      
       return data;
     } catch (error) {
       throw error;
@@ -57,6 +66,8 @@ export const useAuth = () => {
       if (!res.ok) {
         throw new Error(data.error || 'Something went wrong');
       }
+
+      refreshSettings();
 
       router.push('/signin');
       return data;

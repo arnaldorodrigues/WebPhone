@@ -4,6 +4,7 @@ import "./globals.css";
 // import { SipProvider } from "@/hooks/use-sip-context";
 import { SIPProvider } from "@/hooks/sip-provider/sip-provider";
 import { PhoneStateProvider } from "@/hooks/use-phonestate-context";
+import ProtectedRoute from "@/components/ui/ProtectedRoute";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,6 +24,7 @@ export default function RootLayout({
         <meta name="color-scheme" content="light only" />
       </head>
       <body className={inter.className}>
+        {/* <ProtectedRoute> */}
         <PhoneStateProvider>
           <SIPProvider>
             <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
@@ -32,6 +34,7 @@ export default function RootLayout({
             </div>
           </SIPProvider>
         </PhoneStateProvider>
+        {/* </ProtectedRoute> */}
       </body>
     </html>
   );
