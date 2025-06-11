@@ -7,23 +7,24 @@ const settingsSchema = new mongoose.Schema({
   },
   wsServer: {
     type: String,
-    required: true,
+    // required: true,
   },
   wsPort: {
     type: String,
-    required: true,
+    // required: true,
   },
   wsPath: {
     type: String,
-    default: '/',
+    // default: '/',
   },
   domain: {
     type: String,
-    required: true,
+    // required: true,
   },
   sipUsername: {
     type: String,
     required: true,
+    unique: true,
   },
   sipPassword: {
     type: String,
@@ -38,6 +39,9 @@ const settingsSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+// Create unique index for sipUsername
+settingsSchema.index({ sipUsername: 1 }, { unique: true });
 
 // Update the updatedAt timestamp before saving
 settingsSchema.pre('save', function(next) {
