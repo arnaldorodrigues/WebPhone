@@ -12,7 +12,7 @@ import {
   ArrowRightOnRectangleIcon,
   LinkIcon,
 } from "@heroicons/react/24/solid";
-import SettingDialog from "@/components/feature/setting/setting-dialog";
+import SettingDialog from "@/components/feature/phone/setting/setting-dialog";
 import { usePhoneState } from "@/hooks/use-phonestate-context";
 import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
 import { CONNECT_STATUS, RegisterStatus } from "@/types/sip-type";

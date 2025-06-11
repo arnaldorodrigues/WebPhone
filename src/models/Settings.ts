@@ -24,6 +24,7 @@ const settingsSchema = new mongoose.Schema({
   sipUsername: {
     type: String,
     required: true,
+    unique: true,
   },
   sipPassword: {
     type: String,
@@ -38,6 +39,9 @@ const settingsSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+// Create unique index for sipUsername
+settingsSchema.index({ sipUsername: 1 }, { unique: true });
 
 // Update the updatedAt timestamp before saving
 settingsSchema.pre('save', function(next) {

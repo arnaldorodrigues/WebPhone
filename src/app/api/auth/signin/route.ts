@@ -26,6 +26,7 @@ export async function POST(request: Request) {
     }
 
     const user = await findUserByEmail(email.toLowerCase());
+    
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid credentials' },

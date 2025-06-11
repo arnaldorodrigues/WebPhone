@@ -1,9 +1,9 @@
 export interface User {
   _id: string;
   email: string;
-  extensionNumber: string;
   password: string;
   name: string;
+  role: 'admin' | 'user';
   createdAt: Date;
 }
 
