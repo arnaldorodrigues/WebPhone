@@ -78,7 +78,7 @@ export function PhoneCallDialog({ isOpen, onClose }: PhoneCallProps) {
   const handleDial = (c: string) => {
     if (c === "backspace") {
       setNumber(number.slice(0, number.length - 1));
-    } else if (number.length < 8) {
+    } else if (number.length < 12) {
       setNumber(number + c);
     }
   };
