@@ -10,7 +10,9 @@ export async function GET(request: NextRequest) {
     await connectDB();
 
     // Fetch all users and populate their settings
-    const users = await UserModel.find({})
+    const users = await UserModel.find({
+      role: { $ne: 'admin' }
+    })
       .populate('settings')
       .select('-password') // Exclude password from response
       .lean();
