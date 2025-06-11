@@ -28,7 +28,7 @@ const settingsSchema = new mongoose.Schema({
   },
   sipPassword: {
     type: String,
-    required: true,
+    // required: true,
   },
   createdAt: {
     type: Date,

@@ -52,6 +52,7 @@ export async function POST(request: Request) {
     const token = _parse_token(t);
 
     const data = await request.json();
+    console.log('123', data)
     await connectDB();
 
     // Check if settings with same extension number exists
