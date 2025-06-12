@@ -143,9 +143,7 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
 
     // Define required fields based on current state
     const requiredFields: (keyof Settings)[] = [
-      "wsServer",
-      "wsPort",
-      "domain",
+      "name",
       "sipUsername",
       "sipPassword",
     ];
