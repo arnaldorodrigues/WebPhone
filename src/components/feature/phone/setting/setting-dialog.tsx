@@ -293,7 +293,6 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
           </label>
           <div className="mt-1">
             <DropdownSelect
-              name="domain"
               placeholder="Select Domain"
               value={String(formData.domain || "")}
               onChange={(value) => {
