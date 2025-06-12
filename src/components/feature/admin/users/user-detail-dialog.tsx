@@ -83,7 +83,7 @@ const UserDetailDialog = ({
       isOpen={isOpen}
       onClose={onClose}
       title="User Details"
-      maxWidth="sm"
+      maxWidth="2xl"
     >
       <div className="space-y-6">
         {/* User Profile Section */}
@@ -114,7 +114,7 @@ const UserDetailDialog = ({
         </div>
 
         {/* User Information */}
-        <div className="grid grid-cols-1 gap-4 px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
               <UserIcon className="w-5 h-5 mr-2 text-indigo-500" />
@@ -178,7 +178,7 @@ const UserDetailDialog = ({
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">
-                    Extension Number
+                    SIP Username
                   </p>
                   <p className="text-gray-900 font-mono">
                     {user.settings?.sipUsername || "Not configured"}
@@ -186,7 +186,7 @@ const UserDetailDialog = ({
                 </div>
               </div>
 
-              {/* <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
                   <CogIcon className="w-4 h-4 text-gray-600" />
                 </div>
@@ -246,7 +246,7 @@ const UserDetailDialog = ({
                     {user.settings?.wsPath || "Not configured"}
                   </p>
                 </div>
-              </div> */}
+              </div>
 
               {user.settings?.updatedAt && (
                 <div className="flex items-center space-x-3">

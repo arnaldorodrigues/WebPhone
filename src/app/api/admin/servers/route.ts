@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import ServerModel from '@/models/Server';
-import { ServerConfig } from '@/types/admin-server';
+import { ServerConfig } from '@/types/server-type';
 
 // Fetch list of servers
 export async function GET() {

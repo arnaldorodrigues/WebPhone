@@ -7,7 +7,7 @@ import SearchInput from "@/components/ui/inputs/search-input";
 import ServerTable from "@/components/feature/admin/servers/server-table";
 import ServerEditDialog from "@/components/feature/admin/servers/server-edit-dialog";
 import { fetchWithAuth } from "@/utils/api";
-import { ServerConfig } from "@/types/admin-server";
+import { ServerConfig } from "@/types/server-type";
 import ServersPageSkeleton from "@/components/feature/admin/servers/servers-page-skeleton";
 
 const ServersPage = () => {
