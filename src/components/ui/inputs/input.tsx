@@ -1,7 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import { useState, useEffect, useRef } from "react";
+import {
+  EyeIcon,
+  EyeSlashIcon,
+  ChevronDownIcon,
+  CheckIcon,
+} from "@heroicons/react/24/outline";
+
+interface DropdownOption {
+  value: string;
+  label: string;
+  disabled?: boolean;
+}
 
 interface Props {
   id: string;
@@ -13,6 +24,10 @@ interface Props {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   readOnly?: boolean;
+  /**
+   * When `type` is `dropdown`, provide list of options to render in the dropdown.
+   */
+  options?: DropdownOption[];
 }
 
 const Input = ({
@@ -25,9 +40,44 @@ const Input = ({
   value,
   onChange,
   readOnly = false,
+  options = [],
 }: Props) => {
   const [mounted, setMounted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  // Autocomplete text input with dropdown suggestions.
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredOptions = options.filter((opt) =>
+    opt.label.toLowerCase().includes(value.toLowerCase())
+  );
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(e);
+    if (!isOpen) setIsOpen(true);
+  };
+
+  const handleSelectOption = (opt: DropdownOption) => {
+    const syntheticEvent = {
+      target: { value: opt.value },
+    } as unknown as React.ChangeEvent<HTMLInputElement>;
+    onChange(syntheticEvent);
+    setIsOpen(false);
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -78,6 +128,61 @@ const Input = ({
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
+
+  if (type === "dropdown") {
+    return (
+      <div className={`relative ${className}`} ref={containerRef}>
+        <input
+          id={id}
+          name={name}
+          type="text"
+          required={required}
+          className={`${baseClassName} pr-10`}
+          placeholder={placeholder}
+          value={value}
+          onChange={handleInputChange}
+          readOnly={readOnly}
+          onFocus={() => setIsOpen(true)}
+        />
+        {/* dropdown toggle */}
+        <button
+          type="button"
+          className="absolute inset-y-0 right-0 pr-3 flex items-center"
+          onClick={() => setIsOpen((prev) => !prev)}
+          tabIndex={-1}
+        >
+          <ChevronDownIcon className="h-5 w-5 text-gray-400" />
+        </button>
+
+        {isOpen && !readOnly && (
+          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded-lg shadow-lg max-h-60 overflow-auto">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  className={`w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors duration-200 flex items-center justify-between ${
+                    opt.disabled
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-gray-900 cursor-pointer"
+                  }`}
+                  onClick={() => !opt.disabled && handleSelectOption(opt)}
+                  disabled={opt.disabled}
+                >
+                  <span>{opt.label}</span>
+                  {opt.value === value && (
+                    <CheckIcon className="w-4 h-4 text-indigo-500" />
+                  )}
+                </button>
+              ))
+            ) : (
+              <div className="px-4 py-2 text-sm text-gray-500">No options</div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (isPasswordType) {
     return (

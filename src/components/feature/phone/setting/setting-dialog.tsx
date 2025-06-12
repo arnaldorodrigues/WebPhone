@@ -11,6 +11,9 @@ import { UserCircleIcon } from "@heroicons/react/24/solid";
 import { useSettings } from "@/hooks/use-settings";
 import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
 import { SipConfig } from "@/types/sip-type";
+import DropdownSelect from "@/components/ui/inputs/dropdown-select";
+import { fetchWithAuth } from "@/utils/api";
+import { ServerConfig } from "@/types/admin-server";
 
 type ChatEngine = "SIP" | "XMPP";
 
@@ -78,6 +81,7 @@ interface SettingDialogProps {
 const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
   const { settings, updateSettings } = useSettings();
   const [formData, setFormData] = useState<Settings>(settings);
+  const [serverList, setServerList] = useState<ServerConfig[]>([]);
   const [isDirty, setIsDirty] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -88,6 +92,25 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
   );
 
   const { connectAndRegister } = useSIPProvider();
+
+  useEffect(() => {
+    // Get server list from database
+    const getServerList = async () => {
+      try {
+        const data = await fetchWithAuth("/api/admin/servers", {
+          method: "GET",
+        });
+
+        if (data.ok) {
+          const result = await data.json();
+          setServerList(result?.data);
+        }
+      } catch (error) {
+        console.error("Error loading server list:", error);
+      }
+    };
+    getServerList();
+  }, []);
 
   useEffect(() => {
     setFormData(settings);
@@ -260,6 +283,54 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
             Settings saved successfully! The dialog will close shortly.
           </div>
         )}
+        <div>
+          <label
+            htmlFor="domain"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Domain
+            {<span className="text-red-500 ml-1">*</span>}
+          </label>
+          <div className="mt-1">
+            <DropdownSelect
+              name="domain"
+              placeholder="Select Domain"
+              value={String(formData.domain || "")}
+              onChange={(value) => {
+                handleFormDataChange("domain", value);
+                handleFormDataChange(
+                  "wsServer",
+                  serverList.find((server) => server.domain === value)
+                    ?.wsServer || ""
+                );
+                handleFormDataChange(
+                  "wsPort",
+                  serverList.find((server) => server.domain === value)
+                    ?.wsPort || ""
+                );
+                handleFormDataChange(
+                  "wsPath",
+                  serverList.find((server) => server.domain === value)
+                    ?.wsPath || ""
+                );
+              }}
+              className={`${
+                validationErrors.domain
+                  ? "border-red-500 ring-red-500 focus:border-red-500 focus:ring-red-500"
+                  : ""
+              }`}
+              options={serverList.map((server) => ({
+                value: server.domain,
+                label: server.domain,
+              }))}
+            />
+            {validationErrors.domain && (
+              <p className="mt-1 text-sm text-red-600">
+                {validationErrors.domain}
+              </p>
+            )}
+          </div>
+        </div>
         <InputRow
           name="wsServer"
           label="Secure WebSocket Server (TLS):"
@@ -295,15 +366,6 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
           required={false}
           setFormData={(value) => handleFormDataChange("name", value)}
           error={validationErrors.name}
-        />
-        <InputRow
-          name="domain"
-          label="Domain:"
-          placeholder="eg: devone.telemojo.net"
-          formData={formData}
-          required={true}
-          setFormData={(value) => handleFormDataChange("domain", value)}
-          error={validationErrors.domain}
         />
         <InputRow
           name="sipUsername"

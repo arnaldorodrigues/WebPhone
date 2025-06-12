@@ -2,11 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   HomeIcon,
   UsersIcon,
-  CogIcon,
-  ChartBarIcon,
-  DocumentTextIcon,
-  ShieldCheckIcon,
-  BellIcon,
+  ServerIcon,
   ArrowRightOnRectangleIcon,
   UserCircleIcon,
   Bars3Icon,
@@ -82,6 +78,7 @@ const AdminSidebar = ({ isOpen, onToggle }: AdminSidebarProps) => {
   const navigation: NavItem[] = [
     { name: "Dashboard", href: "/admin", icon: HomeIcon, current: true },
     { name: "Users", href: "/admin/users", icon: UsersIcon },
+    { name: "Servers", href: "/admin/servers", icon: ServerIcon },
     // { name: "Analytics", href: "/admin/analytics", icon: ChartBarIcon },
     // { name: "Reports", href: "/admin/reports", icon: DocumentTextIcon },
     // { name: "Notifications", href: "/admin/notifications", icon: BellIcon },
