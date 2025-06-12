@@ -13,7 +13,7 @@ import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
 import { SipConfig } from "@/types/sip-type";
 import DropdownSelect from "@/components/ui/inputs/dropdown-select";
 import { fetchWithAuth } from "@/utils/api";
-import { ServerConfig } from "@/types/admin-server";
+import { ServerConfig } from "@/types/server-type";
 
 type ChatEngine = "SIP" | "XMPP";
 
@@ -165,6 +165,7 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
 
     // Define required fields based on current state
     const requiredFields: (keyof Settings)[] = [
+      "name",
       "wsServer",
       "wsPort",
       "domain",
@@ -292,6 +293,34 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
             Settings saved successfully! The dialog will close shortly.
           </div>
         )}
+        <InputRow
+          name="name"
+          label="Full Name:"
+          placeholder="eg: Keyla James"
+          formData={formData}
+          required={true}
+          setFormData={(value) => handleFormDataChange("name", value)}
+          error={validationErrors.name}
+        />
+        <InputRow
+          name="sipUsername"
+          label="SIP Username:"
+          placeholder="eg: webrtc"
+          formData={formData}
+          required={true}
+          setFormData={(value) => handleFormDataChange("sipUsername", value)}
+          error={validationErrors.sipUsername}
+        />
+        <InputRow
+          name="sipPassword"
+          label="SIP Password:"
+          placeholder="eg: 1234"
+          formData={formData}
+          required={true}
+          setFormData={(value) => handleFormDataChange("sipPassword", value)}
+          error={validationErrors.sipPassword}
+          type="password"
+        />
         <div>
           <label
             htmlFor="domain"
@@ -365,34 +394,6 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
           required={false}
           setFormData={(value) => handleFormDataChange("wsPath", value)}
           error={validationErrors.wsPath}
-        />
-        <InputRow
-          name="name"
-          label="Full Name:"
-          placeholder="eg: Keyla James"
-          formData={formData}
-          required={false}
-          setFormData={(value) => handleFormDataChange("name", value)}
-          error={validationErrors.name}
-        />
-        <InputRow
-          name="sipUsername"
-          label="SIP Username:"
-          placeholder="eg: webrtc"
-          formData={formData}
-          required={true}
-          setFormData={(value) => handleFormDataChange("sipUsername", value)}
-          error={validationErrors.sipUsername}
-        />
-        <InputRow
-          name="sipPassword"
-          label="SIP Password:"
-          placeholder="eg: 1234"
-          formData={formData}
-          required={true}
-          setFormData={(value) => handleFormDataChange("sipPassword", value)}
-          error={validationErrors.sipPassword}
-          type="password"
         />
       </div>
     ),

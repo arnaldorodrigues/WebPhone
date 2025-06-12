@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Dialog } from "@/components/ui/dialogs/dialog";
 import Input from "@/components/ui/inputs/input";
-import { ServerConfig } from "@/types/admin-server";
+import { ServerConfig } from "@/types/server-type";
 import { fetchWithAuth } from "@/utils/api";
 import { CheckIcon } from "@heroicons/react/24/outline";
 

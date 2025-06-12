@@ -6,7 +6,7 @@ import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import Pagination from "@/components/ui/pagination/pagination";
 import ConfirmDialog from "@/components/ui/dialogs/confirm-dialog";
 import { fetchWithAuth } from "@/utils/api";
-import { ServerConfig } from "@/types/admin-server";
+import { ServerConfig } from "@/types/server-type";
 import ServerEditDialog from "@/components/feature/admin/servers/server-edit-dialog";
 
 interface Props {
