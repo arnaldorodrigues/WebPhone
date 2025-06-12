@@ -35,7 +35,7 @@ const UsersPageSkeleton = () => {
 
       {/* Users Table Skeleton */}
       <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-hidden">
           <table className="min-w-full divide-y divide-gray-100">
             {/* Table Header Skeleton */}
             <thead className="bg-gray-50">
@@ -63,7 +63,7 @@ const UsersPageSkeleton = () => {
 
             {/* Table Body Skeleton */}
             <tbody className="bg-white divide-y divide-gray-100">
-              {[1, 2, 3, 4, 5].map((i) => (
+              {[1, 2, 3, 4].map((i) => (
                 <tr key={i} className="hover:bg-gray-50">
                   {/* User Info Cell */}
                   <td className="px-6 py-4 whitespace-nowrap">
