@@ -154,23 +154,23 @@ const UserEditDialog = ({
       newErrors.sipPassword = "SIP Password is required";
     }
 
-    if (!formData.settings.domain.trim()) {
-      newErrors.domain = "Domain is required";
-    }
+    // if (!formData.settings.domain.trim()) {
+    //   newErrors.domain = "Domain is required";
+    // }
 
-    if (!formData.settings.wsServer.trim()) {
-      newErrors.wsServer = "WS Server is required";
-    }
+    // if (!formData.settings.wsServer.trim()) {
+    //   newErrors.wsServer = "WS Server is required";
+    // }
 
-    if (!formData.settings.wsPort.trim()) {
-      newErrors.wsPort = "WS Port is required";
-    } else if (!/^\d+$/.test(formData.settings.wsPort)) {
-      newErrors.wsPort = "WS Port must be a number";
-    }
+    // if (!formData.settings.wsPort.trim()) {
+    //   newErrors.wsPort = "WS Port is required";
+    // } else if (!/^\d+$/.test(formData.settings.wsPort)) {
+    //   newErrors.wsPort = "WS Port must be a number";
+    // }
 
-    if (!formData.settings.wsPath.trim()) {
-      newErrors.wsPath = "WS Path is required";
-    }
+    // if (!formData.settings.wsPath.trim()) {
+    //   newErrors.wsPath = "WS Path is required";
+    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -452,7 +452,7 @@ const UserEditDialog = ({
               {/* Domain */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Domain *
+                  Domain
                 </label>
                 <DropdownSelect
                   placeholder="Select domain"
@@ -478,10 +478,12 @@ const UserEditDialog = ({
                   className={`font-mono ${
                     errors.domain ? "border-red-300" : ""
                   }`}
-                  options={serverList.map((server) => ({
-                    value: server.domain,
-                    label: server.domain,
-                  }))}
+                  options={serverList.map((server) => {
+                    return {
+                      value: server.domain || "",
+                      label: server.domain || "",
+                    };
+                  })}
                 />
                 {errors.domain && (
                   <p className="mt-1 text-sm text-red-600">{errors.domain}</p>
@@ -491,7 +493,7 @@ const UserEditDialog = ({
               {/* WS Server */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  WS Server *
+                  WS Server
                 </label>
                 <Input
                   id="wsServer"
@@ -515,7 +517,7 @@ const UserEditDialog = ({
               {/* WS Port */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  WS Port *
+                  WS Port
                 </label>
                 <Input
                   id="wsPort"
@@ -539,7 +541,7 @@ const UserEditDialog = ({
               {/* WS Path */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  WS Path *
+                  WS Path
                 </label>
                 <Input
                   id="wsPath"

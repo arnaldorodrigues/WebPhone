@@ -126,7 +126,7 @@ const DropdownSelect = ({
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded-lg shadow-lg max-h-60 overflow-auto">
           {options.map((option) => (
             <button
-              key={option.value}
+              key={option.value + option.label}
               type="button"
               onClick={() =>
                 !option.disabled && handleOptionClick(option.value)

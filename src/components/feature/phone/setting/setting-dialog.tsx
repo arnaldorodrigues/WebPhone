@@ -15,6 +15,8 @@ import DropdownSelect from "@/components/ui/inputs/dropdown-select";
 import { fetchWithAuth } from "@/utils/api";
 import { ServerConfig } from "@/types/server-type";
 
+type ChatEngine = "SIP" | "XMPP";
+
 // Validation errors type
 type ValidationErrors = {
   [key in keyof Settings]?: string;
@@ -79,6 +81,7 @@ interface SettingDialogProps {
 const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
   const { settings, updateSettings } = useSettings();
   const [formData, setFormData] = useState<Settings>(settings);
+  const [serverList, setServerList] = useState<ServerConfig[]>([]);
   const [isDirty, setIsDirty] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +92,25 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
   );
 
   const { connectAndRegister } = useSIPProvider();
+
+  useEffect(() => {
+    // Get server list from database
+    const getServerList = async () => {
+      try {
+        const data = await fetchWithAuth("/api/admin/servers", {
+          method: "GET",
+        });
+
+        if (data.ok) {
+          const result = await data.json();
+          setServerList(result?.data);
+        }
+      } catch (error) {
+        console.error("Error loading server list:", error);
+      }
+    };
+    getServerList();
+  }, []);
 
   useEffect(() => {
     setFormData(settings);
@@ -144,6 +166,9 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
     // Define required fields based on current state
     const requiredFields: (keyof Settings)[] = [
       "name",
+      "wsServer",
+      "wsPort",
+      "domain",
       "sipUsername",
       "sipPassword",
     ];
@@ -179,6 +204,8 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
       const updatedSettings = {
         ...formData,
       };
+
+      console.log("123123", updatedSettings);
 
       await updateSettings(updatedSettings);
 
@@ -271,7 +298,7 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
           label="Full Name:"
           placeholder="eg: Keyla James"
           formData={formData}
-          readOnly={false}
+          required={true}
           setFormData={(value) => handleFormDataChange("name", value)}
           error={validationErrors.name}
         />
@@ -294,23 +321,59 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
           error={validationErrors.sipPassword}
           type="password"
         />
-        <InputRow
-          name="domain"
-          label="Domain:"
-          placeholder="eg: domain1.com"
-          formData={formData}
-          required={false}
-          readOnly={true}
-          setFormData={(value) => handleFormDataChange("domain", value)}
-          error={validationErrors.domain}
-        />
+        <div>
+          <label
+            htmlFor="domain"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Domain
+            {<span className="text-red-500 ml-1">*</span>}
+          </label>
+          <div className="mt-1">
+            <DropdownSelect
+              placeholder="Select Domain"
+              value={String(formData.domain || "")}
+              onChange={(value) => {
+                handleFormDataChange("domain", value);
+                handleFormDataChange(
+                  "wsServer",
+                  serverList.find((server) => server.domain === value)
+                    ?.wsServer || ""
+                );
+                handleFormDataChange(
+                  "wsPort",
+                  serverList.find((server) => server.domain === value)
+                    ?.wsPort || ""
+                );
+                handleFormDataChange(
+                  "wsPath",
+                  serverList.find((server) => server.domain === value)
+                    ?.wsPath || ""
+                );
+              }}
+              className={`${
+                validationErrors.domain
+                  ? "border-red-500 ring-red-500 focus:border-red-500 focus:ring-red-500"
+                  : ""
+              }`}
+              options={serverList.map((server) => ({
+                value: server.domain,
+                label: server.domain,
+              }))}
+            />
+            {validationErrors.domain && (
+              <p className="mt-1 text-sm text-red-600">
+                {validationErrors.domain}
+              </p>
+            )}
+          </div>
+        </div>
         <InputRow
           name="wsServer"
           label="Secure WebSocket Server (TLS):"
           placeholder="eg: ws://devone.telemojo.net"
           formData={formData}
-          readOnly={true}
-          required={false}
+          required={true}
           setFormData={(value) => handleFormDataChange("wsServer", value)}
           error={validationErrors.wsServer}
         />
@@ -319,8 +382,7 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
           label="WebSocket Port:"
           placeholder="eg: 4443"
           formData={formData}
-          readOnly={true}
-          required={false}
+          required={true}
           setFormData={(value) => handleFormDataChange("wsPort", value)}
           error={validationErrors.wsPort}
         />
@@ -329,7 +391,6 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
           label="WebSocket Path:"
           placeholder="/"
           formData={formData}
-          readOnly={true}
           required={false}
           setFormData={(value) => handleFormDataChange("wsPath", value)}
           error={validationErrors.wsPath}
