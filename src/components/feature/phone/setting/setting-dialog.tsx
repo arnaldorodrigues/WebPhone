@@ -204,11 +204,20 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
         ...formData,
       };
 
+      console.log("123123", updatedSettings);
+
       await updateSettings(updatedSettings);
 
       // Re-establish connection with new settings
       try {
-        connectAndRegister(formData as unknown as SipConfig);
+        connectAndRegister({
+          server: formData.domain,
+          username: formData.sipUsername,
+          password: formData.sipPassword,
+          wsServer: formData.wsServer,
+          wsPort: formData.wsPort,
+          wsPath: formData.wsPath,
+        });
       } catch (error) {
         console.error("Error connecting and registering:", error);
       }
