@@ -14,9 +14,6 @@ export interface Settings {
   xwPort: string;
   xwPath: string;
   xDomain: string;
-  extensionNumber: string;
-  isSTV: boolean;
-  chatEngine: string;
 }
 
 // Default settings
@@ -33,9 +30,6 @@ export const defaultSettings: Settings = {
   xwPort: "",
   xwPath: "",
   xDomain: "",
-  extensionNumber: "",
-  isSTV: false,
-  chatEngine: "SIP"
 };
 
 // Settings-specific operations
