@@ -9,8 +9,8 @@ import { SessionState } from "sip.js";
 // import { useSipContext } from "@/hooks/use-sip-context";
 import { usePhoneState } from "@/hooks/use-phonestate-context";
 import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
-import { useSettings } from "@/hooks/use-settings";
 import { CallSessionItem } from "./call-session-item";
+import { useUserData } from "@/hooks/use-userdata";
 
 interface PhoneCallProps {
   isOpen: boolean;
@@ -22,7 +22,7 @@ export function PhoneCallDialog({ isOpen, onClose }: PhoneCallProps) {
   const { sessions, sessionManager } = useSIPProvider();
   const [number, setNumber] = useState("");
   const [lastRemoteNumber, setLastRemoteNumber] = useState("");
-  const { settings } = useSettings();
+  const { sipConfig } = useUserData();
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -92,7 +92,7 @@ export function PhoneCallDialog({ isOpen, onClose }: PhoneCallProps) {
     try {
       console.log("UI: Initiating call to:", number);
       setLastRemoteNumber(number); // Store the number we're calling
-      await sessionManager?.call(`sip:${number}@${settings.domain}`);
+      await sessionManager?.call(`sip:${number}@${sipConfig?.server}`);
       setPhoneState("sending");
       console.log("UI: Call initiated successfully");
     } catch (error) {
