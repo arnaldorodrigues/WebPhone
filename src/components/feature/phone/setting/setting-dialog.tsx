@@ -11,6 +11,9 @@ import { UserCircleIcon } from "@heroicons/react/24/solid";
 import { useSettings } from "@/hooks/use-settings";
 import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
 import { SipConfig } from "@/types/sip-type";
+import DropdownSelect from "@/components/ui/inputs/dropdown-select";
+import { fetchWithAuth } from "@/utils/api";
+import { ServerConfig } from "@/types/server-type";
 
 type ChatEngine = "SIP" | "XMPP";
 
@@ -78,6 +81,7 @@ interface SettingDialogProps {
 const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
   const { settings, updateSettings } = useSettings();
   const [formData, setFormData] = useState<Settings>(settings);
+  const [serverList, setServerList] = useState<ServerConfig[]>([]);
   const [isDirty, setIsDirty] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -88,6 +92,25 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
   );
 
   const { connectAndRegister } = useSIPProvider();
+
+  useEffect(() => {
+    // Get server list from database
+    const getServerList = async () => {
+      try {
+        const data = await fetchWithAuth("/api/admin/servers", {
+          method: "GET",
+        });
+
+        if (data.ok) {
+          const result = await data.json();
+          setServerList(result?.data);
+        }
+      } catch (error) {
+        console.error("Error loading server list:", error);
+      }
+    };
+    getServerList();
+  }, []);
 
   useEffect(() => {
     setFormData(settings);
@@ -142,6 +165,7 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
 
     // Define required fields based on current state
     const requiredFields: (keyof Settings)[] = [
+      "name",
       "wsServer",
       "wsPort",
       "domain",
@@ -181,11 +205,20 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
         ...formData,
       };
 
+      console.log("123123", updatedSettings);
+
       await updateSettings(updatedSettings);
 
       // Re-establish connection with new settings
       try {
-        connectAndRegister(formData as unknown as SipConfig);
+        connectAndRegister({
+          server: formData.domain,
+          username: formData.sipUsername,
+          password: formData.sipPassword,
+          wsServer: formData.wsServer,
+          wsPort: formData.wsPort,
+          wsPath: formData.wsPath,
+        });
       } catch (error) {
         console.error("Error connecting and registering:", error);
       }
@@ -261,6 +294,81 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
           </div>
         )}
         <InputRow
+          name="name"
+          label="Full Name:"
+          placeholder="eg: Keyla James"
+          formData={formData}
+          required={true}
+          setFormData={(value) => handleFormDataChange("name", value)}
+          error={validationErrors.name}
+        />
+        <InputRow
+          name="sipUsername"
+          label="SIP Username:"
+          placeholder="eg: webrtc"
+          formData={formData}
+          required={true}
+          setFormData={(value) => handleFormDataChange("sipUsername", value)}
+          error={validationErrors.sipUsername}
+        />
+        <InputRow
+          name="sipPassword"
+          label="SIP Password:"
+          placeholder="eg: 1234"
+          formData={formData}
+          required={true}
+          setFormData={(value) => handleFormDataChange("sipPassword", value)}
+          error={validationErrors.sipPassword}
+          type="password"
+        />
+        <div>
+          <label
+            htmlFor="domain"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Domain
+            {<span className="text-red-500 ml-1">*</span>}
+          </label>
+          <div className="mt-1">
+            <DropdownSelect
+              placeholder="Select Domain"
+              value={String(formData.domain || "")}
+              onChange={(value) => {
+                handleFormDataChange("domain", value);
+                handleFormDataChange(
+                  "wsServer",
+                  serverList.find((server) => server.domain === value)
+                    ?.wsServer || ""
+                );
+                handleFormDataChange(
+                  "wsPort",
+                  serverList.find((server) => server.domain === value)
+                    ?.wsPort || ""
+                );
+                handleFormDataChange(
+                  "wsPath",
+                  serverList.find((server) => server.domain === value)
+                    ?.wsPath || ""
+                );
+              }}
+              className={`${
+                validationErrors.domain
+                  ? "border-red-500 ring-red-500 focus:border-red-500 focus:ring-red-500"
+                  : ""
+              }`}
+              options={serverList.map((server) => ({
+                value: server.domain,
+                label: server.domain,
+              }))}
+            />
+            {validationErrors.domain && (
+              <p className="mt-1 text-sm text-red-600">
+                {validationErrors.domain}
+              </p>
+            )}
+          </div>
+        </div>
+        <InputRow
           name="wsServer"
           label="Secure WebSocket Server (TLS):"
           placeholder="eg: ws://devone.telemojo.net"
@@ -286,43 +394,6 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
           required={false}
           setFormData={(value) => handleFormDataChange("wsPath", value)}
           error={validationErrors.wsPath}
-        />
-        <InputRow
-          name="name"
-          label="Full Name:"
-          placeholder="eg: Keyla James"
-          formData={formData}
-          required={false}
-          setFormData={(value) => handleFormDataChange("name", value)}
-          error={validationErrors.name}
-        />
-        <InputRow
-          name="domain"
-          label="Domain:"
-          placeholder="eg: devone.telemojo.net"
-          formData={formData}
-          required={true}
-          setFormData={(value) => handleFormDataChange("domain", value)}
-          error={validationErrors.domain}
-        />
-        <InputRow
-          name="sipUsername"
-          label="SIP Username:"
-          placeholder="eg: webrtc"
-          formData={formData}
-          required={true}
-          setFormData={(value) => handleFormDataChange("sipUsername", value)}
-          error={validationErrors.sipUsername}
-        />
-        <InputRow
-          name="sipPassword"
-          label="SIP Password:"
-          placeholder="eg: 1234"
-          formData={formData}
-          required={true}
-          setFormData={(value) => handleFormDataChange("sipPassword", value)}
-          error={validationErrors.sipPassword}
-          type="password"
         />
       </div>
     ),

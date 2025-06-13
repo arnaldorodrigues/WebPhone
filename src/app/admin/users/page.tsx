@@ -205,7 +205,7 @@ const UsersPage = () => {
       </div> */}
 
       {/* Users Table */}
-      <div className="mt-10 bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+      <div className="mt-4 bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <UserTable users={filteredUsers} onRefresh={fetchUsers} />
         </div>

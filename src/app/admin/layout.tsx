@@ -35,7 +35,9 @@ const RootLayout = ({
                 <div className="px-6 py-4">
                   <div className="flex items-center justify-between">
                     <h2 className="text-2xl font-bold text-gray-900">
-                      {title.split("/").pop()?.toUpperCase()}
+                      {title.split("/").pop()?.toUpperCase() === "ADMIN"
+                        ? "Dashboard"
+                        : title.split("/").pop()?.toUpperCase()}
                     </h2>
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center text-sm text-gray-500">
