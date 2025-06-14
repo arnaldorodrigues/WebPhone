@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import UserModel from '@/models/User';
 import { Settings } from '@/models/Settings';
-import { User } from '@/types/admin-user';
+import { User } from '@/types/user';
 import bcrypt from 'bcryptjs';
 
 export async function GET(request: NextRequest) {

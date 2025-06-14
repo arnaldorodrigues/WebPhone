@@ -7,7 +7,7 @@ import Pagination from "@/components/ui/pagination/pagination";
 import ConfirmDialog from "@/components/ui/dialogs/confirm-dialog";
 import UserDetailDialog from "./user-detail-dialog";
 import UserEditDialog from "./user-edit-dialog";
-import { User } from "@/types/admin-user";
+import { User } from "@/types/user";
 import { fetchWithAuth } from "@/utils/api";
 
 interface UserTableProps {

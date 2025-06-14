@@ -19,9 +19,9 @@ const ChatInput = ({ value, setValue, onEnter }: Props) => {
   return (
     <div className="w-full p-4 bg-white border-t border-gray-100">
       <div className="flex items-start gap-3">
-        <button className="p-2 rounded-lg text-gray-400 hover:text-gray-500 hover:bg-gray-50 transition-colors duration-200">
+        {/* <button className="p-2 rounded-lg text-gray-400 hover:text-gray-500 hover:bg-gray-50 transition-colors duration-200">
           <EllipsisHorizontalIcon className="w-5 h-5" />
-        </button>
+        </button> */}
         <div className="flex-1">
           <PlainText
             id="chat_input"

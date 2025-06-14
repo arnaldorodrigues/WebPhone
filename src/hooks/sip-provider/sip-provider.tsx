@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useCallback, useRef, useState } from "react";
+import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import React from "react";
 import { Session } from "sip.js/lib/api/session";
 import { SessionManager, SessionManagerOptions } from "sip.js/lib/platform/web";
@@ -12,6 +12,16 @@ import {
   CONNECT_STATUS,
   SessionTimer,
 } from "../../types/sip-type";
+import { useUserData } from "../use-userdata";
+import { addContact } from "@/lib/contact-action";
+
+// Define message type
+interface SipMessage {
+  id: string;
+  body: string;
+  from: string;
+  timestamp: Date;
+}
 
 export const SIPProvider = (props: {
   children: ReactNode;
@@ -32,6 +42,9 @@ export const SIPProvider = (props: {
   const [registerStatus, setRegisterStatus] = useState<RegisterStatus>(
     RegisterStatus.UNREGISTERED
   );
+  // Add messages state
+  const [messages, setMessages] = useState<Record<string, SipMessage>>({});
+  const { userData, refreshUserData } = useUserData();
 
   const updateSession = useCallback(
     (session: Session) => {
@@ -42,6 +55,21 @@ export const SIPProvider = (props: {
     },
     [setSessions]
   );
+
+  // Add message management functions
+  const addMessage = useCallback(
+    (message: SipMessage) => {
+      setMessages((messages) => ({
+        ...messages,
+        [message.id]: message,
+      }));
+    },
+    [setMessages]
+  );
+
+  const clearMessages = useCallback(() => {
+    setMessages({});
+  }, [setMessages]);
 
   const connectAndRegister = useCallback((sipConfig: SipConfig) => {
     const sessionManager = new SessionManager(
@@ -129,12 +157,20 @@ export const SIPProvider = (props: {
             );
             setStatus(CONNECT_STATUS.DISCONNECTED);
           },
+          onMessageReceived: (message) => {
+            const newMessage: SipMessage = {
+              id: Date.now().toString(),
+              body: message.request.body || "",
+              from: message.request.from?.uri?.user || "unknown",
+              timestamp: new Date(),
+            };
+            addMessage(newMessage);
+          },
         },
         ...mergedSessionManagerOptions,
       }
     );
     setSessionManager(sessionManager);
-
     sessionManager.connect();
   }, []);
 
@@ -155,6 +191,7 @@ export const SIPProvider = (props: {
         // Clear sessions
         setSessions({});
         setSessionTimer({});
+        clearMessages(); // Clear messages on disconnect
 
         // Update status
         setStatus(CONNECT_STATUS.WAIT_REQUEST_CONNECT);
@@ -167,11 +204,47 @@ export const SIPProvider = (props: {
         setSessionManager(null);
         setSessions({});
         setSessionTimer({});
+        clearMessages(); // Clear messages even on error
         setStatus(CONNECT_STATUS.DISCONNECTED);
         setRegisterStatus(RegisterStatus.UNREGISTERED);
       }
     }
-  }, [sessionManager, registerStatus]);
+  }, [sessionManager, registerStatus, clearMessages]);
+
+  useEffect(() => {
+    const processNewContacts = async () => {
+      let newContacts: string[] = [];
+      const keys = Object.keys(messages);
+
+      for (let i = 0; i < keys.length; i++) {
+        if (newContacts.includes(messages[keys[i]].from)) {
+          continue;
+        }
+        if (
+          userData.contacts.some(
+            (contact) => contact.number === messages[keys[i]].from
+          )
+        ) {
+          continue;
+        }
+        newContacts.push(messages[keys[i]].from);
+      }
+
+      await Promise.all(
+        newContacts.map((contactId) =>
+          addContact({
+            id: "",
+            name: "",
+            number: contactId,
+          })
+        )
+      );
+
+      refreshUserData();
+    };
+
+    processNewContacts();
+  }, [messages, refreshUserData]);
 
   return (
     <>
@@ -184,6 +257,8 @@ export const SIPProvider = (props: {
           registerStatus,
           sessions,
           sessionTimer,
+          messages, // Add messages to context
+          clearMessages, // Add clearMessages function to context
         }}
       >
         {children}

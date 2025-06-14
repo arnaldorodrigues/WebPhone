@@ -4,7 +4,13 @@ import UserModel from '@/models/User';
 import { Settings } from '@/models/Settings';
 import { _parse_token, getParsedToken } from '@/utils/auth';
 import bcrypt from 'bcryptjs';
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
+
+interface Contact {
+  id: string;
+  name?: string;
+  number?: string;
+}
 
 interface UserDocument extends Document {
   _id: any;
@@ -13,6 +19,7 @@ interface UserDocument extends Document {
   role: string;
   password: string;
   newPassword: string;
+  contacts?: Contact[];
   settings?: {
     wsServer: string;
     wsPort: string;
@@ -34,10 +41,65 @@ export async function GET(request: NextRequest) {
     }
 
     const token = _parse_token(t);
-
     await connectDB();
 
-    // Fetch user and populate settings
+    // Check if this is a candidate search request
+    const searchParams = request.nextUrl.searchParams;
+    const searchQuery = searchParams.get('query');
+    const count = searchParams.get('count');
+
+    if (searchQuery && count) {
+      // This is a candidate search request
+      const limit = parseInt(count);
+      
+      // Find users that match the query in name or SIP username
+      const users = await UserModel.aggregate([
+        {
+          $match: { role: "user", _id: { $ne: new mongoose.Types.ObjectId(token._id) } }
+        },
+        {
+          $lookup: {
+            from: "settings", // collection name, not model name
+            localField: "settings",
+            foreignField: "_id",
+            as: "settings"
+          }
+        },
+        {
+          $unwind: {
+            path: "$settings",
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $match: {
+            $or: [
+              { name: { $regex: searchQuery, $options: "i" } },
+              { "settings.sipUsername": { $regex: searchQuery, $options: "i" } }
+            ]
+          }
+        },
+        {
+          $limit: parseInt(count)
+        }
+      ]);
+      
+      console.log("dfaf", users)
+
+      // Transform users into candidate format
+      const candidates = users.map((user: any) => ({
+        id: user._id.toString(),
+        name: user.name,
+        number: user.settings?.sipUsername || ''
+      }));
+
+      return NextResponse.json({
+        success: true,
+        data: candidates
+      });
+    }
+
+    // Regular user fetch request
     const user = await UserModel.findById(token._id)
       .populate('settings')
       .select('-password')
@@ -60,6 +122,7 @@ export async function GET(request: NextRequest) {
       role: typedUser.role,
       status: typedUser.settings ? 'active' : 'inactive',
       createdAt: typedUser.createdAt,
+      contacts: [],
       settings: typedUser.settings ? {
         wsServer: typedUser.settings.wsServer,
         wsPort: typedUser.settings.wsPort,
@@ -71,15 +134,30 @@ export async function GET(request: NextRequest) {
       } : null,
     };
 
+    for (let i = 0; i < (typedUser.contacts?.length || 0); i++) {
+      const contact = await UserModel.findById(typedUser?.contacts?.[i])
+        .populate('settings')
+        .select('name settings')
+        .lean();
+
+      if (contact) {
+        formattedUser.contacts.push({
+          id: contact?._id?.toString(),
+          name: contact?.name || '',
+          number: contact?.settings?.sipUsername || '',
+        });
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: formattedUser
     });
 
   } catch (error) {
-    console.error('Error fetching user:', error);
+    console.error('Error in GET request:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch user' },
+      { success: false, error: 'Failed to process request' },
       { status: 500 }
     );
   }
@@ -215,6 +293,7 @@ export async function POST(request: NextRequest) {
       role: typedResponseUser.role,
       status: typedResponseUser.settings ? 'active' : 'inactive',
       createdAt: typedResponseUser.createdAt,
+      contacts: typedResponseUser.contacts || [],
       settings: typedResponseUser.settings ? {
         wsServer: typedResponseUser.settings.wsServer,
         wsPort: typedResponseUser.settings.wsPort,
@@ -251,6 +330,135 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json(
       { success: false, error: 'Failed to update user' },
+      { status: 500 }
+    );
+  }
+}
+
+// Add or delete contact
+export async function PUT(request: NextRequest) {
+  try {
+    const t = request.headers.get('cookies');
+
+    if (!t) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const token = _parse_token(t);
+    const { action, number } = await request.json();
+
+    await connectDB();
+
+    if (!action || !number) {
+      return NextResponse.json(
+        { success: false, error: 'Action and contact data are required' },
+        { status: 400 }
+      );
+    }
+
+    const user = await UserModel.findById(token._id);
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    const contact = (await UserModel.aggregate([
+      {
+        $lookup: {
+          from: "settings", // collection name in lowercase and plural
+          localField: "settings",
+          foreignField: "_id",
+          as: "settings"
+        }
+      },
+      { $unwind: "$settings" },
+      { $match: { "settings.sipUsername": number } }
+    ]))[0];
+
+    console.log("contact", contact)
+
+    if (!contact) {
+      return NextResponse.json(
+        { success: false, error: "That number not found"},
+        { status: 404}
+      )
+    }
+
+    if (action === 'add') {
+      console.log('user', user, contact._id)
+      // Check if contact already exists
+      const contactExists = user.contacts.some(
+        (c: any) => c.toString() === contact._id.toString()
+      );
+      
+      if (contactExists) {
+        return NextResponse.json(
+          { success: false, error: 'Contact already exists' },
+          { status: 400 }
+        );
+      }
+      
+      if(contact && contact._id) user.contacts.push(contact._id);
+    } else if (action === 'remove') {
+      user.contacts = user.contacts.filter(
+        (c: any) => c !== contact._id
+      );
+    } else {
+      return NextResponse.json(
+        { success: false, error: 'Invalid action' },
+        { status: 400 }
+      );
+    }
+
+    await user.save();
+
+    // Fetch updated user data
+    const updatedUser = await UserModel.findById(user._id)
+      .populate('settings')
+      .select('-password')
+      .lean();
+
+    if (!updatedUser) {
+      return NextResponse.json(
+        { success: false, error: 'Failed to retrieve updated user' },
+        { status: 500 }
+      );
+    }
+
+    const typedUser = updatedUser as unknown as UserDocument;
+
+    // Format response data
+    const formattedUser = {
+      id: typedUser._id.toString(),
+      name: typedUser.name,
+      email: typedUser.email,
+      role: typedUser.role,
+      status: typedUser.settings ? 'active' : 'inactive',
+      createdAt: typedUser.createdAt,
+      contacts: typedUser.contacts || [],
+      settings: typedUser.settings ? {
+        wsServer: typedUser.settings.wsServer,
+        wsPort: typedUser.settings.wsPort,
+        wsPath: typedUser.settings.wsPath,
+        domain: typedUser.settings.domain,
+        sipUsername: typedUser.settings.sipUsername,
+        sipPassword: typedUser.settings.sipPassword,
+        updatedAt: typedUser.settings.updatedAt,
+      } : null,
+    };
+
+    return NextResponse.json({
+      success: true,
+      message: `Contact ${action}ed successfully`,
+      data: formattedUser
+    });
+
+  } catch (error) {
+    console.error('Error in UPDATE request:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to process request' },
       { status: 500 }
     );
   }
