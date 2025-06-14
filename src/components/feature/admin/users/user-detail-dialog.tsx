@@ -11,7 +11,7 @@ import {
   PencilIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import { User } from "@/types/admin-user";
+import { User } from "@/types/user";
 
 interface UserDetailDialogProps {
   isOpen: boolean;

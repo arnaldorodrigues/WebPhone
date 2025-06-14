@@ -8,7 +8,7 @@ import DropdownSelect from "@/components/ui/inputs/dropdown-select";
 import UserTable from "@/components/feature/admin/users/user-table";
 import { fetchWithAuth } from "@/utils/api";
 import UsersPageSkeleton from "@/components/feature/admin/users/users-page-skeleton";
-import { User } from "@/types/admin-user";
+import { User } from "@/types/user";
 import UserEditDialog from "@/components/feature/admin/users/user-edit-dialog";
 
 interface ApiResponse {

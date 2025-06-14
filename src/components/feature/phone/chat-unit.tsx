@@ -11,7 +11,7 @@ const ChatUnit = ({
     <div className={`w-full flex ${isMe ? "justify-end" : "justify-start"}`}>
       <div
         className={`
-          max-w-md p-4 rounded-2xl break-words shadow-sm
+          max-w-2xl p-4 rounded-2xl break-words shadow-sm
           ${
             isMe
               ? "bg-indigo-500 text-white"

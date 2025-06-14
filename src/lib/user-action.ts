@@ -1,42 +1,6 @@
 import { fetchWithAuth } from "@/utils/api";
-
-export interface UserSettings {
-  wsServer: string;
-  wsPort: string;
-  wsPath: string;
-  domain: string;
-  sipUsername: string;
-  sipPassword: string;
-  updatedAt?: string;
-}
-
-export interface UserData {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  status: 'active' | 'inactive';
-  createdAt: string;
-  settings: UserSettings | null;
-}
-
-// Default user data
-export const defaultUserData: UserData = {
-  id: "",
-  name: "",
-  email: "",
-  role: "user",
-  status: "inactive",
-  createdAt: new Date().toISOString(),
-  settings: {
-    wsServer: "",
-    wsPort: "",
-    wsPath: "/",
-    domain: "",
-    sipUsername: "",
-    sipPassword: "",
-  },
-};
+import { defaultUserData } from "@/types/user";
+import { UserData } from "@/types/user";
 
 // User-specific operations
 export const userAction = {

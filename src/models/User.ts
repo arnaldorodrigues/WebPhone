@@ -26,10 +26,11 @@ const userSchema: Schema = new Schema({
     type: Date,
     default: Date.now,
   },
-  settings:{
+  settings: {
     type: Schema.Types.ObjectId,
     ref: 'Settings'
-  }
+  },
+  contacts: [Schema.Types.ObjectId]
 });
 
 const UserModel = mongoose.models.User || mongoose.model<User>('User', userSchema);

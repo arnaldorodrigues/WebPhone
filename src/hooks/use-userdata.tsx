@@ -7,7 +7,8 @@ import {
   createContext,
   useContext,
 } from "react";
-import { userAction, UserData } from "@/lib/user-action";
+import { userAction } from "@/lib/user-action";
+import { UserData } from "@/types/user";
 import { SipConfig } from "@/types/sip-type";
 
 // Create context

@@ -407,6 +407,7 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
           placeholder="eg: telemojo.net"
           formData={formData}
           readOnly={true}
+          required={false}
         />
       </div>
     ),

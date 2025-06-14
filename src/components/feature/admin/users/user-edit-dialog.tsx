@@ -5,7 +5,7 @@ import { Dialog } from "@/components/ui/dialogs/dialog";
 import Input from "@/components/ui/inputs/input";
 import DropdownSelect from "@/components/ui/inputs/dropdown-select";
 import { UserIcon, CogIcon, CheckIcon } from "@heroicons/react/24/outline";
-import { User } from "@/types/admin-user";
+import { User } from "@/types/user";
 import { fetchWithAuth } from "@/utils/api";
 import { ServerConfig } from "@/types/server-type";
 

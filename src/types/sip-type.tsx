@@ -8,6 +8,13 @@ import { SessionManager } from "sip.js/lib/platform/web";
 //   refVideoRemote?: HTMLVideoElement;
 // }
 
+export interface SipMessage {
+  id: string;
+  body: string;
+  from: string;
+  timestamp: Date;
+}
+
 export enum CONNECT_STATUS {
   WAIT_REQUEST_CONNECT = "WAIT_REQUEST_CONNECT",
   CONNECTED = "CONNECTED",
@@ -37,6 +44,8 @@ export interface IProviderContext {
   registerStatus: RegisterStatus;
   sessions: Record<string, Session>;
   sessionTimer: SessionTimer;
+  messages: Record<string, SipMessage>;
+  clearMessages: () => void;
 }
 
 export enum SessionDirection {
