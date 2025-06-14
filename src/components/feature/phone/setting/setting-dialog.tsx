@@ -239,6 +239,7 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
           domain: userData.settings?.domain || "",
           sipUsername: formData.sipUsername || "",
           sipPassword: formData.sipPassword || "",
+          updatedAt: new Date().toISOString(),
         },
       });
 

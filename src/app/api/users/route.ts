@@ -4,7 +4,7 @@ import UserModel from '@/models/User';
 import { Settings } from '@/models/Settings';
 import { _parse_token, getParsedToken } from '@/utils/auth';
 import bcrypt from 'bcryptjs';
-import mongoose, { Document } from 'mongoose';
+import mongoose, { Document, Types } from 'mongoose';
 
 interface Contact {
   id: string;
@@ -115,7 +115,24 @@ export async function GET(request: NextRequest) {
     const typedUser = user as unknown as UserDocument;
       
     // Format response data
-    const formattedUser = {
+    const formattedUser: {
+      id: string;
+      name: string;
+      email: string;
+      role: string;
+      status: string;
+      createdAt: Date;
+      contacts: Contact[];
+      settings: {
+        wsServer: string;
+        wsPort: string;
+        wsPath: string;
+        domain: string;
+        sipUsername: string;
+        sipPassword: string;
+        updatedAt: Date;
+      } | null;
+    } = {
       id: typedUser._id.toString(),
       name: typedUser.name,
       email: typedUser.email,
@@ -138,14 +155,21 @@ export async function GET(request: NextRequest) {
       const contact = await UserModel.findById(typedUser?.contacts?.[i])
         .populate('settings')
         .select('name settings')
-        .lean();
+        .lean() as unknown as {
+          _id: Types.ObjectId;
+          name: string;
+          settings?: {
+            sipUsername: string;
+          };
+        };
 
       if (contact) {
-        formattedUser.contacts.push({
-          id: contact?._id?.toString(),
-          name: contact?.name || '',
-          number: contact?.settings?.sipUsername || '',
-        });
+        const newContact: Contact = {
+          id: contact._id.toString(),
+          name: contact.name || '',
+          number: contact.settings?.sipUsername || '',
+        };
+        formattedUser.contacts.push(newContact);
       }
     }
 
@@ -286,7 +310,24 @@ export async function POST(request: NextRequest) {
     const typedResponseUser = responseUser as unknown as UserDocument;
 
     // Format response data
-    const formattedUser = {
+    const formattedUser: {
+      id: string;
+      name: string;
+      email: string;
+      role: string;
+      status: string;
+      createdAt: Date;
+      contacts: Contact[];
+      settings: {
+        wsServer: string;
+        wsPort: string;
+        wsPath: string;
+        domain: string;
+        sipUsername: string;
+        sipPassword: string;
+        updatedAt: Date;
+      } | null;
+    } = {
       id: typedResponseUser._id.toString(),
       name: typedResponseUser.name,
       email: typedResponseUser.email,
@@ -375,7 +416,13 @@ export async function PUT(request: NextRequest) {
       },
       { $unwind: "$settings" },
       { $match: { "settings.sipUsername": number } }
-    ]))[0];
+    ]))[0] as unknown as {
+      _id: Types.ObjectId;
+      name: string;
+      settings: {
+        sipUsername: string;
+      };
+    };
 
     console.log("contact", contact)
 
@@ -390,7 +437,7 @@ export async function PUT(request: NextRequest) {
       console.log('user', user, contact._id)
       // Check if contact already exists
       const contactExists = user.contacts.some(
-        (c: any) => c.toString() === contact._id.toString()
+        (c: Types.ObjectId) => c.toString() === contact._id.toString()
       );
       
       if (contactExists) {
@@ -403,7 +450,7 @@ export async function PUT(request: NextRequest) {
       if(contact && contact._id) user.contacts.push(contact._id);
     } else if (action === 'remove') {
       user.contacts = user.contacts.filter(
-        (c: any) => c !== contact._id
+        (c: Types.ObjectId) => c.toString() !== contact._id.toString()
       );
     } else {
       return NextResponse.json(
@@ -430,7 +477,24 @@ export async function PUT(request: NextRequest) {
     const typedUser = updatedUser as unknown as UserDocument;
 
     // Format response data
-    const formattedUser = {
+    const formattedUser: {
+      id: string;
+      name: string;
+      email: string;
+      role: string;
+      status: string;
+      createdAt: Date;
+      contacts: Contact[];
+      settings: {
+        wsServer: string;
+        wsPort: string;
+        wsPath: string;
+        domain: string;
+        sipUsername: string;
+        sipPassword: string;
+        updatedAt: Date;
+      } | null;
+    } = {
       id: typedUser._id.toString(),
       name: typedUser.name,
       email: typedUser.email,
