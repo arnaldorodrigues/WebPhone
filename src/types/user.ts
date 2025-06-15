@@ -25,6 +25,7 @@ interface Contact {
   email?: string;
   createdAt?: string;
   updatedAt?: string;
+  unreadCount?: number;
 }
 
 export interface UserData {

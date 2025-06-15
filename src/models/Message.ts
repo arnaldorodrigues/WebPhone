@@ -13,6 +13,11 @@ const messageSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  status: {
+    type: String,
+    default: 'unread',
+    enum: ['unread', 'read', 'failed'],
+  },
   timestamp: {
     type: Date,
     default: Date.now,

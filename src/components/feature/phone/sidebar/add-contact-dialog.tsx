@@ -4,6 +4,7 @@ import SearchInput from "@/components/ui/inputs/search-input";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { Contact } from "@/types/user";
 import { addContact, getCandidates } from "@/lib/contact-action";
+import { useUserData } from "@/hooks/use-userdata";
 
 interface AddContactDialogProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ const AddContactDialog = ({ isOpen, onClose }: AddContactDialogProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [candidates, setCandidates] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const { refreshUserData } = useUserData();
 
   // Mock candidates for demonstration - replace with actual API call
   useEffect(() => {
@@ -36,6 +38,7 @@ const AddContactDialog = ({ isOpen, onClose }: AddContactDialogProps) => {
   const handleAddContact = async () => {
     if (selectedContact) {
       await addContact(selectedContact);
+      await refreshUserData();
     }
     handleCancel();
   };

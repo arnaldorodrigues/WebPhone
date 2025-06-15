@@ -10,12 +10,13 @@ const ContactCard = ({
   contact: Contact;
   isSelected: boolean;
 }) => {
-  const { id, name, number } = contact;
+  const { id, name, number, unreadCount = 0 } = contact;
+
   return (
     <Link
       href={`/phone/${id}`}
       className={`w-full p-3 flex rounded-lg gap-3 border-l-4 border-transparent hover:border-indigo-500 hover:bg-gray-100 transition-all duration-200 ease-in-out group ${
-        isSelected ? "border-indigo-500! bg-gray-100" : ""
+        isSelected ? "border-indigo-500! bg-blue-50" : ""
       }`}
     >
       <div className="rounded-full w-12 h-12 bg-gradient-to-br from-green-400 to-green-500 shadow-sm flex-shrink-0 flex items-center justify-center">
@@ -35,6 +36,13 @@ const ContactCard = ({
           >
             {name || number}
           </p>
+          {unreadCount > 0 && (
+            <div className="ml-auto flex-shrink-0">
+              <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-medium text-white bg-indigo-500 rounded-full">
+                {unreadCount}
+              </span>
+            </div>
+          )}
         </div>
         <div className="flex flex-1 justify-between mt-1">
           <p className="truncate flex-1 text-sm text-gray-500">{number}</p>
