@@ -5,6 +5,8 @@ interface Props {
   // className?: string;
   placeholder?: string;
   value: string;
+  rows?: number;
+  maxRows?: number;
   onChange: (s: string) => void;
   onEnter: () => void;
 }
@@ -15,6 +17,8 @@ const PlainText = ({
   required = false,
   placeholder,
   value,
+  rows = 1,
+  maxRows = 3,
   onChange,
   onEnter,
 }: Props) => {
@@ -23,10 +27,13 @@ const PlainText = ({
       id={id}
       name={name}
       required={required}
-      className="appearance-none block w-full px-4 py-2.5 border border-gray-200 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all duration-200 hover:border-gray-300 resize-none min-h-[80px]"
+      className="appearance-none block w-full px-4 py-2.5 outline-none ring-2 border-1 ring-indigo-400 border-indigo-400 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all duration-200 hover:outline-none hover:ring-2 hover:ring-indigo-500 hover:border-indigo-500 resize-none min-h-[40px]"
       placeholder={placeholder}
       value={value}
-      rows={3}
+      rows={Math.min(
+        Math.max((value.match(/\n/g) || []).length + 1, rows),
+        maxRows
+      )}
       onChange={(e) => onChange(e.target.value)}
       onKeyDown={(e) => {
         if (e.key === "Enter") {

@@ -84,8 +84,6 @@ export async function GET(request: NextRequest) {
         }
       ]);
       
-      console.log("dfaf", users)
-
       // Transform users into candidate format
       const candidates = users.map((user: any) => ({
         id: user._id.toString(),
@@ -424,8 +422,6 @@ export async function PUT(request: NextRequest) {
       };
     };
 
-    console.log("contact", contact)
-
     if (!contact) {
       return NextResponse.json(
         { success: false, error: "That number not found"},
@@ -434,7 +430,6 @@ export async function PUT(request: NextRequest) {
     }
 
     if (action === 'add') {
-      console.log('user', user, contact._id)
       // Check if contact already exists
       const contactExists = user.contacts.some(
         (c: Types.ObjectId) => c.toString() === contact._id.toString()

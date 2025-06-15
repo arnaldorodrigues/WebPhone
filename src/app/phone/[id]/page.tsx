@@ -9,13 +9,18 @@ import { useUserData } from "@/hooks/use-userdata";
 import { fetchWithAuth } from "@/utils/api";
 import { addContact } from "@/lib/contact-action";
 import { useParams } from "next/navigation";
+import { readMessage } from "@/lib/message-action";
 
 const Page = () => {
   const params = useParams();
   const { sessionManager, messages: sipMessages } = useSIPProvider();
-  const { userData } = useUserData();
+  const { userData, refreshUserData } = useUserData();
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchMessages();
+  }, [sipMessages]);
 
   // Save message to database and send via SIP
   const handleSendMessage = async (text: string) => {
@@ -26,14 +31,18 @@ const Page = () => {
       const contact = userData.contacts.find(
         (contact) => contact.id === params.id
       );
+
       if (!contact) {
         return;
       }
+
       // Send message via SIP
-      await sessionManager.message(
-        `sip:${contact.number}@${userData.settings.domain}`,
-        text
-      );
+      if (sessionManager) {
+        await sessionManager.message(
+          `sip:${contact.number}@${userData.settings.domain}`,
+          text
+        );
+      }
 
       // Save message to database
       const response = await fetchWithAuth("/api/messages", {
@@ -64,15 +73,16 @@ const Page = () => {
 
       if (data.success) {
         setMessages(data.data);
+        data.data.forEach(async (message: any) => {
+          await readMessage(message._id);
+        });
       }
+
+      refreshUserData();
     } catch (error) {
       console.error("Error fetching messages:", error);
     }
   };
-
-  useEffect(() => {
-    fetchMessages();
-  }, [sipMessages]);
 
   return (
     <div className="w-full h-[calc(100vh-4rem)] flex flex-col justify-between bg-blue-50">
