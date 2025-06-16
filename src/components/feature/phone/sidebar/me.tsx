@@ -107,9 +107,6 @@ export function Me() {
         });
       }
 
-      // Properly disconnect and unregister from SIP server
-      await disconnect();
-
       await logout();
     } catch (error) {
       console.error("Error during signout:", error);

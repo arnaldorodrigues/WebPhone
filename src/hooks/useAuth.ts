@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getToken, setToken, removeToken } from '@/utils/auth';
 import { useUserData } from './use-userdata';
+import { useSIPProvider } from './sip-provider/sip-provider-context';
 
 const SETTINGS_STORAGE_KEY = 'user_settings';
 
@@ -12,6 +13,7 @@ export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const {refreshUserData, clearUserData} = useUserData();
+  const {disconnect} = useSIPProvider();
   
   useEffect(() => {
     const token = getToken();
@@ -102,6 +104,11 @@ export const useAuth = () => {
       console.error('Logout error:', error);
       // Even if there's an error, still redirect to signin
       router.push('/signin');
+    }
+    finally {
+      setIsLoading(false);
+      setIsAuthenticated(false);
+      await disconnect();
     }
   };
 

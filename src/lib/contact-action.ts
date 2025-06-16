@@ -76,3 +76,20 @@ export async function removeContact(contact: Contact): Promise<boolean> {
     return false;
   }
 }
+
+export async function fetchAllRegisteredExtensionNumbers () {
+  try {
+    const response = await fetch('https://64.23.231.206/api/en/registered', {
+      method: 'GET',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch all registered extension numbers');
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Error fetching all registered extension numbers:', error);
+  }
+}
