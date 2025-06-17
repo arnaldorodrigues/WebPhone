@@ -14,6 +14,7 @@ import {
 } from "../../types/sip-type";
 import { useUserData } from "../use-userdata";
 import { addContact } from "@/lib/contact-action";
+import { useNotification } from "@/contexts/notification-context";
 
 // Define message type
 interface SipMessage {
@@ -30,6 +31,7 @@ export const SIPProvider = (props: {
   const { mergedSessionManagerOptions = {}, children } = props;
   const refAudioRemote = useRef<HTMLAudioElement>(null);
   const refVideoRemote = useRef<HTMLVideoElement>(null);
+  const { showNotification } = useNotification();
 
   const [sessions, setSessions] = useState<Record<string, Session>>({});
   const [sessionTimer, setSessionTimer] = useState<SessionTimer>({});
@@ -71,108 +73,138 @@ export const SIPProvider = (props: {
     setMessages({});
   }, [setMessages]);
 
-  const connectAndRegister = useCallback((sipConfig: SipConfig) => {
-    const sessionManager = new SessionManager(
-      `${sipConfig?.wsServer || ""}:${sipConfig?.wsPort || ""}${
-        sipConfig?.wsPath || ""
-      }`,
-      {
-        aor: `sip:${sipConfig.username}@${sipConfig.server}`,
-        userAgentOptions: {
-          authorizationUsername: sipConfig.username,
-          authorizationPassword: sipConfig.password,
-        },
-        media: {
-          constraints: {
-            audio: true,
-            video: false,
+  const connectAndRegister = useCallback(
+    (sipConfig: SipConfig) => {
+      const sessionManager = new SessionManager(
+        `${sipConfig?.wsServer || ""}:${sipConfig?.wsPort || ""}${
+          sipConfig?.wsPath || ""
+        }`,
+        {
+          aor: `sip:${sipConfig.username}@${sipConfig.server}`,
+          userAgentOptions: {
+            authorizationUsername: sipConfig.username,
+            authorizationPassword: sipConfig.password,
           },
-          remote: {
-            audio: refAudioRemote.current as HTMLAudioElement,
-            // video: refVideoRemote.current as HTMLVideoElement,
+          media: {
+            constraints: {
+              audio: true,
+              video: false,
+            },
+            remote: {
+              audio: refAudioRemote.current as HTMLAudioElement,
+            },
           },
-        },
-        delegate: {
-          onCallCreated: (session) => {
-            session.stateChange.addListener((state) => {
-              console.info(
-                ErrorMessageLevel1.SIP_PROVIDER,
-                `Session ${session.id} changed to ${state}`
-              );
+          delegate: {
+            onCallCreated: (session) => {
+              session.stateChange.addListener((state) => {
+                console.info(
+                  ErrorMessageLevel1.SIP_PROVIDER,
+                  `Session ${session.id} changed to ${state}`
+                );
+                updateSession(session);
+              });
               updateSession(session);
-            });
-            updateSession(session);
-            setSessionTimer((timer) => ({
-              ...timer,
-              [session.id]: {
-                createdAt: new Date(),
-              },
-            }));
+              setSessionTimer((timer) => ({
+                ...timer,
+                [session.id]: {
+                  createdAt: new Date(),
+                },
+              }));
+            },
+            onCallAnswered: (session) => {
+              updateSession(session);
+              setSessionTimer((timer) => ({
+                ...timer,
+                [session.id]: {
+                  ...(timer[session.id] || {}),
+                  answeredAt: new Date(),
+                },
+              }));
+              showNotification(
+                "Call Status",
+                "Call connected successfully",
+                "success"
+              );
+            },
+            onCallHangup: (session) => {
+              updateSession(session);
+              setSessionTimer((timer) => ({
+                ...timer,
+                [session.id]: {
+                  ...(timer[session.id] || {}),
+                  hangupAt: new Date(),
+                },
+              }));
+              showNotification("Call Status", "Call has ended", "info");
+            },
+            onCallReceived: (session) => {
+              updateSession(session);
+              setSessionTimer((timer) => ({
+                ...timer,
+                [session.id]: {
+                  ...(timer[session.id] || {}),
+                  receivedAt: new Date(),
+                },
+              }));
+              const caller = session.remoteIdentity.uri.user;
+              showNotification("Incoming Call", `Call from ${caller}`, "info");
+            },
+            onRegistered: () => {
+              setRegisterStatus(RegisterStatus.REGISTERED);
+              showNotification(
+                "Connection Status",
+                "Successfully connected to SIP server",
+                "success"
+              );
+            },
+            onUnregistered: () => {
+              setRegisterStatus(RegisterStatus.UNREGISTERED);
+              showNotification(
+                "Connection Status",
+                "Disconnected from SIP server",
+                "warning"
+              );
+            },
+            onServerConnect() {
+              setStatus(CONNECT_STATUS.CONNECTED);
+              sessionManager.register();
+            },
+            onServerDisconnect(error) {
+              console.error(
+                ErrorMessageLevel1.SIP_PROVIDER,
+                ErrorMessageLevel2.FAILED_CONNECT_SIP_USER,
+                error
+              );
+              setStatus(CONNECT_STATUS.DISCONNECTED);
+              showNotification(
+                "Connection Error",
+                "Failed to connect to SIP server",
+                "error"
+              );
+            },
+            onMessageReceived: (message) => {
+              const newMessage: SipMessage = {
+                id: Date.now().toString(),
+                body: message.request.body || "",
+                from: message.request.from?.uri?.user || "unknown",
+                timestamp: new Date(),
+              };
+              addMessage(newMessage);
+              showNotification(
+                "New Message",
+                `Message received from ${newMessage.from}`,
+                "info"
+              );
+            },
           },
-          onCallAnswered: (session) => {
-            updateSession(session);
-            setSessionTimer((timer) => ({
-              ...timer,
-              [session.id]: {
-                ...(timer[session.id] || {}),
-                answeredAt: new Date(),
-              },
-            }));
-          },
-          onCallHangup: (session) => {
-            updateSession(session);
-            setSessionTimer((timer) => ({
-              ...timer,
-              [session.id]: {
-                ...(timer[session.id] || {}),
-                hangupAt: new Date(),
-              },
-            }));
-          },
-          onCallReceived: (session) => {
-            updateSession(session);
-            setSessionTimer((timer) => ({
-              ...timer,
-              [session.id]: {
-                ...(timer[session.id] || {}),
-                receivedAt: new Date(),
-              },
-            }));
-          },
-          onRegistered: () => {
-            setRegisterStatus(RegisterStatus.REGISTERED);
-          },
-          onUnregistered: () => {
-            setRegisterStatus(RegisterStatus.UNREGISTERED);
-          },
-          onServerConnect() {
-            setStatus(CONNECT_STATUS.CONNECTED);
-            sessionManager.register();
-          },
-          onServerDisconnect(error) {
-            console.error(
-              ErrorMessageLevel1.SIP_PROVIDER,
-              ErrorMessageLevel2.FAILED_CONNECT_SIP_USER,
-              error
-            );
-            setStatus(CONNECT_STATUS.DISCONNECTED);
-          },
-          onMessageReceived: (message) => {
-            const newMessage: SipMessage = {
-              id: Date.now().toString(),
-              body: message.request.body || "",
-              from: message.request.from?.uri?.user || "unknown",
-              timestamp: new Date(),
-            };
-            addMessage(newMessage);
-          },
-        },
-        ...mergedSessionManagerOptions,
-      }
-    );
-    setSessionManager(sessionManager);
-    sessionManager.connect();
-  }, []);
+          ...mergedSessionManagerOptions,
+        }
+      );
+      setSessionManager(sessionManager);
+      sessionManager.connect();
+    },
+    [showNotification]
+  );
 
   const disconnect = useCallback(async () => {
     if (sessionManager) {
