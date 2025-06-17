@@ -6,13 +6,24 @@ import AddContactDialog from "./add-contact-dialog";
 import { useUserData } from "@/hooks/use-userdata";
 import { useParams } from "next/navigation";
 import { fetchMessageCountByContact } from "@/lib/message-action";
+import { fetchAllRegisteredExtensionNumbers } from "@/lib/contact-action";
 
 const ContactList = () => {
   const { userData } = useUserData();
   const [contacts, setContacts] = useState<any[]>([]);
+  const [allRegistrations, setAllRegistrations] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { id } = useParams();
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const allRegistrations = await fetchAllRegisteredExtensionNumbers();
+      setAllRegistrations(allRegistrations);
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -22,13 +33,17 @@ const ContactList = () => {
             contact.id,
             "unread"
           );
-          return { ...contact, unreadCount };
+          return {
+            ...contact,
+            unreadCount,
+            isOnline: allRegistrations.includes(contact.number),
+          };
         })
       );
       setContacts(temp);
     };
     fetchContacts();
-  }, [userData]);
+  }, [userData, allRegistrations]);
 
   const filteredContacts = contacts?.filter(
     (contact) =>

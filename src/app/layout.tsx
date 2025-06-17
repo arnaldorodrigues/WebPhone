@@ -6,6 +6,7 @@ import { SIPProvider } from "@/hooks/sip-provider/sip-provider";
 import { PhoneStateProvider } from "@/hooks/use-phonestate-context";
 import ProtectedRoute from "@/components/ui/ProtectedRoute";
 import { UserDataProvider } from "@/hooks/use-userdata";
+import { NotificationProvider } from "@/contexts/notification-context";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,17 +27,19 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         {/* <ProtectedRoute> */}
-        <UserDataProvider>
-          <PhoneStateProvider>
-            <SIPProvider>
-              <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
-                <div className="max-w-7xl min-h-screen flex flex-col mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                  {children}
+        <NotificationProvider>
+          <UserDataProvider>
+            <PhoneStateProvider>
+              <SIPProvider>
+                <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
+                  <div className="max-w-7xl min-h-screen flex flex-col mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    {children}
+                  </div>
                 </div>
-              </div>
-            </SIPProvider>
-          </PhoneStateProvider>
-        </UserDataProvider>
+              </SIPProvider>
+            </PhoneStateProvider>
+          </UserDataProvider>
+        </NotificationProvider>
         {/* </ProtectedRoute> */}
       </body>
     </html>

@@ -7,10 +7,10 @@ const ContactCard = ({
   contact,
   isSelected,
 }: {
-  contact: Contact;
+  contact: Contact & { isOnline?: boolean };
   isSelected: boolean;
 }) => {
-  const { id, name, number, unreadCount = 0 } = contact;
+  const { id, name, number, unreadCount = 0, isOnline } = contact;
 
   return (
     <Link
@@ -19,10 +19,17 @@ const ContactCard = ({
         isSelected ? "border-indigo-500! bg-blue-50" : ""
       }`}
     >
-      <div className="rounded-full w-12 h-12 bg-gradient-to-br from-green-400 to-green-500 shadow-sm flex-shrink-0 flex items-center justify-center">
-        <span className="text-lg font-semibold text-white">
-          {name?.charAt(0).toUpperCase()}
-        </span>
+      <div className="relative">
+        <div className="rounded-full w-12 h-12 bg-gradient-to-br from-green-400 to-green-500 shadow-sm flex-shrink-0 flex items-center justify-center">
+          <span className="text-lg font-semibold text-white">
+            {name?.charAt(0).toUpperCase()}
+          </span>
+        </div>
+        <div
+          className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white ${
+            isOnline ? "bg-green-500" : "bg-gray-400"
+          }`}
+        />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex gap-2 items-center">
