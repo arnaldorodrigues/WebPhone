@@ -1,26 +1,29 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getParsedToken, getToken } from "@/utils/auth";
+import { getParsedToken } from "@/utils/auth";
 import { Dialog } from "@/components/ui/dialogs/dialog";
 import { TabView } from "@/components/ui/views/tab-view";
 import Input from "@/components/ui/inputs/input";
-import { Settings, settingsAction } from "@/lib/action";
-
 import { UserCircleIcon } from "@heroicons/react/24/solid";
-import { useSettings } from "@/hooks/use-settings";
+import { useUserData } from "@/hooks/use-userdata";
 import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
-import { SipConfig } from "@/types/sip-type";
-import DropdownSelect from "@/components/ui/inputs/dropdown-select";
-import { fetchWithAuth } from "@/utils/api";
-import { ServerConfig } from "@/types/server-type";
-
-type ChatEngine = "SIP" | "XMPP";
 
 // Validation errors type
 type ValidationErrors = {
-  [key in keyof Settings]?: string;
+  [key: string]: string;
 };
+
+interface SettingDLG {
+  name: string;
+  email: string;
+  sipUsername?: string;
+  sipPassword?: string;
+  password?: string;
+  newPassword?: string;
+  confirmPassword?: string;
+  domain?: string;
+}
 
 const InputRow = ({
   name,
@@ -37,8 +40,8 @@ const InputRow = ({
   label: string;
   placeholder: string;
   required?: boolean;
-  formData: Settings;
-  setFormData: (s: string) => void;
+  formData: SettingDLG;
+  setFormData?: (s: string) => void;
   readOnly?: boolean;
   error?: string;
   type?: string;
@@ -58,8 +61,8 @@ const InputRow = ({
           type={type}
           required={required}
           placeholder={placeholder}
-          value={String(formData[name as keyof Settings] || "")}
-          onChange={(e) => setFormData(e.target.value)}
+          value={String(formData[name as keyof SettingDLG] || "")}
+          onChange={(e) => setFormData?.(e.target.value)}
           readOnly={readOnly}
           className={`${readOnly ? "bg-gray-100 cursor-not-allowed" : ""} ${
             hasError
@@ -79,9 +82,21 @@ interface SettingDialogProps {
 }
 
 const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
-  const { settings, updateSettings } = useSettings();
-  const [formData, setFormData] = useState<Settings>(settings);
-  const [serverList, setServerList] = useState<ServerConfig[]>([]);
+  const {
+    userData,
+    setUserData,
+    isLoading: userDataLoading,
+    refreshUserData,
+  } = useUserData();
+  const [formData, setFormData] = useState<SettingDLG>({
+    name: "",
+    email: "",
+    password: "",
+    newPassword: "",
+    sipUsername: "",
+    sipPassword: "",
+    domain: "",
+  });
   const [isDirty, setIsDirty] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -93,84 +108,76 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
 
   const { connectAndRegister } = useSIPProvider();
 
+  // Load user data
   useEffect(() => {
-    // Get server list from database
-    const getServerList = async () => {
-      try {
-        const data = await fetchWithAuth("/api/admin/servers", {
-          method: "GET",
-        });
-
-        if (data.ok) {
-          const result = await data.json();
-          setServerList(result?.data);
-        }
-      } catch (error) {
-        console.error("Error loading server list:", error);
-      }
-    };
-    getServerList();
-  }, []);
-
-  useEffect(() => {
-    setFormData(settings);
-  }, [settings]);
-
-  // Load settings and auth token
-  useEffect(() => {
-    const loadSettings = async () => {
+    const loadUserData = async () => {
       try {
         setError(null);
         const token = getParsedToken();
         if (!token?.email) {
           throw new Error("No email found in token");
         }
-
-        // Load settings from database
-        const savedSettings = settings;
-        if (savedSettings) {
+        if (userData) {
           setFormData({
-            ...savedSettings,
+            name: userData.name || "",
+            email: userData.email || "",
+            sipUsername: userData.settings?.sipUsername || "",
+            sipPassword: userData.settings?.sipPassword || "",
+            password: "",
+            newPassword: "",
+            confirmPassword: "",
+            domain: userData.settings?.domain || "",
           });
         }
       } catch (error) {
-        console.error("Error loading settings:", error);
+        console.error("Error loading user data:", error);
         setError(
-          error instanceof Error ? error.message : "Failed to load settings"
+          error instanceof Error ? error.message : "Failed to load user data"
         );
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (isOpen) {
-      loadSettings();
+    if (isOpen && !isSaving) {
+      loadUserData();
     }
-  }, [isOpen]);
+  }, [isOpen, userData, isSaving]);
 
   // Track changes to detect if form is dirty
   useEffect(() => {
-    const currentSettings = {
-      ...formData,
+    if (!userData) return;
+    const currentData = {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      newPassword: formData.newPassword,
+      sipUsername: formData.sipUsername,
+      sipPassword: formData.sipPassword,
     };
-    const savedSettings = settings;
-    setIsDirty(
-      JSON.stringify(currentSettings) !== JSON.stringify(savedSettings)
-    );
-  }, [formData]);
+
+    const savedData = {
+      name: userData.name,
+      email: userData.email,
+      password: "",
+      newPassword: "",
+      sipUsername: userData.settings?.sipUsername,
+      sipPassword: userData.settings?.sipPassword,
+    };
+
+    setIsDirty(JSON.stringify(currentData) !== JSON.stringify(savedData));
+  }, [formData, userData]);
 
   // Validation function
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
 
-    // Define required fields based on current state
-    const requiredFields: (keyof Settings)[] = [
+    // Define required fields
+    const requiredFields: (keyof SettingDLG)[] = [
       "name",
-      "wsServer",
-      "wsPort",
-      "domain",
       "sipUsername",
       "sipPassword",
+      "email",
     ];
 
     // Check each required field
@@ -180,6 +187,19 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
         errors[field] = "This field is required";
       }
     });
+
+    // Validate password change if new password is provided
+    if (formData.newPassword) {
+      if (!formData.password) {
+        errors.password = "Current password is required to set new password";
+      }
+      if (formData.newPassword !== formData.confirmPassword) {
+        errors.confirmPassword = "Passwords do not match";
+      }
+      if (formData.newPassword.length < 6) {
+        errors.newPassword = "Password must be at least 6 characters";
+      }
+    }
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -201,42 +221,53 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
         throw new Error("No email found in token");
       }
 
-      const updatedSettings = {
-        ...formData,
-      };
-
-      console.log("123123", updatedSettings);
-
-      await updateSettings(updatedSettings);
-
-      // Re-establish connection with new settings
-      try {
-        connectAndRegister({
-          server: formData.domain,
-          username: formData.sipUsername,
-          password: formData.sipPassword,
-          wsServer: formData.wsServer,
-          wsPort: formData.wsPort,
-          wsPath: formData.wsPath,
-        });
-      } catch (error) {
-        console.error("Error connecting and registering:", error);
+      if (!userData) {
+        throw new Error("No user data available");
       }
+
+      // Update user data
+      await setUserData({
+        ...userData,
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        newPassword: formData.newPassword,
+        settings: {
+          wsServer: userData.settings?.wsServer || "",
+          wsPort: userData.settings?.wsPort || "",
+          wsPath: userData.settings?.wsPath || "/",
+          domain: userData.settings?.domain || "",
+          sipUsername: formData.sipUsername || "",
+          sipPassword: formData.sipPassword || "",
+          updatedAt: new Date().toISOString(),
+        },
+      });
 
       setIsDirty(false);
       setSaveSuccess(true);
       setValidationErrors({});
 
-      // Close dialog after successful save
-      setTimeout(() => {
-        onClose();
-      }, 1000);
+      // Re-establish connection with new settings
+      try {
+        connectAndRegister({
+          server: userData.settings?.domain || "",
+          username: formData.sipUsername!,
+          password: formData.sipPassword!,
+          wsServer: userData.settings?.wsServer || "",
+          wsPort: userData.settings?.wsPort || "",
+          wsPath: userData.settings?.wsPath || "",
+        });
+      } catch (error) {
+        console.error("Error connecting and registering:", error);
+      }
+
+      // Close dialog immediately after successful save
+      onClose();
     } catch (error) {
-      console.error("Error saving settings:", error);
+      console.error("Error saving user data:", error);
       setError(
-        error instanceof Error ? error.message : "Failed to save settings"
+        error instanceof Error ? error.message : "Failed to save user data"
       );
-    } finally {
       setIsSaving(false);
     }
   };
@@ -244,20 +275,30 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
   const handleCancel = async () => {
     try {
       setError(null);
-      const savedSettings = settings;
-      setFormData(savedSettings);
+      if (userData) {
+        setFormData({
+          name: userData.name,
+          email: userData.email,
+          sipUsername: userData.settings?.sipUsername,
+          sipPassword: userData.settings?.sipPassword,
+          password: "",
+          newPassword: "",
+          confirmPassword: "",
+          domain: userData.settings?.domain || "",
+        });
+      }
       setIsDirty(false);
       setValidationErrors({});
       onClose();
     } catch (error) {
-      console.error("Error loading settings:", error);
+      console.error("Error loading user data:", error);
       setError(
-        error instanceof Error ? error.message : "Failed to load settings"
+        error instanceof Error ? error.message : "Failed to load user data"
       );
     }
   };
 
-  const handleFormDataChange = (field: keyof Settings, value: string) => {
+  const handleFormDataChange = (field: keyof SettingDLG, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -303,6 +344,15 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
           error={validationErrors.name}
         />
         <InputRow
+          name="email"
+          label="Email:"
+          placeholder="eg: keyla@telemojo.net"
+          formData={formData}
+          required={true}
+          setFormData={(value) => handleFormDataChange("email", value)}
+          error={validationErrors.email}
+        />
+        <InputRow
           name="sipUsername"
           label="SIP Username:"
           placeholder="eg: webrtc"
@@ -316,104 +366,53 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
           label="SIP Password:"
           placeholder="eg: 1234"
           formData={formData}
-          required={true}
           setFormData={(value) => handleFormDataChange("sipPassword", value)}
           error={validationErrors.sipPassword}
           type="password"
         />
-        <div>
-          <label
-            htmlFor="domain"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Domain
-            {<span className="text-red-500 ml-1">*</span>}
-          </label>
-          <div className="mt-1">
-            <DropdownSelect
-              placeholder="Select Domain"
-              value={String(formData.domain || "")}
-              onChange={(value) => {
-                handleFormDataChange("domain", value);
-                handleFormDataChange(
-                  "wsServer",
-                  serverList.find((server) => server.domain === value)
-                    ?.wsServer || ""
-                );
-                handleFormDataChange(
-                  "wsPort",
-                  serverList.find((server) => server.domain === value)
-                    ?.wsPort || ""
-                );
-                handleFormDataChange(
-                  "wsPath",
-                  serverList.find((server) => server.domain === value)
-                    ?.wsPath || ""
-                );
-              }}
-              className={`${
-                validationErrors.domain
-                  ? "border-red-500 ring-red-500 focus:border-red-500 focus:ring-red-500"
-                  : ""
-              }`}
-              options={serverList.map((server) => ({
-                value: server.domain,
-                label: server.domain,
-              }))}
-            />
-            {validationErrors.domain && (
-              <p className="mt-1 text-sm text-red-600">
-                {validationErrors.domain}
-              </p>
-            )}
-          </div>
-        </div>
         <InputRow
-          name="wsServer"
-          label="Secure WebSocket Server (TLS):"
-          placeholder="eg: ws://devone.telemojo.net"
+          name="password"
+          label="Current Password:"
+          placeholder="Enter your current password"
           formData={formData}
-          required={true}
-          setFormData={(value) => handleFormDataChange("wsServer", value)}
-          error={validationErrors.wsServer}
+          required={formData.newPassword !== ""}
+          setFormData={(value) => handleFormDataChange("password", value)}
+          error={validationErrors.password}
+          type="password"
         />
         <InputRow
-          name="wsPort"
-          label="WebSocket Port:"
-          placeholder="eg: 4443"
+          name="newPassword"
+          label="New Password:"
+          placeholder="Enter your new password"
           formData={formData}
-          required={true}
-          setFormData={(value) => handleFormDataChange("wsPort", value)}
-          error={validationErrors.wsPort}
+          required={formData.newPassword !== ""}
+          setFormData={(value) => handleFormDataChange("newPassword", value)}
+          error={validationErrors.newPassword}
+          type="password"
         />
         <InputRow
-          name="wsPath"
-          label="WebSocket Path:"
-          placeholder="/"
+          name="confirmPassword"
+          label="Confirm New Password:"
+          placeholder="Confirm your new password"
           formData={formData}
+          required={formData.newPassword !== ""}
+          setFormData={(value) =>
+            handleFormDataChange("confirmPassword", value)
+          }
+          error={validationErrors.confirmPassword}
+          type="password"
+        />
+        <InputRow
+          name="domain"
+          label="Domain:"
+          placeholder="eg: telemojo.net"
+          formData={formData}
+          readOnly={true}
           required={false}
-          setFormData={(value) => handleFormDataChange("wsPath", value)}
-          error={validationErrors.wsPath}
         />
       </div>
     ),
   };
-
-  if (isLoading) {
-    return (
-      <Dialog
-        isOpen={isOpen}
-        onClose={onClose}
-        title="Settings"
-        maxWidth="xl"
-        closeOnOutsideClick={false}
-      >
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Loading settings...</div>
-        </div>
-      </Dialog>
-    );
-  }
 
   return (
     <Dialog
@@ -427,7 +426,7 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
         <div className="flex-grow">
           <TabView tabs={[accountTab]} />
         </div>
-        <div className="flex justify-end gap-4 mt-6 pt-4 border-t">
+        <div className="flex justify-end gap-4 mt-6">
           <button
             onClick={handleCancel}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -444,12 +443,27 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
             }`}
           >
             {isSaving ? (
-              <div className="flex items-center">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                Saving...
+              <div className="flex items-center justify-center">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                <span className="text-sm">Saving...</span>
               </div>
             ) : saveSuccess ? (
-              "Saved ✓"
+              <div className="flex items-center justify-center">
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <span>Saved</span>
+              </div>
             ) : (
               "Save"
             )}

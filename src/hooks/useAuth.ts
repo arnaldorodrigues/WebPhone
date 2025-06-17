@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getToken, setToken, removeToken } from '@/utils/auth';
-import { useSettings } from './use-settings';
+import { useUserData } from './use-userdata';
+import { useSIPProvider } from './sip-provider/sip-provider-context';
 
 const SETTINGS_STORAGE_KEY = 'user_settings';
 
@@ -11,7 +12,8 @@ export const useAuth = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const { refreshSettings } = useSettings();
+  const {refreshUserData, clearUserData} = useUserData();
+  const {disconnect} = useSIPProvider();
   
   useEffect(() => {
     const token = getToken();
@@ -42,6 +44,8 @@ export const useAuth = () => {
       } else {
         router.push('/phone');
       }
+
+      refreshUserData();
       
       return data;
     } catch (error) {
@@ -67,7 +71,7 @@ export const useAuth = () => {
         throw new Error(data.error || 'Something went wrong');
       }
 
-      refreshSettings();
+      refreshUserData();
 
       router.push('/signin');
       return data;
@@ -90,6 +94,9 @@ export const useAuth = () => {
           console.error('Error clearing settings from localStorage:', error);
         }
       }
+
+      // Clear user data in context
+      clearUserData();
       
       // Redirect to signin page
       router.push('/signin');
@@ -97,6 +104,11 @@ export const useAuth = () => {
       console.error('Logout error:', error);
       // Even if there's an error, still redirect to signin
       router.push('/signin');
+    }
+    finally {
+      setIsLoading(false);
+      setIsAuthenticated(false);
+      await disconnect();
     }
   };
 

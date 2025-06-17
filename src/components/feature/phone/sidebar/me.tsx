@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { PhoneCallDialog } from "@/components/feature/phone/dial/phone-call";
-import { useSettings } from "@/hooks/use-settings";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Cog8ToothIcon,
@@ -18,6 +17,7 @@ import { usePhoneState } from "@/hooks/use-phonestate-context";
 import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
 import { CONNECT_STATUS, RegisterStatus } from "@/types/sip-type";
 import { SessionState } from "sip.js";
+import { useUserData } from "@/hooks/use-userdata";
 
 export function Me() {
   const [isShowSettingDialog, setIsShowSettingDialog] = useState(false);
@@ -29,15 +29,14 @@ export function Me() {
     connectStatus,
     disconnect,
   } = useSIPProvider();
-  const { sipConfig, settings, isConfigLoaded, refreshSettings } =
-    useSettings();
+  const { sipConfig, isLoading, userData, refreshUserData } = useUserData();
   const { logout } = useAuth();
   const { phoneState, setPhoneState } = usePhoneState();
 
   useEffect(() => {
     if (
       sipConfig &&
-      isConfigLoaded &&
+      !isLoading &&
       connectStatus === CONNECT_STATUS.WAIT_REQUEST_CONNECT &&
       registerStatus === RegisterStatus.UNREGISTERED
     ) {
@@ -47,13 +46,7 @@ export function Me() {
         console.error("Failed to connect and register:", error);
       }
     }
-  }, [
-    sipConfig,
-    isConfigLoaded,
-    connectAndRegister,
-    connectStatus,
-    registerStatus,
-  ]);
+  }, [sipConfig, isLoading, connectAndRegister, connectStatus, registerStatus]);
 
   // Handle incoming calls
   useEffect(() => {
@@ -84,21 +77,23 @@ export function Me() {
   // Force refresh when settings change
   useEffect(() => {
     setRefreshKey((prev) => prev + 1);
-  }, [settings, sipConfig]);
+  }, [userData, sipConfig]);
 
   // Get display name and username from settings
-  const displayName = sipConfig?.displayName || settings.name || "User";
-  const username = sipConfig?.username || settings.sipUsername || "";
-  const server = sipConfig?.server || settings.domain || "";
+  const displayName = sipConfig?.displayName || userData.name || "User";
+  const username = sipConfig?.username || userData.settings?.sipUsername || "";
+  const server = sipConfig?.server || userData.settings?.domain || "";
 
   const userDisplayText =
-    isConfigLoaded && username ? `${displayName}` : "Not Configured";
+    !isLoading && username ? `${displayName}` : "Not Configured";
 
   const handleSettingsClose = async () => {
     setIsShowSettingDialog(false);
-    // Force a refresh when settings dialog closes (in case settings were saved)
-    await refreshSettings();
-    setRefreshKey((prev) => prev + 1);
+    // Only refresh if the dialog was closed without saving
+    if (!userData?.settings?.sipUsername) {
+      await refreshUserData();
+      setRefreshKey((prev) => prev + 1);
+    }
   };
 
   const handleSignout = async () => {
@@ -111,9 +106,6 @@ export function Me() {
           }
         });
       }
-
-      // Properly disconnect and unregister from SIP server
-      await disconnect();
 
       await logout();
     } catch (error) {
@@ -130,7 +122,7 @@ export function Me() {
         await disconnect();
       } else {
         // Register - connect to SIP server
-        if (sipConfig && isConfigLoaded) {
+        if (sipConfig && !isLoading) {
           await connectAndRegister(sipConfig);
         }
       }
@@ -155,7 +147,8 @@ export function Me() {
           {/* Status indicator */}
           <div
             className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white shadow-sm ${
-              registerStatus === RegisterStatus.REGISTERED
+              registerStatus === RegisterStatus.REGISTERED &&
+              connectStatus === CONNECT_STATUS.CONNECTED
                 ? "bg-green-500"
                 : "bg-gray-400"
             }`}
@@ -165,7 +158,8 @@ export function Me() {
           <div className="flex gap-2 items-center">
             <div
               className={`w-4 h-4 flex items-center justify-center rounded-sm shadow-sm ${
-                registerStatus === RegisterStatus.REGISTERED
+                registerStatus === RegisterStatus.REGISTERED &&
+                connectStatus === CONNECT_STATUS.CONNECTED
                   ? "bg-green-500"
                   : "bg-gray-400"
               }`}
@@ -192,9 +186,9 @@ export function Me() {
         <div className="flex gap-1">
           <button
             onClick={handleRegisterToggle}
-            disabled={!sipConfig || !isConfigLoaded}
+            disabled={!sipConfig || isLoading}
             className={`p-2 rounded-lg transition-colors duration-200 ${
-              !sipConfig || !isConfigLoaded
+              !sipConfig || isLoading
                 ? "text-gray-400 cursor-not-allowed"
                 : registerStatus === RegisterStatus.REGISTERED
                 ? "text-green-600 hover:text-green-700 hover:bg-green-50"

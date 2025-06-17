@@ -19,6 +19,8 @@ export const ProviderContext = createContext<IProviderContext>({
   registerStatus: RegisterStatus.UNREGISTERED,
   sessions: {},
   sessionTimer: {},
+  messages: {},
+  clearMessages: () => {},
 });
 
 export const useSIPProvider = () => {
