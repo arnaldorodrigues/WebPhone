@@ -77,19 +77,20 @@ export async function removeContact(contact: Contact): Promise<boolean> {
   }
 }
 
-export async function fetchAllRegisteredExtensionNumbers () {
+export async function checkExtensionNumberIsRegistered (extensionNumber: string) {
   try {
-    const response = await fetch('https://64.23.231.206/api/en/registered', {
+    const response = await fetch(`https://devone.telemojo.net/3cns-api/en/registered/${extensionNumber}`, {
       method: 'GET',
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch all registered extension numbers');
+      throw new Error('Failed to check online status of extension number');
     }
 
     const data = await response.json();
-    return data.data;
+    return data.data === '1';
   } catch (error) {
-    console.error('Error fetching all registered extension numbers:', error);
+    console.error('Error checking online status of extension number:', error);
+    return false;
   }
 }

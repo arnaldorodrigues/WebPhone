@@ -5,11 +5,8 @@ import { PhoneCallDialog } from "@/components/feature/phone/dial/phone-call";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Cog8ToothIcon,
-  MagnifyingGlassIcon,
   PhoneIcon,
-  UserPlusIcon,
   ArrowRightOnRectangleIcon,
-  LinkIcon,
   ArrowPathIcon,
 } from "@heroicons/react/24/solid";
 import SettingDialog from "@/components/feature/phone/setting/setting-dialog";
@@ -32,21 +29,6 @@ export function Me() {
   const { sipConfig, isLoading, userData, refreshUserData } = useUserData();
   const { logout } = useAuth();
   const { phoneState, setPhoneState } = usePhoneState();
-
-  useEffect(() => {
-    if (
-      sipConfig &&
-      !isLoading &&
-      connectStatus === CONNECT_STATUS.WAIT_REQUEST_CONNECT &&
-      registerStatus === RegisterStatus.UNREGISTERED
-    ) {
-      try {
-        connectAndRegister(sipConfig);
-      } catch (error) {
-        console.error("Failed to connect and register:", error);
-      }
-    }
-  }, [sipConfig, isLoading, connectAndRegister, connectStatus, registerStatus]);
 
   // Handle incoming calls
   useEffect(() => {
@@ -89,11 +71,6 @@ export function Me() {
 
   const handleSettingsClose = async () => {
     setIsShowSettingDialog(false);
-    // Only refresh if the dialog was closed without saving
-    if (!userData?.settings?.sipUsername) {
-      await refreshUserData();
-      setRefreshKey((prev) => prev + 1);
-    }
   };
 
   const handleSignout = async () => {

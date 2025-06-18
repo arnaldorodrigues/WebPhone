@@ -113,8 +113,6 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { messageId, status } = body;
 
-    console.log("123123123", messageId, status);
-
     const message = await Message.findByIdAndUpdate(messageId, { status }, { new: true });
 
     return NextResponse.json({ success: true, message });
