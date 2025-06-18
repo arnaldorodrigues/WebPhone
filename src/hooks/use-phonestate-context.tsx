@@ -43,9 +43,7 @@ export function PhoneStateProvider({
     extensionNumber,
   };
 
-  useEffect(() => {
-    console.log("Phone state changed:", phoneState);
-  }, [phoneState]);
+  useEffect(() => {}, [phoneState]);
 
   return (
     <PhoneStateContext.Provider value={value}>
