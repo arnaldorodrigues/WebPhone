@@ -1,11 +1,12 @@
 "use client";
 
 import Sidebar from "@/components/feature/phone/sidebar/sidebar";
-import { useUserData } from "@/hooks/use-userdata";
-import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
-import { CONNECT_STATUS, RegisterStatus } from "@/types/sip-type";
 import { usePathname } from "next/navigation";
+import ProtectedRoute from "@/components/ui/ProtectedRoute";
+import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
+import { useUserData } from "@/hooks/use-userdata";
 import { useEffect, useRef } from "react";
+import { CONNECT_STATUS, RegisterStatus } from "@/types/sip-type";
 
 interface Props {}
 
@@ -42,10 +43,14 @@ const RootLayout = ({
   }, [sipConfig, connectAndRegister, isLoading, connectStatus, registerStatus]);
 
   return (
-    <div className="w-full h-full flex-1 flex flex-row ">
-      <Sidebar hidden={!sidebarVisible} />
-      <div className={`flex-1 ${sidebarVisible && "hidden"}}`}>{children}</div>
-    </div>
+    <ProtectedRoute requiredRole="user">
+      <div className="w-full h-full flex-1 flex flex-row ">
+        <Sidebar hidden={!sidebarVisible} />
+        <div className={`flex-1 ${sidebarVisible && "hidden"}}`}>
+          {children}
+        </div>
+      </div>
+    </ProtectedRoute>
   );
 };
 
