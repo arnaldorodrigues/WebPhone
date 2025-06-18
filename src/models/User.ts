@@ -28,11 +28,12 @@ const userSchema: Schema = new Schema({
   },
   settings: {
     type: Schema.Types.ObjectId,
-    ref: 'Settings'
+    ref: "Settings",
   },
-  contacts: [Schema.Types.ObjectId]
+  contacts: [Schema.Types.ObjectId],
 });
 
-const UserModel = mongoose.models.User || mongoose.model<User>('User', userSchema);
+const UserModel =
+  mongoose.models.User || mongoose.model<User>("User", userSchema);
 
-export default UserModel; 
+export default UserModel;

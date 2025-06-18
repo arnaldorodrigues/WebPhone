@@ -12,7 +12,6 @@ export default function SignUp() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    // extensionNumber: "",
     password: "",
     confirmPassword: "",
   });
@@ -21,7 +20,6 @@ export default function SignUp() {
   const [validationErrors, setValidationErrors] = useState({
     name: "",
     email: "",
-    // extensionNumber: "",
     password: "",
     confirmPassword: "",
   });
@@ -46,7 +44,6 @@ export default function SignUp() {
     const errors = {
       name: "",
       email: "",
-      // extensionNumber: "",
       password: "",
       confirmPassword: "",
     };
@@ -62,12 +59,6 @@ export default function SignUp() {
     } else if (!validateEmail(formData.email)) {
       errors.email = "Please enter a valid email address";
     }
-
-    // if (!formData.extensionNumber) {
-    //   errors.extensionNumber = "Extension number is required";
-    // } else if (!/^\d+$/.test(formData.extensionNumber)) {
-    //   errors.extensionNumber = "Extension number must contain only numbers";
-    // }
 
     if (!formData.password) {
       errors.password = "Password is required";
@@ -113,7 +104,6 @@ export default function SignUp() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData({ ...formData, [field]: value });
-    // Clear validation error when user starts typing
     if (validationErrors[field as keyof typeof validationErrors]) {
       setValidationErrors({
         ...validationErrors,
@@ -197,37 +187,6 @@ export default function SignUp() {
                 </p>
               )}
             </div>
-
-            {/* <div>
-              <label
-                htmlFor="extensionNumber"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Extension Number
-              </label>
-              <Input
-                id="extensionNumber"
-                name="extensionNumber"
-                type="text"
-                required={true}
-                placeholder="Enter your extension number"
-                value={formData.extensionNumber}
-                onChange={(e) =>
-                  handleInputChange("extensionNumber", e.target.value)
-                }
-                className={
-                  validationErrors.extensionNumber
-                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                    : ""
-                }
-              />
-              {validationErrors.extensionNumber && (
-                <p className="mt-1 text-sm text-red-600">
-                  {validationErrors.extensionNumber}
-                </p>
-              )}
-            </div> */}
-
             <div>
               <label
                 htmlFor="password"

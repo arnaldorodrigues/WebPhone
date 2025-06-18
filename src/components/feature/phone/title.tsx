@@ -2,14 +2,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useUserData } from "@/hooks/use-userdata";
 
-import {
-  PhoneIcon,
-  ChevronLeftIcon,
-  VideoCameraIcon,
-  PencilIcon,
-  MagnifyingGlassIcon,
-  TrashIcon,
-} from "@heroicons/react/24/solid";
+import { PhoneIcon, ChevronLeftIcon } from "@heroicons/react/24/solid";
 
 const Title = () => {
   const { id } = useParams();
@@ -47,23 +40,6 @@ const Title = () => {
           </p>
         </div>
       </div>
-      {/* <div className="flex gap-6 items-center text-gray-400">
-        <button className="hover:text-indigo-500 transition-colors duration-200">
-          <PhoneIcon className="w-5 h-5" />
-        </button>
-        <button className="hover:text-indigo-500 transition-colors duration-200">
-          <VideoCameraIcon className="w-5 h-5" />
-        </button>
-        <button className="hover:text-indigo-500 transition-colors duration-200">
-          <PencilIcon className="w-5 h-5" />
-        </button>
-        <button className="hover:text-indigo-500 transition-colors duration-200">
-          <MagnifyingGlassIcon className="w-5 h-5" />
-        </button>
-        <button className="hover:text-red-500 transition-colors duration-200">
-          <TrashIcon className="w-5 h-5" />
-        </button>
-      </div> */}
     </div>
   );
 };

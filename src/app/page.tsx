@@ -3,7 +3,6 @@ import Link from "next/link";
 export default function Home() {
   return (
     <main className="min-h-screen relative overflow-hidden bg-white">
-      {/* Background Pattern */}
       <div className="absolute inset-0">
         <svg
           className="w-full h-full"
@@ -17,7 +16,6 @@ export default function Home() {
               height="100"
               patternUnits="userSpaceOnUse"
             >
-              {/* Main curved lines */}
               <path
                 d="M0 50 Q25 25, 50 50 T100 50"
                 stroke="#E5E7EB"
@@ -40,7 +38,6 @@ export default function Home() {
                 strokeOpacity="0.15"
               />
 
-              {/* Additional curved elements */}
               <path
                 d="M0 20 C20 0, 80 0, 100 20"
                 stroke="#E5E7EB"
@@ -56,7 +53,6 @@ export default function Home() {
                 strokeOpacity="0.1"
               />
 
-              {/* New curved elements */}
               <path
                 d="M0 40 C30 20, 70 20, 100 40"
                 stroke="#E5E7EB"
@@ -72,7 +68,6 @@ export default function Home() {
                 strokeOpacity="0.12"
               />
 
-              {/* Diagonal curves */}
               <path
                 d="M0 0 Q50 50, 100 0"
                 stroke="#E5E7EB"
@@ -88,7 +83,6 @@ export default function Home() {
                 strokeOpacity="0.08"
               />
 
-              {/* Small decorative curves */}
               <path
                 d="M20 0 C30 10, 40 10, 50 0"
                 stroke="#E5E7EB"
@@ -118,7 +112,6 @@ export default function Home() {
                 strokeOpacity="0.05"
               />
 
-              {/* Additional intricate curves */}
               <path
                 d="M0 15 C15 5, 35 5, 50 15"
                 stroke="#E5E7EB"
@@ -148,7 +141,6 @@ export default function Home() {
                 strokeOpacity="0.06"
               />
 
-              {/* Vertical curves */}
               <path
                 d="M10 0 C10 20, 10 40, 10 60"
                 stroke="#E5E7EB"
@@ -178,7 +170,6 @@ export default function Home() {
                 strokeOpacity="0.04"
               />
 
-              {/* Wave patterns */}
               <path
                 d="M0 25 Q10 20, 20 25 T40 25 T60 25 T80 25 T100 25"
                 stroke="#E5E7EB"
@@ -194,7 +185,6 @@ export default function Home() {
                 strokeOpacity="0.03"
               />
 
-              {/* Circular elements */}
               <path
                 d="M25 25 Q25 15, 35 15 T45 25 T35 35 T25 25"
                 stroke="#E5E7EB"
@@ -224,8 +214,6 @@ export default function Home() {
                 strokeOpacity="0.02"
               />
 
-              {/* 20 New Curves */}
-              {/* Spiral-like curves */}
               <path
                 d="M50 50 Q60 40, 70 50 T90 50 T110 50"
                 stroke="#E5E7EB"
@@ -241,7 +229,6 @@ export default function Home() {
                 strokeOpacity="0.025"
               />
 
-              {/* Concentric curves */}
               <path
                 d="M50 50 Q60 40, 70 50 T90 50 T110 50 T130 50"
                 stroke="#E5E7EB"
@@ -257,7 +244,6 @@ export default function Home() {
                 strokeOpacity="0.02"
               />
 
-              {/* Additional wave patterns */}
               <path
                 d="M0 35 Q10 30, 20 35 T40 35 T60 35 T80 35 T100 35"
                 stroke="#E5E7EB"
@@ -273,7 +259,6 @@ export default function Home() {
                 strokeOpacity="0.025"
               />
 
-              {/* Diagonal wave patterns */}
               <path
                 d="M0 0 Q25 25, 50 0 T100 0"
                 stroke="#E5E7EB"
@@ -289,7 +274,6 @@ export default function Home() {
                 strokeOpacity="0.02"
               />
 
-              {/* Small circular patterns */}
               <path
                 d="M15 15 Q15 5, 25 5 T35 15 T25 25 T15 15"
                 stroke="#E5E7EB"
@@ -319,7 +303,6 @@ export default function Home() {
                 strokeOpacity="0.015"
               />
 
-              {/* Additional vertical curves */}
               <path
                 d="M20 0 C20 15, 20 30, 20 45"
                 stroke="#E5E7EB"
@@ -349,7 +332,6 @@ export default function Home() {
                 strokeOpacity="0.015"
               />
 
-              {/* Additional horizontal curves */}
               <path
                 d="M0 45 C15 45, 30 45, 45 45"
                 stroke="#E5E7EB"
@@ -384,7 +366,6 @@ export default function Home() {
         </svg>
       </div>
 
-      {/* Content */}
       <div className="relative min-h-screen flex flex-col">
         <div className="text-center pt-16">
           <h1 className="text-6xl font-bold text-indigo-600">

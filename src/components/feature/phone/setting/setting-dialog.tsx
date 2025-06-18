@@ -9,7 +9,6 @@ import { UserCircleIcon } from "@heroicons/react/24/solid";
 import { useUserData } from "@/hooks/use-userdata";
 import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
 
-// Validation errors type
 type ValidationErrors = {
   [key: string]: string;
 };
@@ -102,7 +101,6 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
     {}
   );
 
-  // Load user data
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -138,7 +136,6 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
     }
   }, [isOpen, userData, isSaving]);
 
-  // Track changes to detect if form is dirty
   useEffect(() => {
     if (!userData) return;
     const currentData = {
@@ -162,11 +159,9 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
     setIsDirty(JSON.stringify(currentData) !== JSON.stringify(savedData));
   }, [formData, userData]);
 
-  // Validation function
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
 
-    // Define required fields
     const requiredFields: (keyof SettingDLG)[] = [
       "name",
       "sipUsername",
@@ -174,7 +169,6 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
       "email",
     ];
 
-    // Check each required field
     requiredFields.forEach((field) => {
       const value = formData[field];
       if (!value || (typeof value === "string" && value.trim() === "")) {
@@ -182,7 +176,6 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
       }
     });
 
-    // Validate password change if new password is provided
     if (formData.newPassword) {
       if (!formData.password) {
         errors.password = "Current password is required to set new password";
@@ -204,7 +197,6 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
       setError(null);
       setSaveSuccess(false);
 
-      // Validate form before saving
       if (!validateForm()) {
         return;
       }
@@ -219,7 +211,6 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
         throw new Error("No user data available");
       }
 
-      // Update user data
       await setUserData({
         ...userData,
         name: formData.name,
@@ -294,7 +285,6 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
       [field]: value,
     }));
 
-    // Clear validation error for this field when user starts typing
     if (validationErrors[field]) {
       setValidationErrors((prev) => {
         const updated = { ...prev };

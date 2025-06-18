@@ -6,7 +6,6 @@ import DialDisplay from "@/components/feature/phone/dial/dial-display";
 import DialPad from "@/components/feature/phone/dial/dial-pad";
 import { SessionState } from "sip.js";
 
-// import { useSipContext } from "@/hooks/use-sip-context";
 import { usePhoneState } from "@/hooks/use-phonestate-context";
 import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
 import { CallSessionItem } from "./call-session-item";
@@ -31,26 +30,19 @@ export function PhoneCallDialog({ isOpen, onClose }: PhoneCallProps) {
     }
   }, [sessions]);
 
-  // Add keyboard event listener
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Only handle keyboard input when the dialog is open and in dialing mode
       if (!isOpen || phoneState !== "dialing") return;
 
       const key = event.key;
 
-      // Handle number keys (0-9)
       if (/^[0-9*#]$/.test(key)) {
         event.preventDefault();
         handleDial(key);
-      }
-      // Handle backspace
-      else if (key === "Backspace") {
+      } else if (key === "Backspace") {
         event.preventDefault();
         handleDial("backspace");
-      }
-      // Handle Enter key to make the call
-      else if (key === "Enter") {
+      } else if (key === "Enter") {
         event.preventDefault();
         if (number.trim()) {
           handleCall();
@@ -58,10 +50,8 @@ export function PhoneCallDialog({ isOpen, onClose }: PhoneCallProps) {
       }
     };
 
-    // Add event listener when dialog is open
     if (isOpen) {
       document.addEventListener("keydown", handleKeyDown);
-      // Focus the dialog content to ensure it can receive keyboard events
       setTimeout(() => {
         if (dialogRef.current) {
           dialogRef.current.focus();
@@ -69,7 +59,6 @@ export function PhoneCallDialog({ isOpen, onClose }: PhoneCallProps) {
       }, 100);
     }
 
-    // Cleanup event listener
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
@@ -90,15 +79,11 @@ export function PhoneCallDialog({ isOpen, onClose }: PhoneCallProps) {
     }
 
     try {
-      console.log("UI: Initiating call to:", number);
-      setLastRemoteNumber(number); // Store the number we're calling
+      setLastRemoteNumber(number);
       await sessionManager?.call(`sip:${number}@${sipConfig?.server}`);
       setPhoneState("sending");
-      console.log("UI: Call initiated successfully");
     } catch (error) {
       console.error("UI: Failed to make call:", error);
-      // setPhoneState("ended");
-      // Show error to user
       if (error instanceof Error) {
         alert(`Call failed: ${error.message}`);
       }

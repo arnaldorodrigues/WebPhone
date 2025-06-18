@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-// import { SipProvider } from "@/hooks/use-sip-context";
 import { SIPProvider } from "@/hooks/sip-provider/sip-provider";
 import { PhoneStateProvider } from "@/hooks/use-phonestate-context";
-import ProtectedRoute from "@/components/ui/ProtectedRoute";
 import { UserDataProvider } from "@/hooks/use-userdata";
 import { NotificationProvider } from "@/contexts/notification-context";
 
@@ -26,7 +24,6 @@ export default function RootLayout({
         <meta name="color-scheme" content="light only" />
       </head>
       <body className={inter.className}>
-        {/* <ProtectedRoute> */}
         <NotificationProvider>
           <UserDataProvider>
             <PhoneStateProvider>
@@ -40,7 +37,6 @@ export default function RootLayout({
             </PhoneStateProvider>
           </UserDataProvider>
         </NotificationProvider>
-        {/* </ProtectedRoute> */}
       </body>
     </html>
   );

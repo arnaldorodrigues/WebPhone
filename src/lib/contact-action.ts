@@ -79,7 +79,8 @@ export async function removeContact(contact: Contact): Promise<boolean> {
 
 export async function checkExtensionNumberIsRegistered (extensionNumber: string) {
   try {
-    const response = await fetch(`https://devone.telemojo.net/3cns-api/en/registered/${extensionNumber}`, {
+    const apiBaseUrl = process.env.BACKEND_URL || 'https://devone.telemojo.net/3cns-api';
+    const response = await fetch(`${apiBaseUrl}/en/registered/${extensionNumber}`, {
       method: 'GET',
     });
 

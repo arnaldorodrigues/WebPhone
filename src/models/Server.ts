@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const serverSchema = new mongoose.Schema({
   domain: {
@@ -19,7 +19,7 @@ const serverSchema = new mongoose.Schema({
   },
   wsPath: {
     type: String,
-    default: '/',
+    default: "/",
     trim: true,
   },
   createdAt: {
@@ -32,12 +32,10 @@ const serverSchema = new mongoose.Schema({
   },
 });
 
-// Update the updatedAt timestamp before saving
-serverSchema.pre('save', function (next) {
-  // @ts-ignore
+serverSchema.pre("save", function (next) {
   this.updatedAt = new Date();
   next();
 });
 
-const Server = mongoose.models.Server || mongoose.model('Server', serverSchema);
-export default Server; 
+const Server = mongoose.models.Server || mongoose.model("Server", serverSchema);
+export default Server;

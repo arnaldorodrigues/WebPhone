@@ -43,7 +43,6 @@ const ServersPage = () => {
     fetchServers();
   }, []);
 
-  // Apply search filter
   useEffect(() => {
     if (!searchTerm.trim()) {
       setFilteredServers(servers);
@@ -85,7 +84,6 @@ const ServersPage = () => {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      {/* Actions Bar */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <SearchInput
           value={searchTerm}

@@ -9,7 +9,6 @@ interface Message {
   from: string;
   to: string;
   timestamp: string;
-  status: string;
 }
 
 interface ChatBoardProps {
@@ -28,7 +27,6 @@ const ChatBoard = ({ messages, currentUser }: ChatBoardProps) => {
     scrollToBottom();
   }, [messages]);
 
-  // Group messages by date
   const messageGroups = messages?.reduce<
     { date: string; messages: Message[] }[]
   >((groups, message) => {
@@ -55,7 +53,6 @@ const ChatBoard = ({ messages, currentUser }: ChatBoardProps) => {
                 key={message._id + message.body + message.timestamp}
                 text={message.body}
                 date={format(new Date(message.timestamp), "HH:mm")}
-                status={message.status}
                 isMe={message.from === currentUser}
               />
             ))}

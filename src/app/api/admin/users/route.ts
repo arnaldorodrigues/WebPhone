@@ -9,26 +9,21 @@ export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
-    // Fetch all users and populate their settings
     const users = await UserModel.find({
       role: { $ne: 'admin' }
     })
       .populate('settings')
-      .select('-password') // Exclude password from response
+      .select('-password')
       .lean();
 
-    // Also fetch settings that might not be linked to users yet
     const allSettings = await Settings.find({}).lean();
 
-    // Create a map of settings by email for easier lookup
     const settingsByEmail = new Map();
     allSettings.forEach(setting => {
       settingsByEmail.set(setting.email, setting);
     });
 
-    // Enhanced user data with additional fields for admin panel
     const enhancedUsers = users.map((user: any) => {
-      // Get settings either from populated field or by email lookup
       const userSettings = user.settings || settingsByEmail.get(user.email);
       
       return {
@@ -36,8 +31,7 @@ export async function GET(request: NextRequest) {
         name: user.name,
         email: user.email,
         role: user.role,
-        // extensionNumber: user.extensionNumber || 'N/A',
-        status: userSettings ? 'active' : 'inactive', // Determine status based on settings
+        status: userSettings ? 'active' : 'inactive', 
         createdAt: user.createdAt,
         settings: userSettings ? {
           wsServer: userSettings.wsServer,
@@ -85,7 +79,6 @@ export async function POST(request: NextRequest) {
     const userData: User & { password?: string } = await request.json();
     await connectDB();
     
-    // Validate required fields
     if (!userData.email || !userData.name) {
       return NextResponse.json(
         { success: false, error: 'Email and name are required' },
@@ -93,7 +86,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user already exists
     const existingUser = await UserModel.findOne({ 
       email: userData.email.toLowerCase() 
     });
@@ -101,16 +93,12 @@ export async function POST(request: NextRequest) {
     let savedUser;
     
     if (existingUser) {
-      // Update existing user
-      console.log('Updating existing user:', userData.email);
       
-      // Update user data (excluding password unless provided)
       const updateData: any = {
         name: userData.name,
         role: userData.role || 'user',
       };
       
-      // Only update password if provided
       if (userData.password && userData.password.trim() !== '') {
         const hashedPassword = await bcrypt.hash(userData.password, 10);
         updateData.password = hashedPassword;
@@ -123,10 +111,7 @@ export async function POST(request: NextRequest) {
       );
       
     } else {
-      // Create new user
-      console.log('Creating new user:', userData.email);
       
-      // Password is required for new users
       if (!userData.password) {
         return NextResponse.json(
           { success: false, error: 'Password is required for new users' },
@@ -134,7 +119,6 @@ export async function POST(request: NextRequest) {
         );
       }
       
-      // Password validation
       if (userData.password.length < 6) {
         return NextResponse.json(
           { success: false, error: 'Password must be at least 6 characters long' },
@@ -152,13 +136,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Handle settings if provided
     if (userData.settings) {
-      // Check for duplicate SIP username before proceeding
       if (userData.settings.sipUsername) {
         const existingSipUser = await Settings.findOne({
           sipUsername: userData.settings.sipUsername,
-          email: { $ne: userData.email.toLowerCase() } // Exclude current user's email
+          email: { $ne: userData.email.toLowerCase() } 
         });
 
         if (existingSipUser) {
@@ -179,7 +161,6 @@ export async function POST(request: NextRequest) {
         sipPassword: userData.settings.sipPassword,
       };
 
-      // Check if settings already exist for this user
       const existingSettings = await Settings.findOne({ 
         email: userData.email.toLowerCase() 
       });
@@ -187,18 +168,15 @@ export async function POST(request: NextRequest) {
       let savedSettings;
       
       if (existingSettings) {
-        // Update existing settings
         savedSettings = await Settings.findByIdAndUpdate(
           existingSettings._id,
           settingsData,
           { new: true, runValidators: true }
         );
       } else {
-        // Create new settings
         savedSettings = await Settings.create(settingsData);
       }
 
-      // Link settings to user if not already linked
       if (!savedUser.settings || savedUser.settings.toString() !== savedSettings._id.toString()) {
         await UserModel.findByIdAndUpdate(savedUser._id, {
           settings: savedSettings._id
@@ -206,7 +184,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Fetch the complete user data with populated settings for response
     const responseUser = await UserModel.findById(savedUser._id)
       .populate('settings')
       .select('-password')
@@ -219,7 +196,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Format response data
     const formattedUser = {
       id: responseUser._id.toString(),
       name: responseUser.name,
@@ -247,7 +223,6 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Error in POST /api/admin/users:', error);
     
-    // Handle duplicate key errors
     if (error.code === 11000) {
       if (error.message.includes('sipUsername')) {
         return NextResponse.json(
@@ -291,7 +266,6 @@ export async function DELETE(request: NextRequest) {
 
     await connectDB();
 
-    // Find the user to get their email for settings cleanup
     const user = await UserModel.findById(userId);
     if (!user) {
       return NextResponse.json(
@@ -300,10 +274,8 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Delete associated settings
     await Settings.deleteMany({ email: user.email });
 
-    // Delete the user
     await UserModel.findByIdAndDelete(userId);
 
     return NextResponse.json({

@@ -29,7 +29,6 @@ export function PhoneStateProvider({
   const [phoneState, setPhoneState] = useState<PhoneStateType>(null);
   const [extensionNumber, setExtensionNumber] = useState("");
 
-  // Initialize extension number from auth token
   useEffect(() => {
     const token = getParsedToken();
     if (token?.extensionNumber) {
