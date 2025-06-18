@@ -31,7 +31,7 @@ export default function RootLayout({
           <UserDataProvider>
             <PhoneStateProvider>
               <SIPProvider>
-                <ProtectedRoute requiredRole="user" redirectOnAuth={true}>
+                <ProtectedRoute>
                   <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
                     <div className="max-w-7xl min-h-screen flex flex-col mx-auto px-4 sm:px-6 lg:px-8 py-8">
                       {children}

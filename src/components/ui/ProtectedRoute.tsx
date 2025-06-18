@@ -1,30 +1,29 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useLayoutEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { getParsedToken } from "@/utils/auth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: "admin" | "user";
-  redirectOnAuth?: boolean; // If true, redirect authenticated users to their respective dashboards
 }
 
-export default function ProtectedRoute({
-  children,
-  requiredRole,
-  redirectOnAuth = false,
-}: ProtectedRouteProps) {
+export default function ProtectedRoute({ children }: ProtectedRouteProps) {
+  const pathname = usePathname();
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isLoading) return; // Wait for auth state to be determined
 
     if (!isAuthenticated) {
-      // User is not authenticated, redirect to signin
-      router.push("/signin");
+      if (pathname === "/") {
+        router.push("/");
+      } else if (pathname !== "/signin" && pathname !== "/signup") {
+        router.push("/signin");
+      }
+
       return;
     }
 
@@ -33,26 +32,20 @@ export default function ProtectedRoute({
     const userRole = tokenData?.role;
 
     // If redirectOnAuth is true (used for signin/signup pages), redirect authenticated users
-    if (redirectOnAuth) {
-      if (userRole === "admin") {
-        router.push("/admin");
-      } else {
-        router.push("/phone");
-      }
-      return;
+    if (userRole === "admin") {
+      router.push("/admin");
+    } else {
+      router.push("/phone");
     }
 
-    // Check if user has required role for protected routes
-    if (requiredRole && userRole !== requiredRole) {
-      // User doesn't have required role, redirect to their appropriate dashboard
-      if (userRole === "admin") {
-        router.push("/admin");
-      } else {
+    if (pathname === "/" || pathname === "/signin" || pathname === "/signup") {
+      if (userRole === "user") {
         router.push("/phone");
+      } else {
+        router.push("/admin");
       }
-      return;
     }
-  }, [isLoading, isAuthenticated, router, requiredRole, redirectOnAuth]);
+  }, [isLoading, isAuthenticated, router, pathname]);
 
   if (isLoading) {
     return (
@@ -61,16 +54,6 @@ export default function ProtectedRoute({
       </div>
     );
   }
-
-  // Show nothing while redirecting
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  // If redirectOnAuth is true, don't render children (we're redirecting)
-  // if (redirectOnAuth) {
-  //   return null;
-  // }
 
   return <>{children}</>;
 }
