@@ -68,9 +68,9 @@ export default function ProtectedRoute({
   }
 
   // If redirectOnAuth is true, don't render children (we're redirecting)
-  if (redirectOnAuth) {
-    return null;
-  }
+  // if (redirectOnAuth) {
+  //   return null;
+  // }
 
   return <>{children}</>;
 }

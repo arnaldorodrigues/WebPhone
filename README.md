@@ -1,36 +1,127 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Browser Phone
+
+A modern browser-based phone application built with Next.js, featuring SIP integration, real-time communication, user authentication, and administrative capabilities.
+
+## Features
+
+- 📞 Browser-based SIP phone functionality
+- 💬 Real-time chat messaging
+- 👥 Contact management
+- 🔐 User authentication and authorization
+- ⚙️ Admin panel for user and server management
+- 🎨 Modern UI with Tailwind CSS
+- 🔒 Secure communication
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+- Node.js (v20 or higher)
+- npm or yarn
+- MongoDB instance
+- SSL certificates (for HTTPS development)
 
 ## Getting Started
 
-First, run the development server:
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/3cns/WebPhone.git
+   cd WebPhone
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. **Environment Setup**
+   Create a `.env.local` file in the root directory with the following variables:
+   ```env
+   MONGODB_URI=your_mongodb_connection_string
+   JWT_SECRET=your_jwt_secret
+   NEXTAUTH_SECRET=your_nextauth_secret
+   NEXTAUTH_URL=https://localhost:3000
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+4. **SSL Certificate Setup**
+   Place your SSL certificates in the `certs` directory:
+   - `certs/localhost.key`
+   - `certs/localhost.crt`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+5. **Start the development server**
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
 
-## Learn More
+   The application will be available at `https://localhost:3000`
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `/src/app` - Next.js application routes and API endpoints
+- `/src/components` - React components organized by feature
+- `/src/hooks` - Custom React hooks including SIP provider
+- `/src/lib` - Utility functions and database actions
+- `/src/models` - MongoDB models and schemas
+- `/src/types` - TypeScript type definitions
+- `/src/utils` - Helper functions and utilities
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Key Features Documentation
 
-## Deploy on Vercel
+### Authentication
+- Sign up and sign in functionality
+- JWT-based authentication
+- Protected routes and API endpoints
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Phone Features
+- SIP.js integration for WebRTC calls
+- Real-time audio communication
+- Call history and status display
+- Dial pad with number input
+- Contact management
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Admin Panel
+- User management
+- Server configuration
+- System monitoring
+- Access control
+
+### Chat System
+- Real-time messaging
+- Message history
+- Contact-based conversations
+- Message status tracking
+
+## Development
+
+### Available Scripts
+
+- `npm run dev` - Start development server with HTTPS
+- `npm run build` - Build the production application
+- `npm run start` - Start the production server
+- `npm run lint` - Run ESLint for code quality
+
+### Technology Stack
+
+- **Frontend**: Next.js, React, TailwindCSS
+- **Backend**: Next.js API Routes
+- **Database**: MongoDB with Mongoose
+- **Authentication**: NextAuth.js
+- **VoIP**: SIP.js
+- **UI Components**: Headless UI, Heroicons
+
+## Deployment
+
+The application can be deployed to various platforms:
+
+1. **Vercel** (Recommended)
+   - Connect your repository to Vercel
+   - Configure environment variables
+   - Deploy automatically with git push
+
+2. **Self-hosted**
+   - Build the application: `npm run build`
+   - Start the server: `npm run start`
+   - Use process manager (PM2) for production

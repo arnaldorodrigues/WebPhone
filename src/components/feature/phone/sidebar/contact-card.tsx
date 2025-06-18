@@ -2,15 +2,27 @@ import { PhoneIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 
 import { Contact } from "@/types/user";
+import { useEffect, useState } from "react";
+import { checkExtensionNumberIsRegistered } from "@/lib/contact-action";
 
 const ContactCard = ({
   contact,
   isSelected,
 }: {
-  contact: Contact & { isOnline?: boolean };
+  contact: Contact;
   isSelected: boolean;
 }) => {
-  const { id, name, number, unreadCount = 0, isOnline } = contact;
+  const { id, name, number, unreadCount = 0 } = contact;
+  const [isOnline, setIsOnline] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const isRegistered = await checkExtensionNumberIsRegistered(number);
+      setIsOnline(isRegistered || false);
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Link

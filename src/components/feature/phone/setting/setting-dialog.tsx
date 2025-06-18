@@ -82,12 +82,8 @@ interface SettingDialogProps {
 }
 
 const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
-  const {
-    userData,
-    setUserData,
-    isLoading: userDataLoading,
-    refreshUserData,
-  } = useUserData();
+  const { userData, setUserData, isLoading: userDataLoading } = useUserData();
+  const { connectAndRegister, disconnect } = useSIPProvider();
   const [formData, setFormData] = useState<SettingDLG>({
     name: "",
     email: "",
@@ -105,8 +101,6 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
     {}
   );
-
-  const { connectAndRegister } = useSIPProvider();
 
   // Load user data
   useEffect(() => {
@@ -243,25 +237,21 @@ const SettingDialog = ({ isOpen, onClose }: SettingDialogProps) => {
         },
       });
 
+      disconnect();
+
+      connectAndRegister({
+        server: userData.settings?.domain || "",
+        username: formData.sipUsername!,
+        password: formData.sipPassword!,
+        wsServer: userData.settings?.wsServer || "",
+        wsPort: userData.settings?.wsPort || "",
+        wsPath: userData.settings?.wsPath || "",
+      });
+
       setIsDirty(false);
       setSaveSuccess(true);
       setValidationErrors({});
 
-      // Re-establish connection with new settings
-      try {
-        connectAndRegister({
-          server: userData.settings?.domain || "",
-          username: formData.sipUsername!,
-          password: formData.sipPassword!,
-          wsServer: userData.settings?.wsServer || "",
-          wsPort: userData.settings?.wsPort || "",
-          wsPath: userData.settings?.wsPath || "",
-        });
-      } catch (error) {
-        console.error("Error connecting and registering:", error);
-      }
-
-      // Close dialog immediately after successful save
       onClose();
     } catch (error) {
       console.error("Error saving user data:", error);
