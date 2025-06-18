@@ -11,12 +11,10 @@ const DialPad = ({ onPressButton, onCall }: DialPadProps) => {
   };
 
   const handleCall = () => {
-    console.log("DialPad: Call button pressed, onCall available:", !!onCall);
     if (onCall) {
-      console.log("DialPad: Executing onCall callback...");
       onCall();
     } else {
-      console.warn("📞 DialPad: No onCall callback provided!");
+      console.warn("No onCall callback provided!");
     }
   };
 

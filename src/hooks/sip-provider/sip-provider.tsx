@@ -16,7 +16,6 @@ import { useUserData } from "../use-userdata";
 import { addContact } from "@/lib/contact-action";
 import { useNotification } from "@/contexts/notification-context";
 
-// Define message type
 interface SipMessage {
   id: string;
   body: string;
@@ -44,7 +43,6 @@ export const SIPProvider = (props: {
   const [registerStatus, setRegisterStatus] = useState<RegisterStatus>(
     RegisterStatus.UNREGISTERED
   );
-  // Add messages state
   const [messages, setMessages] = useState<Record<string, SipMessage>>({});
   const { userData, refreshUserData } = useUserData();
 
@@ -58,7 +56,6 @@ export const SIPProvider = (props: {
     [setSessions]
   );
 
-  // Add message management functions
   const addMessage = useCallback(
     (message: SipMessage) => {
       setMessages((messages) => ({
@@ -209,34 +206,26 @@ export const SIPProvider = (props: {
   const disconnect = useCallback(async () => {
     if (sessionManager) {
       try {
-        // Unregister if currently registered
         if (registerStatus === RegisterStatus.REGISTERED) {
           await sessionManager.unregister();
         }
 
-        // Disconnect from the SIP server
         await sessionManager.disconnect();
 
-        // Reset session manager
         setSessionManager(null);
 
-        // Clear sessions
         setSessions({});
         setSessionTimer({});
-        clearMessages(); // Clear messages on disconnect
+        clearMessages();
 
-        // Update status
         setStatus(CONNECT_STATUS.WAIT_REQUEST_CONNECT);
         setRegisterStatus(RegisterStatus.UNREGISTERED);
-
-        console.log("SIP Provider: Successfully disconnected and unregistered");
       } catch (error) {
         console.error("SIP Provider: Error during disconnect:", error);
-        // Force reset even if there's an error
         setSessionManager(null);
         setSessions({});
         setSessionTimer({});
-        clearMessages(); // Clear messages even on error
+        clearMessages();
         setStatus(CONNECT_STATUS.DISCONNECTED);
         setRegisterStatus(RegisterStatus.UNREGISTERED);
       }
@@ -289,14 +278,13 @@ export const SIPProvider = (props: {
           registerStatus,
           sessions,
           sessionTimer,
-          messages, // Add messages to context
-          clearMessages, // Add clearMessages function to context
+          messages,
+          clearMessages,
         }}
       >
         {children}
       </ProviderContext.Provider>
       <audio ref={refAudioRemote} />
-      {/* <video ref={refVideoRemote} /> */}
     </>
   );
 };

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import UserModel from '@/models/User';
 import { Settings } from '@/models/Settings';
-import { _parse_token, getParsedToken } from '@/utils/auth';
+import { _parse_token } from '@/utils/auth';
 import bcrypt from 'bcryptjs';
 import mongoose, { Document, Types } from 'mongoose';
 
@@ -43,23 +43,20 @@ export async function GET(request: NextRequest) {
     const token = _parse_token(t);
     await connectDB();
 
-    // Check if this is a candidate search request
     const searchParams = request.nextUrl.searchParams;
     const searchQuery = searchParams.get('query');
     const count = searchParams.get('count');
 
     if (searchQuery && count) {
-      // This is a candidate search request
       const limit = parseInt(count);
       
-      // Find users that match the query in name or SIP username
       const users = await UserModel.aggregate([
         {
           $match: { role: "user", _id: { $ne: new mongoose.Types.ObjectId(token._id) } }
         },
         {
           $lookup: {
-            from: "settings", // collection name, not model name
+            from: "settings",
             localField: "settings",
             foreignField: "_id",
             as: "settings"
@@ -84,7 +81,6 @@ export async function GET(request: NextRequest) {
         }
       ]);
       
-      // Transform users into candidate format
       const candidates = users.map((user: any) => ({
         id: user._id.toString(),
         name: user.name,
@@ -97,7 +93,6 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Regular user fetch request
     const user = await UserModel.findById(token._id)
       .populate('settings')
       .select('-password')
@@ -112,7 +107,6 @@ export async function GET(request: NextRequest) {
       
     const typedUser = user as unknown as UserDocument;
       
-    // Format response data
     const formattedUser: {
       id: string;
       name: string;
@@ -198,7 +192,6 @@ export async function POST(request: NextRequest) {
     const userData = await request.json();
     await connectDB();
 
-    // Validate required fields
     if (!userData.email || !userData.name) {
       return NextResponse.json(
         { success: false, error: 'Email and name are required' },
@@ -206,7 +199,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find existing user
     const existingUser = await UserModel.findById(token._id);
 
     if (!existingUser) {
@@ -216,7 +208,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check password
     if (userData.password) {
       const isPasswordValid = await bcrypt.compare(userData.password, existingUser.password);
       if (!isPasswordValid) {
@@ -227,24 +218,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Update user data
     const updateData: any = {
       name: userData.name,
       email: userData.email,
       role: userData.role || existingUser.role,
       password: userData.newPassword ? await bcrypt.hash(userData.newPassword, 10) : undefined,
     };
-
-    // Update user
+    
     const updatedUser = await UserModel.findByIdAndUpdate(
       existingUser._id,
       updateData,
       { new: true, runValidators: true }
     );
 
-    // Handle settings if provided
     if (userData.settings) {
-      // Check for duplicate SIP username
       if (userData.settings.sipUsername) {
         const existingSipUser = await Settings.findOne({
           sipUsername: userData.settings.sipUsername,
@@ -269,7 +256,6 @@ export async function POST(request: NextRequest) {
         sipPassword: userData.settings.sipPassword,
       };
 
-      // Find or create settings
       const existingSettings = await Settings.findOne({ 
         email: token.email.toLowerCase() 
       });
@@ -286,13 +272,11 @@ export async function POST(request: NextRequest) {
         savedSettings = await Settings.create(settingsData);
       }
 
-      // Link settings to user
       await UserModel.findByIdAndUpdate(updatedUser._id, {
         settings: savedSettings._id
       });
     }
 
-    // Fetch complete updated user data
     const responseUser = await UserModel.findById(updatedUser._id)
       .populate('settings')
       .select('-password')
@@ -307,7 +291,6 @@ export async function POST(request: NextRequest) {
 
     const typedResponseUser = responseUser as unknown as UserDocument;
 
-    // Format response data
     const formattedUser: {
       id: string;
       name: string;
@@ -374,7 +357,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Add or delete contact
 export async function PUT(request: NextRequest) {
   try {
     const t = request.headers.get('cookies');
@@ -406,7 +388,7 @@ export async function PUT(request: NextRequest) {
     const contact = (await UserModel.aggregate([
       {
         $lookup: {
-          from: "settings", // collection name in lowercase and plural
+          from: "settings", 
           localField: "settings",
           foreignField: "_id",
           as: "settings"
@@ -430,7 +412,6 @@ export async function PUT(request: NextRequest) {
     }
 
     if (action === 'add') {
-      // Check if contact already exists
       const contactExists = user.contacts.some(
         (c: Types.ObjectId) => c.toString() === contact._id.toString()
       );
@@ -456,7 +437,6 @@ export async function PUT(request: NextRequest) {
 
     await user.save();
 
-    // Fetch updated user data
     const updatedUser = await UserModel.findById(user._id)
       .populate('settings')
       .select('-password')
@@ -471,7 +451,6 @@ export async function PUT(request: NextRequest) {
 
     const typedUser = updatedUser as unknown as UserDocument;
 
-    // Format response data
     const formattedUser: {
       id: string;
       name: string;

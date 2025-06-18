@@ -2,7 +2,6 @@ interface Props {
   id: string;
   name: string;
   required?: boolean;
-  // className?: string;
   placeholder?: string;
   value: string;
   rows?: number;

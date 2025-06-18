@@ -1,6 +1,5 @@
 import { fetchWithAuth } from "@/utils/api";
 
-// Define the settings interface
 export interface Settings {
   wsServer: string;
   wsPort: string;
@@ -16,7 +15,6 @@ export interface Settings {
   xDomain: string;
 }
 
-// Default settings
 export const defaultSettings: Settings = {
   wsServer: "",
   wsPort: "",
@@ -32,7 +30,6 @@ export const defaultSettings: Settings = {
   xDomain: "",
 };
 
-// Settings-specific operations
 export const settingsAction = {
   defaultSettings,
   get: async (): Promise<Settings> => {

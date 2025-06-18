@@ -17,10 +17,8 @@ const AddContactDialog = ({ isOpen, onClose }: AddContactDialogProps) => {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const { refreshUserData } = useUserData();
 
-  // Mock candidates for demonstration - replace with actual API call
   useEffect(() => {
     if (searchQuery.length > 0) {
-      // Simulate API call to get candidates
       const gettingCandidates = async () => {
         const candidates = await getCandidates(searchQuery);
         setCandidates(candidates);

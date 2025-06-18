@@ -25,7 +25,6 @@ const ServerTable = ({ servers, onRefresh }: Props) => {
   );
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
-  // Update pagination
   useEffect(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
@@ -157,7 +156,6 @@ const ServerTable = ({ servers, onRefresh }: Props) => {
         </div>
       )}
 
-      {/* Edit dialog */}
       <ServerEditDialog
         isOpen={isEditDialogOpen}
         onClose={closeEdit}
@@ -165,7 +163,6 @@ const ServerTable = ({ servers, onRefresh }: Props) => {
         onSuccess={onRefresh}
       />
 
-      {/* Confirm delete */}
       <ConfirmDialog
         isOpen={isConfirmDialogOpen}
         onClose={closeConfirm}

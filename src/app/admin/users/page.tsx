@@ -41,7 +41,6 @@ const UsersPage = () => {
     extensionNumbers: 0,
   });
 
-  // Fetch users data from API
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -69,11 +68,9 @@ const UsersPage = () => {
     fetchUsers();
   }, []);
 
-  // Filter users based on search and filters
   useEffect(() => {
     let filtered = users;
 
-    // Search filter
     if (searchTerm) {
       filtered = filtered.filter(
         (user) =>
@@ -85,12 +82,10 @@ const UsersPage = () => {
       );
     }
 
-    // Role filter
     if (roleFilter !== "all") {
       filtered = filtered.filter((user) => user.role === roleFilter);
     }
 
-    // Status filter
     if (statusFilter !== "all") {
       filtered = filtered.filter((user) => user.status === statusFilter);
     }
@@ -127,44 +122,13 @@ const UsersPage = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      {/* Actions Bar */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        {/* Search */}
         <SearchInput
           value={searchTerm}
           onChange={setSearchTerm}
           placeholder="Search by name, email, or extension number..."
           className="flex-1"
         />
-
-        {/* Filters */}
-        {/* <div className="flex gap-2">
-          <DropdownSelect
-            value={roleFilter}
-            onChange={setRoleFilter}
-            options={[
-              { value: "all", label: "All Roles" },
-              { value: "admin", label: "Admin" },
-              { value: "user", label: "User" },
-            ]}
-            placeholder="All Roles"
-            className="w-32"
-          />
-
-          <DropdownSelect
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={[
-              { value: "all", label: "All Status" },
-              { value: "active", label: "Active" },
-              { value: "inactive", label: "Inactive" },
-            ]}
-            placeholder="All Status"
-            className="w-32"
-          />
-        </div> */}
-
-        {/* Add User Button */}
         <button
           onClick={handleAddUser}
           className="flex items-center px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors duration-200 shadow-sm"
@@ -174,37 +138,6 @@ const UsersPage = () => {
         </button>
       </div>
 
-      {/* Stats Cards */}
-      {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <div className="text-sm font-medium text-gray-500">Total Users</div>
-          <div className="text-2xl font-bold text-gray-900">
-            {stats.totalUsers}
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <div className="text-sm font-medium text-gray-500">Active Users</div>
-          <div className="text-2xl font-bold text-green-500">
-            {stats.activeUsers}
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <div className="text-sm font-medium text-gray-500">Admins</div>
-          <div className="text-2xl font-bold text-purple-500">
-            {stats.adminUsers}
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <div className="text-sm font-medium text-gray-500">
-            Extension Numbers
-          </div>
-          <div className="text-2xl font-bold text-orange-500">
-            {stats.extensionNumbers}
-          </div>
-        </div>
-      </div> */}
-
-      {/* Users Table */}
       <div className="mt-4 bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <UserTable users={filteredUsers} onRefresh={fetchUsers} />

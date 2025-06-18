@@ -23,17 +23,9 @@ const CandidateList = ({ candidates = [], onSelect }: CandidateListProps) => {
             className="w-full p-3 bg-white/10 hover:bg-white/20 rounded-xl text-left transition-all duration-200 ease-in-out flex items-center gap-3 transform hover:scale-[1.02]"
           >
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center overflow-hidden shadow-md">
-              {/* {candidate.photo ? (
-                <img
-                  src={candidate.photo}
-                  alt={candidate.name || candidate.number}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="text-white/70 text-lg">
-                  {(candidate.name?.[0] || candidate.number[0]).toUpperCase()}
-                </span>
-              )} */}
+              <span className="text-white/70 text-lg">
+                {(candidate.name?.[0] || candidate.number[0]).toUpperCase()}
+              </span>
             </div>
             <div className="flex flex-row items-center gap-3">
               {candidate.name && (

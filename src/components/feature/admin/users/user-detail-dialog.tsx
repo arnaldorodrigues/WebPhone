@@ -6,7 +6,6 @@ import {
   EnvelopeIcon,
   PhoneIcon,
   CalendarIcon,
-  ShieldCheckIcon,
   CogIcon,
   PencilIcon,
   TrashIcon,
@@ -86,7 +85,6 @@ const UserDetailDialog = ({
       maxWidth="2xl"
     >
       <div className="space-y-6">
-        {/* User Profile Section */}
         <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-xl">
           <div className="h-16 w-16 bg-gradient-to-br from-indigo-400 to-indigo-500 rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
             <span className="text-xl font-bold text-white">
@@ -98,8 +96,6 @@ const UserDetailDialog = ({
               <h2 className="text-xl font-semibold text-gray-900 truncate">
                 {user.name}
               </h2>
-              {/* {getRoleBadge(user.role)}
-              {getStatusBadge(user.status)} */}
             </div>
             <p className="text-gray-600 mb-1">{user.email}</p>
             <p className="text-sm text-gray-500">
@@ -113,7 +109,6 @@ const UserDetailDialog = ({
           </div>
         </div>
 
-        {/* User Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -142,16 +137,6 @@ const UserDetailDialog = ({
                 </div>
               </div>
 
-              {/* <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <ShieldCheckIcon className="w-4 h-4 text-gray-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Role</p>
-                  <p className="text-gray-900 capitalize">{user.role}</p>
-                </div>
-              </div>
-
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
                   <CalendarIcon className="w-4 h-4 text-gray-600" />
@@ -160,11 +145,10 @@ const UserDetailDialog = ({
                   <p className="text-sm font-medium text-gray-500">Status</p>
                   <p className="text-gray-900 capitalize">{user.status}</p>
                 </div>
-              </div> */}
+              </div>
             </div>
           </div>
 
-          {/* SIP Settings */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
               <CogIcon className="w-5 h-5 mr-2 text-indigo-500" />
@@ -267,7 +251,6 @@ const UserDetailDialog = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
           <button
             onClick={onClose}

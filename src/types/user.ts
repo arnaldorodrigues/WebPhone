@@ -33,13 +33,12 @@ export interface UserData {
   name: string;
   email: string;
   role: string;
-  status: 'active' | 'inactive';
+  status: "active" | "inactive";
   createdAt: string;
   settings: UserSettings | null;
   contacts: Contact[];
 }
 
-// Default user data
 export const defaultUserData: UserData = {
   id: "",
   name: "",

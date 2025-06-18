@@ -2,12 +2,10 @@ const ChatUnit = ({
   text,
   date,
   isMe,
-  status,
 }: {
   text: string;
   date: string;
   isMe: boolean;
-  status: string;
 }) => {
   return (
     <div className={`w-full flex ${isMe ? "justify-end" : "justify-start"}`}>
@@ -28,15 +26,6 @@ const ChatUnit = ({
           >
             {date}
           </p>
-          {/* {isMe && (
-            <>
-              {status === "unread" && (
-                <p className="text-xs text-gray-400">√</p>
-              )}
-              {status === "read" && <p className="text-xs text-gray-400">√√</p>}
-              {status === "failed" && <p className="text-xs text-red-400">×</p>}
-            </>
-          )} */}
         </div>
       </div>
     </div>

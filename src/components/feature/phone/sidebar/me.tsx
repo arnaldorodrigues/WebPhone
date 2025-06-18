@@ -26,11 +26,10 @@ export function Me() {
     connectStatus,
     disconnect,
   } = useSIPProvider();
-  const { sipConfig, isLoading, userData, refreshUserData } = useUserData();
+  const { sipConfig, isLoading, userData } = useUserData();
   const { logout } = useAuth();
   const { phoneState, setPhoneState } = usePhoneState();
 
-  // Handle incoming calls
   useEffect(() => {
     if (sessions && Object.keys(sessions).length > 0) {
       const sessionIds = Object.keys(sessions);
@@ -56,12 +55,10 @@ export function Me() {
     }
   }, [sessions, setPhoneState]);
 
-  // Force refresh when settings change
   useEffect(() => {
     setRefreshKey((prev) => prev + 1);
   }, [userData, sipConfig]);
 
-  // Get display name and username from settings
   const displayName = sipConfig?.displayName || userData.name || "User";
   const username = sipConfig?.username || userData.settings?.sipUsername || "";
   const server = sipConfig?.server || userData.settings?.domain || "";
@@ -75,7 +72,6 @@ export function Me() {
 
   const handleSignout = async () => {
     try {
-      // Disconnect all active SIP sessions before logging out
       if (sessions && Object.keys(sessions).length > 0) {
         Object.values(sessions).forEach((session) => {
           if (session && session.state !== SessionState.Terminated) {
@@ -87,7 +83,6 @@ export function Me() {
       await logout();
     } catch (error) {
       console.error("Error during signout:", error);
-      // Still proceed with logout even if SIP disconnection fails
       await logout();
     }
   };
@@ -95,10 +90,8 @@ export function Me() {
   const handleRegisterToggle = async () => {
     try {
       if (registerStatus === RegisterStatus.REGISTERED) {
-        // Unregister - disconnect from SIP server
         await disconnect();
       } else {
-        // Register - connect to SIP server
         if (sipConfig && !isLoading) {
           await connectAndRegister(sipConfig);
         }
@@ -113,7 +106,6 @@ export function Me() {
       key={refreshKey}
       className="w-full p-5 flex flex-col gap-10 bg-white border-b border-gray-100"
     >
-      {/* Profile Section */}
       <div className="flex items-center">
         <div className="relative">
           <div className="rounded-full w-14 h-14 bg-gradient-to-br from-indigo-400 to-indigo-500 shadow-sm flex-shrink-0 flex items-center justify-center">
@@ -121,7 +113,6 @@ export function Me() {
               {displayName.charAt(0).toUpperCase()}
             </span>
           </div>
-          {/* Status indicator */}
           <div
             className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white shadow-sm ${
               registerStatus === RegisterStatus.REGISTERED &&

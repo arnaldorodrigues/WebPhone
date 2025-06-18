@@ -24,9 +24,6 @@ interface Props {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   readOnly?: boolean;
-  /**
-   * When `type` is `dropdown`, provide list of options to render in the dropdown.
-   */
   options?: DropdownOption[];
 }
 
@@ -44,11 +41,9 @@ const Input = ({
 }: Props) => {
   const [mounted, setMounted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  // Autocomplete text input with dropdown suggestions.
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -93,12 +88,10 @@ const Input = ({
   const baseClassName =
     "appearance-none block w-full px-4 py-2.5 border border-gray-200 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all duration-200 hover:border-gray-300";
 
-  // Add padding-right for password fields to accommodate the eye button
   const finalClassName = `${baseClassName} ${
     isPasswordType ? "pr-10" : ""
   } ${className}`;
 
-  // During SSR and initial client render, use a controlled input with empty value
   if (!mounted) {
     return (
       <div className={isPasswordType ? "relative" : ""}>
@@ -144,7 +137,6 @@ const Input = ({
           readOnly={readOnly}
           onFocus={() => setIsOpen(true)}
         />
-        {/* dropdown toggle */}
         <button
           type="button"
           className="absolute inset-y-0 right-0 pr-3 flex items-center"

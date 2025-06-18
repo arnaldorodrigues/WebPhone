@@ -11,7 +11,6 @@ import { userAction } from "@/lib/user-action";
 import { UserData } from "@/types/user";
 import { SipConfig } from "@/types/sip-type";
 
-// Create context
 interface UserDataContextType {
   userData: UserData;
   sipConfig: SipConfig | null;
@@ -28,7 +27,6 @@ const UserDataContext = createContext<UserDataContextType | undefined>(
   undefined
 );
 
-// Provider component
 export function UserDataProvider({ children }: { children: React.ReactNode }) {
   const [userData, setUserDataState] = useState<UserData>(
     userAction.defaultUserData
@@ -37,7 +35,6 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  // Function to get user data from API
   const getUserData = useCallback(async () => {
     try {
       const loadedData = await userAction.get();
@@ -48,7 +45,6 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Load user data function
   const loadUserData = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -67,12 +63,10 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
     }
   }, [getUserData]);
 
-  // Load user data on mount
   useEffect(() => {
     loadUserData();
   }, [loadUserData]);
 
-  // Function to get SIP configuration
   useEffect(() => {
     if (!userData.settings) {
       return;
@@ -96,10 +90,8 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       setError(null);
 
-      // Update database
       await userAction.set(newData);
 
-      // Update local state
       setUserDataState(newData);
     } catch (err) {
       setError(
@@ -111,13 +103,11 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Refresh function to manually reload user data from database
   const refreshUserData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      // Force fetch from database
       const loadedData = await userAction.get();
       setUserDataState(loadedData);
       setError(null);
@@ -130,7 +120,6 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Function to clear user data (useful for logout or reset)
   const clearUserData = useCallback(() => {
     setUserDataState(userAction.defaultUserData);
     setSipConfig(null);
@@ -153,7 +142,6 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Custom hook to use the user data context
 export function useUserData() {
   const context = useContext(UserDataContext);
   if (context === undefined) {

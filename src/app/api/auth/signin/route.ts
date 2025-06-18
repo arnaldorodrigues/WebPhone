@@ -8,7 +8,6 @@ export async function POST(request: Request) {
     const body: SignInRequest = await request.json();
     const { email, password } = body;
 
-    // Basic validation
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Missing required fields' },
@@ -16,7 +15,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(

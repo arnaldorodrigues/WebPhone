@@ -73,16 +73,13 @@ const Pagination = ({
 
   return (
     <div className={`flex items-center justify-between ${className}`}>
-      {/* Results Info */}
       <div className="text-sm text-gray-500">
         Showing <span className="font-medium">{startItem}</span> to{" "}
         <span className="font-medium">{endItem}</span> of{" "}
         <span className="font-medium">{totalItems}</span> results
       </div>
 
-      {/* Pagination Controls */}
       <div className="flex items-center space-x-2">
-        {/* Previous Button */}
         <button
           onClick={handlePrevious}
           disabled={currentPage === 1}
@@ -99,7 +96,6 @@ const Pagination = ({
           Previous
         </button>
 
-        {/* Page Numbers */}
         <div className="flex items-center space-x-1">
           {getVisiblePages().map((page, index) => (
             <button
@@ -122,7 +118,6 @@ const Pagination = ({
           ))}
         </div>
 
-        {/* Next Button */}
         <button
           onClick={handleNext}
           disabled={currentPage === totalPages}
