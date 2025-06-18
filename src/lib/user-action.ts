@@ -2,7 +2,6 @@ import { fetchWithAuth } from "@/utils/api";
 import { defaultUserData } from "@/types/user";
 import { UserData } from "@/types/user";
 
-// User-specific operations
 export const userAction = {
   defaultUserData,
   get: async (): Promise<UserData> => {

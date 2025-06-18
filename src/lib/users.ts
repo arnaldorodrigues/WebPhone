@@ -31,7 +31,6 @@ export const findUserByEmail = async (email: string): Promise<User | null> => {
 };
 
 export const validatePassword = async (user: User, password: string): Promise<boolean> => {
-  // No need to connect DB here, as the user object already comes from the DB
   return bcrypt.compare(password, user.password);
 };
 

@@ -31,7 +31,6 @@ export function TabView({
 
   return (
     <div className={`w-full bg-white rounded-xl shadow-sm ${className}`}>
-      {/* Tab Headers */}
       <div className="flex space-x-1 border-b border-gray-100">
         {tabs.map((tab) => (
           <button
@@ -53,7 +52,6 @@ export function TabView({
         ))}
       </div>
 
-      {/* Tab Content */}
       <div className="p-6 overflow-y-auto border-0">
         {tabs.find((tab) => tab.id === activeTab)?.content}
       </div>

@@ -3,7 +3,6 @@ import connectDB from '@/lib/mongodb';
 import ServerModel from '@/models/Server';
 import { ServerConfig } from '@/types/server-type';
 
-// Fetch list of servers
 export async function GET() {
   try {
     await connectDB();
@@ -27,27 +26,23 @@ export async function GET() {
   }
 }
 
-// Create or update a server
 export async function POST(request: NextRequest) {
   try {
     const body: Partial<ServerConfig> & { id?: string } = await request.json();
 
     await connectDB();
 
-    // Validate required fields
     if (!body.domain || !body.wsServer || !body.wsPort) {
       return NextResponse.json({ success: false, error: 'Domain, WS Server and WS Port are required' }, { status: 400 });
     }
 
     let saved;
     if (body.id) {
-      // Update existing
       const existing = await ServerModel.findById(body.id);
       if (!existing) {
         return NextResponse.json({ success: false, error: 'Server not found' }, { status: 404 });
       }
 
-      // Ensure domain uniqueness
       const duplicate = await ServerModel.findOne({ domain: body.domain, _id: { $ne: body.id } });
       if (duplicate) {
         return NextResponse.json({ success: false, error: 'Domain already exists' }, { status: 400 });
@@ -61,7 +56,6 @@ export async function POST(request: NextRequest) {
         updatedAt: new Date(),
       }, { new: true, runValidators: true });
     } else {
-      // Create
       const duplicate = await ServerModel.findOne({ domain: body.domain });
       if (duplicate) {
         return NextResponse.json({ success: false, error: 'Domain already exists' }, { status: 400 });
@@ -75,7 +69,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Format response
     const resp = {
       id: saved._id.toString(),
       domain: saved.domain,
@@ -98,7 +91,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Delete a server
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

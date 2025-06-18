@@ -71,7 +71,7 @@ export default function SignIn() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData({ ...formData, [field]: value });
-    // Clear validation error when user starts typing
+
     if (validationErrors[field as keyof typeof validationErrors]) {
       setValidationErrors({
         ...validationErrors,

@@ -13,7 +13,7 @@ interface UserEditDialogProps {
   isOpen: boolean;
   onClose: () => void;
   user: User | null;
-  onSuccess?: () => void; // Callback to refresh parent data
+  onSuccess?: () => void;
 }
 
 interface FormData {
@@ -56,12 +56,10 @@ const UserEditDialog = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverList, setServerList] = useState<ServerConfig[]>([]);
 
-  // Determine if this is create mode (user is null) or edit mode
   const isCreateMode = !user;
   const dialogTitle = isCreateMode ? "Create New User" : "Edit User";
   const submitButtonText = isCreateMode ? "Create User" : "Save Changes";
 
-  // Get server list from database
   useEffect(() => {
     const getServerList = async () => {
       try {
@@ -80,15 +78,13 @@ const UserEditDialog = ({
     getServerList();
   }, []);
 
-  // Initialize form data when user changes
   useEffect(() => {
     if (user) {
-      // Edit mode - populate with user data
       setFormData({
         name: user.name || "",
         email: user.email || "",
         role: user.role || "user",
-        password: "", // Password is always empty for security
+        password: "",
         settings: {
           sipUsername: user.settings?.sipUsername || "",
           sipPassword: user.settings?.sipPassword || "",
@@ -99,7 +95,6 @@ const UserEditDialog = ({
         },
       });
     } else {
-      // Create mode - use defaults
       setFormData({
         name: "",
         email: "",
@@ -121,7 +116,6 @@ const UserEditDialog = ({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // Required field validation
     if (!formData.name.trim()) {
       newErrors.name = "Name is required";
     }
@@ -132,7 +126,6 @@ const UserEditDialog = ({
       newErrors.email = "Please enter a valid email address";
     }
 
-    // Password validation - required for new users, optional for existing users
     if (isCreateMode) {
       if (!formData.password.trim()) {
         newErrors.password = "Password is required for new users";
@@ -140,7 +133,6 @@ const UserEditDialog = ({
         newErrors.password = "Password must be at least 6 characters long";
       }
     } else {
-      // For editing existing users, only validate if password is provided
       if (formData.password && formData.password.length < 6) {
         newErrors.password = "Password must be at least 6 characters long";
       }
@@ -153,24 +145,6 @@ const UserEditDialog = ({
     if (!formData.settings.sipPassword.trim()) {
       newErrors.sipPassword = "SIP Password is required";
     }
-
-    // if (!formData.settings.domain.trim()) {
-    //   newErrors.domain = "Domain is required";
-    // }
-
-    // if (!formData.settings.wsServer.trim()) {
-    //   newErrors.wsServer = "WS Server is required";
-    // }
-
-    // if (!formData.settings.wsPort.trim()) {
-    //   newErrors.wsPort = "WS Port is required";
-    // } else if (!/^\d+$/.test(formData.settings.wsPort)) {
-    //   newErrors.wsPort = "WS Port must be a number";
-    // }
-
-    // if (!formData.settings.wsPath.trim()) {
-    //   newErrors.wsPath = "WS Path is required";
-    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -193,7 +167,6 @@ const UserEditDialog = ({
       }));
     }
 
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({
         ...prev,
@@ -221,11 +194,9 @@ const UserEditDialog = ({
         body: JSON.stringify(userData),
       });
 
-      // Check if the response indicates an error
       if (!response.ok) {
         const errorData = await response.json();
 
-        // Handle specific error cases
         if (errorData.error?.includes("SIP Username already exists")) {
           setErrors((prev) => ({
             ...prev,
@@ -239,7 +210,6 @@ const UserEditDialog = ({
           }));
           return;
         } else {
-          // Generic error handling
           console.error("Error saving user:", errorData.error);
           alert(`Error: ${errorData.error || "Failed to save user"}`);
           return;
@@ -270,7 +240,6 @@ const UserEditDialog = ({
       closeOnOutsideClick={false}
     >
       <div className="space-y-6">
-        {/* User Profile Section */}
         <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-xl">
           <div className="h-16 w-16 bg-gradient-to-br from-indigo-400 to-indigo-500 rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
             <span className="text-xl font-bold text-white">
@@ -289,9 +258,7 @@ const UserEditDialog = ({
           </div>
         </div>
 
-        {/* Form Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Personal Information */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
               <UserIcon className="w-5 h-5 mr-2 text-indigo-500" />
@@ -299,7 +266,6 @@ const UserEditDialog = ({
             </h3>
 
             <div className="space-y-4">
-              {/* Name Field */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Full Name *
@@ -319,7 +285,6 @@ const UserEditDialog = ({
                 )}
               </div>
 
-              {/* Email Field */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email Address *
@@ -339,25 +304,6 @@ const UserEditDialog = ({
                 )}
               </div>
 
-              {/* Role Field */}
-              {/* <div>
-                <DropdownSelect
-                  label="Role *"
-                  value={formData.role}
-                  onChange={(value) => handleInputChange("role", value)}
-                  options={[
-                    { value: "user", label: "User" },
-                    { value: "admin", label: "Admin" },
-                  ]}
-                  placeholder="Select role"
-                  className={errors.role ? "border-red-300" : ""}
-                />
-                {errors.role && (
-                  <p className="mt-1 text-sm text-red-600">{errors.role}</p>
-                )}
-              </div> */}
-
-              {/* Password Field */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Password {isCreateMode ? "*" : ""}
@@ -391,7 +337,6 @@ const UserEditDialog = ({
             </div>
           </div>
 
-          {/* SIP Settings */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
               <CogIcon className="w-5 h-5 mr-2 text-indigo-500" />
@@ -399,7 +344,6 @@ const UserEditDialog = ({
             </h3>
 
             <div className="space-y-4">
-              {/* SIP Username */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   SIP Username *
@@ -425,7 +369,6 @@ const UserEditDialog = ({
                 )}
               </div>
 
-              {/* SIP Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   SIP Password *
@@ -449,7 +392,6 @@ const UserEditDialog = ({
                 )}
               </div>
 
-              {/* Domain */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Domain
@@ -490,7 +432,6 @@ const UserEditDialog = ({
                 )}
               </div>
 
-              {/* WS Server */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   WS Server
@@ -514,7 +455,6 @@ const UserEditDialog = ({
                 )}
               </div>
 
-              {/* WS Port */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   WS Port
@@ -538,7 +478,6 @@ const UserEditDialog = ({
                 )}
               </div>
 
-              {/* WS Path */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   WS Path
@@ -565,7 +504,6 @@ const UserEditDialog = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
           <button
             onClick={handleCancel}

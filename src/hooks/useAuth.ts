@@ -38,7 +38,6 @@ export const useAuth = () => {
       setToken(data.token);
       setIsAuthenticated(true);
       
-      // Role-based routing
       if (data.user?.role === 'admin') {
         router.push('/admin');
       } else {
@@ -82,11 +81,9 @@ export const useAuth = () => {
 
   const logout = async () => {
     try {
-      // Clear authentication state
       removeToken();
       setIsAuthenticated(false);
       
-      // Clear stored settings from localStorage
       if (typeof window !== 'undefined') {
         try {
           localStorage.removeItem(SETTINGS_STORAGE_KEY);
@@ -95,14 +92,11 @@ export const useAuth = () => {
         }
       }
 
-      // Clear user data in context
       clearUserData();
       
-      // Redirect to signin page
       router.push('/signin');
     } catch (error) {
       console.error('Logout error:', error);
-      // Even if there's an error, still redirect to signin
       router.push('/signin');
     }
     finally {

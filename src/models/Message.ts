@@ -24,7 +24,6 @@ const messageSchema = new mongoose.Schema({
   },
 });
 
-// Create compound index for efficient querying of conversations
 messageSchema.index({ from: 1, to: 1, timestamp: -1 });
 
 const Message = mongoose.models.Message || mongoose.model('Message', messageSchema);

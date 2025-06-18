@@ -4,7 +4,6 @@ import UserModel from "@/models/User";
 import connectDB from "@/lib/mongodb";
 import { _parse_token } from "@/utils/auth";
 
-// Get count of messages with status by contact
 export async function GET(request: NextRequest) {
   try {
     const t = request.headers.get('cookies');

@@ -3,17 +3,7 @@
 import AdminSidebar from "@/components/feature/admin/sidebar/admin-sidebar";
 import ProtectedRoute from "@/components/ui/ProtectedRoute";
 
-import {
-  UsersIcon,
-  HomeIcon,
-  EnvelopeIcon,
-  CalendarIcon,
-  ShieldCheckIcon,
-  Cog6ToothIcon,
-  ChartBarIcon,
-  ArrowRightOnRectangleIcon,
-  UserIcon,
-} from "@heroicons/react/24/outline";
+import { CalendarIcon } from "@heroicons/react/24/outline";
 import { usePathname } from "next/navigation";
 
 const RootLayout = ({
@@ -28,9 +18,7 @@ const RootLayout = ({
         <AdminSidebar />
         <div className="flex-1 min-w-0 w-full">
           <div className="min-h-full w-full bg-gray-50">
-            {/* Main Content */}
             <div className="w-full">
-              {/* Header */}
               <header className="bg-white shadow-sm border-b border-gray-100">
                 <div className="px-6 py-4">
                   <div className="flex items-center justify-between">

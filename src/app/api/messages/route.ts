@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Message from '@/models/Message';
-import { _parse_token, getParsedToken } from '@/utils/auth';
+import { _parse_token } from '@/utils/auth';
 import UserModel from '@/models/User';
 
-// Get messages for a conversation
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
@@ -48,7 +47,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Save a new message
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
@@ -74,7 +72,6 @@ export async function POST(request: NextRequest) {
       from: token._id,
       to,
       body: messageBody,
-      // status:"unread",
       timestamp: new Date(),
     });
 
@@ -92,7 +89,6 @@ export async function POST(request: NextRequest) {
   }
 } 
 
-// Set status
 export async function PUT(request: NextRequest) {
   try {
     await connectDB();

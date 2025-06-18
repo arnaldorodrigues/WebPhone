@@ -38,7 +38,6 @@ export function Dialog({
         className="relative z-50"
         onClose={closeOnOutsideClick ? onClose : () => {}}
       >
-        {/* Background overlay */}
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -51,7 +50,6 @@ export function Dialog({
           <div className="fixed inset-0 bg-black/25 backdrop-blur-sm" />
         </Transition.Child>
 
-        {/* Dialog panel */}
         <div className="fixed inset-0 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4 text-center">
             <Transition.Child
@@ -66,7 +64,6 @@ export function Dialog({
               <HeadlessDialog.Panel
                 className={`w-full ${maxWidthClasses[maxWidth]} transform overflow-hidden rounded-2xl bg-white p-3 text-left align-middle shadow-2xl transition-all`}
               >
-                {/* Header */}
                 <div className="flex items-center justify-between mb-1">
                   <HeadlessDialog.Title
                     as="h3"
@@ -86,7 +83,6 @@ export function Dialog({
                   )}
                 </div>
 
-                {/* Content */}
                 <div className="mt-4">{children}</div>
               </HeadlessDialog.Panel>
             </Transition.Child>

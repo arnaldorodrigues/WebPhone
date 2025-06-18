@@ -28,7 +28,6 @@ const UserTable = ({ users, onRefresh }: UserTableProps) => {
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
   useEffect(() => {
-    // Calculate pagination
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const currentUsers = users.slice(startIndex, endIndex);
@@ -112,12 +111,10 @@ const UserTable = ({ users, onRefresh }: UserTableProps) => {
         throw new Error("Failed to delete user");
       }
 
-      // Refresh the user list after successful deletion
       if (onRefresh) {
         onRefresh();
       }
 
-      // Close any open dialogs
       if (isDetailDialogOpen) {
         setIsDetailDialogOpen(false);
         setSelectedUser(null);
@@ -137,19 +134,12 @@ const UserTable = ({ users, onRefresh }: UserTableProps) => {
 
   return (
     <div>
-      {/* Table */}
       <table className="min-w-full divide-y divide-gray-100">
         <thead className="bg-gray-50">
           <tr>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               User
             </th>
-            {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Role
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Status
-            </th> */}
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Extension Number
             </th>
@@ -185,12 +175,6 @@ const UserTable = ({ users, onRefresh }: UserTableProps) => {
                     </div>
                   </div>
                 </td>
-                {/* <td className="px-6 py-4 whitespace-nowrap">
-                  {getRoleBadge(user.role)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {getStatusBadge(user.status)}
-                </td> */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
                     {user.settings?.sipUsername}
@@ -229,7 +213,6 @@ const UserTable = ({ users, onRefresh }: UserTableProps) => {
         </tbody>
       </table>
 
-      {/* Pagination */}
       {showPagination && users.length > 0 && (
         <div className="mx-4 my-6">
           <Pagination
@@ -242,7 +225,6 @@ const UserTable = ({ users, onRefresh }: UserTableProps) => {
         </div>
       )}
 
-      {/* User Detail Dialog */}
       <UserDetailDialog
         isOpen={isDetailDialogOpen}
         onClose={handleCloseDialog}
@@ -258,7 +240,6 @@ const UserTable = ({ users, onRefresh }: UserTableProps) => {
         }}
       />
 
-      {/* User Edit Dialog */}
       <UserEditDialog
         isOpen={isEditDialogOpen}
         onClose={handleCloseEditDialog}
@@ -266,7 +247,6 @@ const UserTable = ({ users, onRefresh }: UserTableProps) => {
         onSuccess={onRefresh}
       />
 
-      {/* Confirm Delete Dialog */}
       <ConfirmDialog
         isOpen={isConfirmDialogOpen}
         onClose={handleCloseConfirmDialog}

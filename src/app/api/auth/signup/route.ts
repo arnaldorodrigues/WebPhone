@@ -8,7 +8,6 @@ export async function POST(request: Request) {
     const body: SignUpRequest = await request.json();
     const { password, name, email } = body;
 
-    // Basic validation
     if (!password || !name || !email) {
       return NextResponse.json(
         { error: 'Missing required fields' },
@@ -17,7 +16,6 @@ export async function POST(request: Request) {
     }
 
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
@@ -26,7 +24,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Password validation
     if (password.length < 6) {
       return NextResponse.json(
         { error: 'Password must be at least 6 characters long' },

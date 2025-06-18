@@ -1,13 +1,6 @@
 import { Session } from "sip.js";
 import { SessionManager } from "sip.js/lib/platform/web";
 
-// export interface SIPProviderOptions {
-//   webSocketServer: string;
-//   domain: string;
-//   refAudioRemote?: HTMLAudioElement;
-//   refVideoRemote?: HTMLVideoElement;
-// }
-
 export interface SipMessage {
   id: string;
   body: string;

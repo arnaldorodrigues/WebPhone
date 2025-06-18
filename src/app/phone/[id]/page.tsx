@@ -7,7 +7,6 @@ import ChatBoard from "@/components/feature/phone/chat-board";
 import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
 import { useUserData } from "@/hooks/use-userdata";
 import { fetchWithAuth } from "@/utils/api";
-import { addContact } from "@/lib/contact-action";
 import { useParams } from "next/navigation";
 import { readMessage } from "@/lib/message-action";
 
@@ -22,7 +21,6 @@ const Page = () => {
     fetchMessages();
   }, [sipMessages]);
 
-  // Save message to database and send via SIP
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || !sessionManager || !userData.settings?.sipUsername)
       return;
@@ -36,7 +34,6 @@ const Page = () => {
         return;
       }
 
-      // Send message via SIP
       if (sessionManager) {
         await sessionManager.message(
           `sip:${contact.number}@${userData.settings.domain}`,
@@ -44,7 +41,6 @@ const Page = () => {
         );
       }
 
-      // Save message to database
       const response = await fetchWithAuth("/api/messages", {
         method: "POST",
         body: JSON.stringify({
@@ -62,10 +58,8 @@ const Page = () => {
     }
   };
 
-  // Fetch messages from the API
   const fetchMessages = async () => {
     try {
-      //Get messages related to me
       const response = await fetchWithAuth(
         `/api/messages?contact=${params.id}`
       );
