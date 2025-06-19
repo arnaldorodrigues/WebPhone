@@ -1,4 +1,4 @@
-# Browser Phone
+# 3C Web Phone
 
 A modern browser-based phone application built with Next.js, featuring SIP integration, real-time communication, user authentication, and administrative capabilities.
 
