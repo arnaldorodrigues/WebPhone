@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useLayoutEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { getParsedToken } from "@/utils/auth";
 
@@ -11,59 +11,38 @@ interface ProtectedRouteProps {
   redirectOnAuth?: boolean;
 }
 
-export default function ProtectedRoute({
-  children,
-  requiredRole,
-  redirectOnAuth = false,
-}: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+const publicRoutes = ["/signin", "/signup", "/"];
+
+export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter();
+  const pathname = usePathname();
 
-  useEffect(() => {
-    if (isLoading) return;
+  const token = getParsedToken();
 
-    if (!isAuthenticated) {
-      router.push("/signin");
-      return;
-    }
-
-    const tokenData = getParsedToken();
-    const userRole = tokenData?.role;
-
-    if (redirectOnAuth) {
-      if (userRole === "admin") {
-        router.push("/admin");
+  useLayoutEffect(() => {
+    if (token) {
+      if (publicRoutes.includes(pathname)) {
+        if (token?.role === "admin") {
+          router.push("/admin");
+        } else {
+          router.push("/phone");
+        }
       } else {
-        router.push("/phone");
+        if (token?.role === "admin" && pathname.includes("/phone")) {
+          router.push("/admin");
+        } else if (token?.role === "user" && pathname.includes("/admin")) {
+          router.push("/phone");
+        }
+        return;
       }
-      return;
-    }
-
-    if (requiredRole && userRole !== requiredRole) {
-      if (userRole === "admin") {
-        router.push("/admin");
+    } else {
+      if (publicRoutes.includes(pathname)) {
+        return;
       } else {
-        router.push("/phone");
+        router.push("/signin");
       }
-      return;
     }
-  }, [isLoading, isAuthenticated, router, requiredRole, redirectOnAuth]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  if (redirectOnAuth) {
-    return null;
-  }
+  }, [router, pathname, token]);
 
   return <>{children}</>;
 }
