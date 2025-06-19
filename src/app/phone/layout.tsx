@@ -43,14 +43,12 @@ const RootLayout = ({
   }, [sipConfig, connectAndRegister, isLoading, connectStatus, registerStatus]);
 
   return (
-    <ProtectedRoute requiredRole="user">
-      <div className="w-full h-full flex-1 flex flex-row ">
-        <Sidebar hidden={!sidebarVisible} />
-        <div className={`flex-1 ${sidebarVisible && "hidden"}}`}>
-          {children}
-        </div>
-      </div>
-    </ProtectedRoute>
+    // <ProtectedRoute requiredRole="user">
+    <div className="w-full h-full flex-1 flex flex-row ">
+      <Sidebar hidden={!sidebarVisible} />
+      <div className={`flex-1 ${sidebarVisible && "hidden"}}`}>{children}</div>
+    </div>
+    // </ProtectedRoute>
   );
 };
 
