@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useLayoutEffect } from "react";
+import { useLayoutEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
 import { getParsedToken } from "@/utils/auth";
 
 interface ProtectedRouteProps {
