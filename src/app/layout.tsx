@@ -9,7 +9,7 @@ import { NotificationProvider } from "@/contexts/notification-context";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Browser Phone",
+  title: "3C Web Phone",
   description: "A web-based phone application",
 };
 
