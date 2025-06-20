@@ -1,14 +1,23 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useUserData } from "@/hooks/use-userdata";
-
 import { PhoneIcon, ChevronLeftIcon } from "@heroicons/react/24/solid";
 
-const Title = () => {
+interface TitleProps {
+  isSMS?: boolean;
+}
+
+const Title = ({ isSMS = false }: TitleProps) => {
   const { id } = useParams();
   const { userData } = useUserData();
 
-  const currentContact = userData.contacts.find((contact) => contact.id === id);
+  const currentContact = isSMS
+    ? null
+    : userData.contacts.find((contact) => contact.id === id);
+  const displayName = isSMS
+    ? (id as string)
+    : currentContact?.name || "Unknown Contact";
+  const displayNumber = isSMS ? (id as string) : currentContact?.number || "";
 
   return (
     <div className="w-full p-4 flex gap-4 shadow-sm bg-white border-b border-gray-100">
@@ -19,24 +28,24 @@ const Title = () => {
         >
           <ChevronLeftIcon className="w-6 h-6 text-indigo-500" />
         </Link>
-        <div className="rounded-full w-12 h-12 bg-gradient-to-br from-green-400 to-green-500 shadow-sm flex items-center justify-center">
+        <div className="rounded-full w-12 h-12 bg-gradient-to-br from-indigo-400 to-indigo-500 shadow-sm flex items-center justify-center">
           <span className="text-white text-lg font-semibold">
-            {currentContact?.name
-              ? currentContact.name.charAt(0).toUpperCase()
-              : "?"}
+            {displayName[0]?.toUpperCase() || "?"}
           </span>
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-1 gap-2 items-center">
-            <div className="w-4 h-4 flex items-center justify-center rounded-sm bg-green-500 shadow-sm">
-              <PhoneIcon className="w-3 h-3 text-white" />
-            </div>
             <p className="truncate text-sm font-semibold sm:text-base text-gray-900">
-              {currentContact ? `${currentContact.name}` : "Unknown Contact"}
+              {displayName}
             </p>
+            {isSMS && (
+              <span className="px-2 py-1 text-xs font-medium text-white bg-indigo-500 rounded-full">
+                SMS
+              </span>
+            )}
           </div>
           <p className="truncate flex-1 text-sm text-gray-500">
-            {currentContact ? `${currentContact.number}` : ""}
+            {displayNumber}
           </p>
         </div>
       </div>

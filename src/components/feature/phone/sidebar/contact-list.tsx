@@ -1,5 +1,5 @@
 import ContactCard from "./contact-card";
-import { PlusIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
 import SearchInput from "@/components/ui/inputs/search-input";
 import { useEffect, useState } from "react";
 import AddContactDialog from "./add-contact-dialog";
@@ -7,17 +7,26 @@ import { useUserData } from "@/hooks/use-userdata";
 import { useParams } from "next/navigation";
 import { fetchMessageCountByContact } from "@/lib/message-action";
 
+interface Contact {
+  id: string;
+  name: string;
+  number: string;
+  unreadCount?: number;
+  type: "chat" | "sms";
+}
+
 const ContactList = () => {
   const { userData } = useUserData();
-  const [contacts, setContacts] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { id } = useParams();
 
   useEffect(() => {
-    const fetchContacts = async () => {
-      const temp = await Promise.all(
-        userData?.contacts?.map(async (contact: any) => {
+    const fetchAllContacts = async () => {
+      // Fetch regular contacts with unread counts
+      const chatContacts = await Promise.all(
+        (userData?.contacts || []).map(async (contact: any) => {
           const unreadCount = await fetchMessageCountByContact(
             contact.id,
             "unread"
@@ -25,12 +34,41 @@ const ContactList = () => {
           return {
             ...contact,
             unreadCount,
+            type: "chat" as const,
           };
         })
       );
-      setContacts(temp);
+
+      // Fetch SMS contacts
+      try {
+        const response = await fetch("/api/sms/contacts");
+        const result = await response.json();
+        const smsContacts = result.success
+          ? result.data.map((contact: any) => ({
+              id: contact.number,
+              name: contact.number,
+              number: contact.number,
+              unreadCount: contact.unreadCount,
+              type: "sms" as const,
+            }))
+          : [];
+
+        // Combine and sort all contacts by unread count and name
+        const allContacts = [...chatContacts, ...smsContacts].sort((a, b) => {
+          if (b.unreadCount !== a.unreadCount) {
+            return (b.unreadCount || 0) - (a.unreadCount || 0);
+          }
+          return a.name.localeCompare(b.name);
+        });
+
+        setContacts(allContacts);
+      } catch (error) {
+        console.error("Error fetching SMS contacts:", error);
+        setContacts(chatContacts);
+      }
     };
-    fetchContacts();
+
+    fetchAllContacts();
   }, [userData]);
 
   const filteredContacts = contacts?.filter(
@@ -41,7 +79,7 @@ const ContactList = () => {
 
   return (
     <>
-      <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+      <div className="px-4 py-3 border-b border-gray-200">
         <div className="flex items-center gap-2">
           <SearchInput
             value={searchQuery}

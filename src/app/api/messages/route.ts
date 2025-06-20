@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     const token = _parse_token(t);
     const url = new URL(request.url);
     const contact = url.searchParams.get('contact');
+    const type = url.searchParams.get('type') || 'chat';
     
     if (!contact) {
       return NextResponse.json(
@@ -24,10 +25,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const userId = type === 'sms' ? process.env.SIGNALWIRE_PHONE_NUMBER : token._id;
     const messages = await Message.find({
+      type,
       $or: [
-        { from: token._id, to: contact },
-        { from: contact, to: token._id }
+        { from: userId, to: contact },
+        { from: contact, to: userId }
       ]
     })
     .sort({timestamp : 1})
@@ -57,9 +60,8 @@ export async function POST(request: NextRequest) {
     }
     
     const token = _parse_token(t);
-
     const body = await request.json();
-    const { to, messageBody } = body;
+    const { to, messageBody, type = 'chat' } = body;
 
     if (!to || !messageBody) {
       return NextResponse.json(
@@ -68,10 +70,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const from = type === 'sms' ? process.env.SIGNALWIRE_PHONE_NUMBER : token._id;
     const message = await Message.create({
-      from: token._id,
+      from,
       to,
       body: messageBody,
+      type,
       timestamp: new Date(),
     });
 
@@ -87,7 +91,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}
 
 export async function PUT(request: NextRequest) {
   try {
@@ -99,7 +103,6 @@ export async function PUT(request: NextRequest) {
     }
 
     const token = _parse_token(t);
-
     const user = await UserModel.findById(token._id);
 
     if (!user) {
@@ -114,9 +117,9 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ success: true, message });
 
   } catch (error) {
-    console.error('Error setting viewed:', error);
+    console.error('Error updating message:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to set viewed' },
+      { success: false, error: 'Failed to update message' },
       { status: 500 }
     );
   }

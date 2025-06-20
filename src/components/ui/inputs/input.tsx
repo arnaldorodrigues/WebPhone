@@ -25,6 +25,7 @@ interface Props {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   readOnly?: boolean;
   options?: DropdownOption[];
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 const Input = ({
@@ -38,6 +39,7 @@ const Input = ({
   onChange,
   readOnly = false,
   options = [],
+  onKeyDown,
 }: Props) => {
   const [mounted, setMounted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -216,6 +218,7 @@ const Input = ({
       value={value}
       onChange={onChange}
       readOnly={readOnly}
+      onKeyDown={onKeyDown}
     />
   );
 };

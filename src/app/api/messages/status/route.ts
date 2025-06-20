@@ -13,20 +13,21 @@ export async function GET(request: NextRequest) {
     }
 
     const token = _parse_token(t);
-
     await connectDB();
-    const user = await UserModel.findById(token._id);
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
+    
     const contact = request.nextUrl.searchParams.get('contact');
     const status = request.nextUrl.searchParams.get('status');
+    const type = request.nextUrl.searchParams.get('type') || 'all';
 
+    if (!contact || !status) {
+      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    }
+
+    const userId = type === 'sms' ? process.env.SIGNALWIRE_PHONE_NUMBER : token._id;
     const messages = await Message.find({
+      type,
       from: contact,
-      to: token._id,
+      to: userId,
       status
     });
 

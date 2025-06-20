@@ -20,7 +20,10 @@ const settingsSchema = new mongoose.Schema({
   sipUsername: {
     type: String,
     required: true,
+<<<<<<< HEAD
     index: false,
+=======
+>>>>>>> 9760e99 (sms basic)
   },
   sipPassword: {
     type: String,

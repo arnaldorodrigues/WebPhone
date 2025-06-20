@@ -9,56 +9,45 @@ import { useUserData } from "@/hooks/use-userdata";
 import { fetchWithAuth } from "@/utils/api";
 import { useParams } from "next/navigation";
 import { readMessage } from "@/lib/message-action";
+import { fetchSMSMessages, sendSMS } from "@/lib/message-action";
+
+interface Message {
+  _id: string;
+  body: string;
+  from: string;
+  to: string;
+  timestamp: string;
+  type?: "chat" | "sms";
+}
 
 const Page = () => {
   const params = useParams();
   const { sessionManager, messages: sipMessages } = useSIPProvider();
   const { userData, refreshUserData } = useUserData();
   const [chatInput, setChatInput] = useState("");
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isSMSMode, setIsSMSMode] = useState(false);
 
   useEffect(() => {
-    fetchMessages();
-  }, [sipMessages]);
+    // Check if this is a SMS contact (number) or a chat contact (id)
+    const isSMS = !userData?.contacts?.some(
+      (contact) => contact.id === params.id
+    );
+    setIsSMSMode(isSMS);
 
-  const handleSendMessage = async (text: string) => {
-    if (!text.trim() || !sessionManager || !userData.settings?.sipUsername)
-      return;
-
-    try {
-      const contact = userData.contacts.find(
-        (contact) => contact.id === params.id
-      );
-
-      if (!contact) {
-        return;
-      }
-
-      if (sessionManager) {
-        await sessionManager.message(
-          `sip:${contact.number}@${userData.settings.domain}`,
-          text
-        );
-      }
-
-      const response = await fetchWithAuth("/api/messages", {
-        method: "POST",
-        body: JSON.stringify({
-          to: params.id,
-          messageBody: text,
-        }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setMessages((prev) => [...prev, data.data]);
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
+    if (isSMS) {
+      fetchSMSConversation();
+    } else {
+      fetchChatMessages();
     }
+  }, [params.id, sipMessages]);
+
+  const fetchSMSConversation = async () => {
+    const smsMessages = await fetchSMSMessages(params.id as string);
+    setMessages(smsMessages);
   };
 
-  const fetchMessages = async () => {
+  const fetchChatMessages = async () => {
     try {
       const response = await fetchWithAuth(
         `/api/messages?contact=${params.id}`
@@ -66,7 +55,11 @@ const Page = () => {
       const data = await response.json();
 
       if (data.success) {
-        setMessages(data.data);
+        const chatMessages: Message[] = data.data.map((msg: any) => ({
+          ...msg,
+          type: "chat" as const,
+        }));
+        setMessages(chatMessages);
         data.data.forEach(async (message: any) => {
           await readMessage(message._id);
         });
@@ -78,10 +71,59 @@ const Page = () => {
     }
   };
 
+  const handleSendMessage = async (text: string) => {
+    if (!text.trim()) return;
+
+    try {
+      if (isSMSMode) {
+        const sentMessage = await sendSMS(params.id as string, text);
+        if (sentMessage) {
+          setMessages((prev) => [...prev, sentMessage as Message]);
+        }
+      } else {
+        if (!sessionManager || !userData.settings?.sipUsername) return;
+
+        const contact = userData.contacts.find(
+          (contact) => contact.id === params.id
+        );
+
+        if (!contact) return;
+
+        if (sessionManager) {
+          await sessionManager.message(
+            `sip:${contact.number}@${userData.settings.domain}`,
+            text
+          );
+        }
+
+        const response = await fetchWithAuth("/api/messages", {
+          method: "POST",
+          body: JSON.stringify({
+            to: params.id,
+            messageBody: text,
+          }),
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          const newMessage: Message = {
+            ...data.data,
+            type: "chat",
+          };
+          setMessages((prev) => [...prev, newMessage]);
+        }
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
+  const myId = isSMSMode ? process.env.SIGNALWIRE_PHONE_NUMBER : userData?.id;
+
   return (
     <div className="w-full h-[calc(100vh-4rem)] flex flex-col justify-between bg-blue-50">
-      <Title />
-      <ChatBoard messages={messages} currentUser={userData?.id || ""} />
+      <Title isSMS={isSMSMode} />
+      <ChatBoard messages={messages} currentUser={myId || ""} />
       <ChatInput
         value={chatInput}
         setValue={setChatInput}
