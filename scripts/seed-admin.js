@@ -4,7 +4,27 @@ const { Schema } = mongoose;
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/browser_phone';
 
-// Define the User schema
+const args = process.argv.slice(2);
+const email = args[0];
+const password = args[1];
+
+if (!email || !password) {
+  console.error('Please provide both email and password as arguments:');
+  console.error('Usage: node seed-admin.js <email> <password>');
+  process.exit(1);
+}
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+if (!emailRegex.test(email)) {
+  console.error('Please provide a valid email address');
+  process.exit(1);
+}
+
+if (password.length < 6) {
+  console.error('Password must be at least 6 characters long');
+  process.exit(1);
+}
+
 const userSchema = new Schema({
   email: {
     type: String,
@@ -55,24 +75,21 @@ async function seedAdmin() {
   try {
     await connectDB();
 
-    // Check if admin already exists
-    const existingAdmin = await UserModel.findOne({ email: 'admin@3cns.com' });
-    if (existingAdmin) {
-      console.log('Admin account already exists');
-      await mongoose.disconnect();
-      process.exit(0);
+    const deleteResult = await UserModel.deleteMany({ role: 'admin' });
+    if (deleteResult.deletedCount > 0) {
+      console.log(`Deleted ${deleteResult.deletedCount} existing admin account(s)`);
     }
 
-    // Create admin account
-    const hashedPassword = await bcrypt.hash('telemojo', 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const admin = await UserModel.create({
-      email: 'admin@3cns.com',
+      email,
       password: hashedPassword,
       name: 'Admin',
       role: 'admin'
     });
 
-    console.log('Admin account created successfully:', {
+    console.log('New admin account created successfully:', {
       email: admin.email,
       name: admin.name,
       role: admin.role
@@ -81,7 +98,7 @@ async function seedAdmin() {
     await mongoose.disconnect();
     process.exit(0);
   } catch (error) {
-    console.error('Error seeding admin account:', error);
+    console.error('Error creating admin account:', error);
     await mongoose.disconnect();
     process.exit(1);
   }

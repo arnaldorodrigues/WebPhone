@@ -368,7 +368,7 @@ export default function Home() {
 
       <div className="relative min-h-screen flex flex-col">
         <div className="text-center pt-16">
-          <h1 className="text-6xl font-bold text-red-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] [text-shadow:_-2px_-2px_0_#fff,_2px_-2px_0_#fff,_-2px_2px_0_#fff,_2px_2px_0_#fff]">
+          <h1 className="text-6xl font-bold text-indigo-600 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] [text-shadow:_-2px_-2px_0_#fff,_2px_-2px_0_#fff,_-2px_2px_0_#fff,_2px_2px_0_#fff]">
             3C Web Phone
           </h1>
         </div>
