@@ -20,7 +20,7 @@ const settingsSchema = new mongoose.Schema({
   sipUsername: {
     type: String,
     required: true,
-    unique: true,
+    index: false,
   },
   sipPassword: {
     type: String,
@@ -35,9 +35,15 @@ const settingsSchema = new mongoose.Schema({
   },
 });
 
+settingsSchema.index({ sipUsername: 1, domain: 1 }, { unique: true });
+
 settingsSchema.pre('save', function(next) {
   this.updatedAt = new Date();
   next();
 });
+
+if (mongoose.models.Settings) {
+  delete mongoose.models.Settings;
+}
 
 export const Settings = mongoose.models.Settings || mongoose.model('Settings', settingsSchema); 

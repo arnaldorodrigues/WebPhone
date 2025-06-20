@@ -140,7 +140,8 @@ export async function POST(request: NextRequest) {
       if (userData.settings.sipUsername) {
         const existingSipUser = await Settings.findOne({
           sipUsername: userData.settings.sipUsername,
-          email: { $ne: userData.email.toLowerCase() } 
+          domain: userData.settings.domain,
+          email: { $ne: userData.email.toLowerCase() },
         });
 
         if (existingSipUser) {
@@ -151,6 +152,22 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      if (userData.settings) {
+        if (userData.name) {
+          const existingUser = await UserModel.findOne({
+            name: userData.name,
+            email: { $ne: userData.email.toLowerCase() },
+          });
+  
+          if (existingUser) {
+            return NextResponse.json(
+              { success: false, error: 'User name already exists. Please choose a different user name.' },
+              { status: 400 }
+            );
+          }
+        }
+      }
+      
       const settingsData = {
         email: userData.email.toLowerCase(),
         wsServer: userData.settings.wsServer,

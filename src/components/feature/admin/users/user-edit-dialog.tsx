@@ -209,6 +209,12 @@ const UserEditDialog = ({
             email: errorData.error,
           }));
           return;
+        } else if (errorData.error?.includes("User name already exists")) {
+          setErrors((prev) => ({
+            ...prev,
+            name: errorData.error,
+          }));
+          return;
         } else {
           console.error("Error saving user:", errorData.error);
           alert(`Error: ${errorData.error || "Failed to save user"}`);
