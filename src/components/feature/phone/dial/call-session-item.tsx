@@ -1,5 +1,6 @@
 import { useSessionCall } from "@/hooks/sip-provider/sip-provider-context";
 import {
+  BackspaceIcon,
   CheckIcon,
   MicrophoneIcon,
   MicrophoneIcon as MicrophoneSlashIcon,
@@ -7,12 +8,14 @@ import {
   PhoneIcon,
   PhoneXMarkIcon,
   XMarkIcon,
+  KeyIcon,
 } from "@heroicons/react/24/outline";
 import { PlayIcon } from "@heroicons/react/24/solid";
 import { Session, SessionState } from "sip.js";
 import { SessionDirection } from "@/types/sip-type";
 import { PhoneStateType, usePhoneState } from "@/hooks/use-phonestate-context";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import NumberDisplay from "./number-display";
 
 export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
   const sessionCall = useSessionCall(sessionId);
@@ -31,6 +34,9 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
     direction,
   } = sessionCall || {};
 
+  const [showDialpad, setShowDialpad] = useState(false);
+  const [dialedNumbers, setDialedNumbers] = useState<string[]>([]);
+
   useEffect(() => {
     if (
       session?.state &&
@@ -41,6 +47,24 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
       hangup?.();
     }
   }, [session?.state]);
+
+  const handleDTMF = (digit: string) => {
+    sendDTMF?.(digit);
+    setDialedNumbers((prev) => [...prev, digit]);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Escape" && showDialpad) {
+      setShowDialpad(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showDialpad) {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [showDialpad]);
 
   return (
     <>
@@ -140,12 +164,12 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
         )}
 
       {session?.state === SessionState.Established && (
-        <div className="flex flex-col items-center justify-center gap-8 py-16">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
-            <PhoneIcon className="w-12 h-12 text-white" />
+        <div className="relative flex flex-col items-center justify-center gap-6 py-8 min-h-[400px]">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
+            <PhoneIcon className="w-10 h-10 text-white" />
           </div>
 
-          <div className="text-center space-y-3">
+          <div className="text-center space-y-2">
             <h2 className="text-2xl font-bold text-gray-800">
               {isHeld ? "Call on Hold" : "Call in Progress"}
             </h2>
@@ -176,7 +200,7 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
+          <div className="grid grid-cols-3 gap-4 w-full max-w-sm px-4">
             <button
               onClick={async () => {
                 try {
@@ -232,6 +256,18 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
                 {isHeld ? "Resume" : "Hold"}
               </span>
             </button>
+
+            <button
+              onClick={() => setShowDialpad(!showDialpad)}
+              className={`flex flex-col items-center space-y-2 p-4 rounded-xl text-white transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 ${
+                showDialpad
+                  ? "bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                  : "bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700"
+              }`}
+            >
+              <KeyIcon className="w-6 h-6" />
+              <span className="text-sm font-medium">Keypad</span>
+            </button>
           </div>
 
           <button
@@ -248,20 +284,57 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
             <span className="font-medium">End Call</span>
           </button>
 
-          {/* DTMF Keypad */}
-          <div className="grid grid-cols-3 gap-4 w-full max-w-sm">
-            {["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"].map(
-              (digit) => (
-                <button
-                  key={digit}
-                  onClick={() => sendDTMF?.(digit)}
-                  className="flex items-center justify-center p-4 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all duration-200"
-                >
-                  <span className="text-xl font-medium">{digit}</span>
-                </button>
-              )
-            )}
-          </div>
+          {/* DTMF Keypad Overlay */}
+          {showDialpad && (
+            <div
+              className="absolute inset-0 bg-white/30 backdrop-blur-md flex items-center justify-center"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                  setShowDialpad(false);
+                }
+              }}
+            >
+              <div className="bg-white/90 rounded-2xl w-full max-w-sm mx-4 shadow-xl">
+                <div className="relative w-full p-6 flex flex-col gap-4 bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-t-2xl">
+                  <button
+                    onClick={() => setShowDialpad(false)}
+                    className="absolute right-4 top-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                  >
+                    <XMarkIcon className="w-6 h-6 text-white" />
+                  </button>
+                  <NumberDisplay value={dialedNumbers.join("")} />
+                </div>
+                <div className="w-full h-full grid grid-cols-3 grid-rows-5 gap-4 p-6">
+                  {[
+                    ...Array.from({ length: 9 }, (_, i) => i + 1),
+                    "*",
+                    0,
+                    "#",
+                  ].map((num) => (
+                    <button
+                      key={num}
+                      onClick={() => handleDTMF(`${num}`)}
+                      className="row-span-1 col-span-1 bg-white rounded-xl shadow-md hover:shadow-lg hover:bg-gray-50 active:bg-gray-100 flex items-center justify-center text-2xl font-medium cursor-pointer transition-all duration-200 ease-in-out transform hover:scale-105"
+                    >
+                      {num}
+                    </button>
+                  ))}
+                  <div className="row-span-1 col-span-1"></div>
+                  <div className="row-span-1 col-span-1"></div>
+                  <button
+                    onClick={() => {
+                      if (dialedNumbers.length > 0) {
+                        setDialedNumbers((prev) => prev.slice(0, -1));
+                      }
+                    }}
+                    className="row-span-1 col-span-1 rounded-xl bg-white shadow-md hover:shadow-lg hover:bg-gray-50 active:bg-gray-100 flex items-center justify-center cursor-pointer transition-all duration-200 ease-in-out transform hover:scale-105"
+                  >
+                    <BackspaceIcon className="w-8 h-8 text-gray-600" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
