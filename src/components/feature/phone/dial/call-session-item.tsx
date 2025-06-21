@@ -24,6 +24,7 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
     hold,
     unhold,
     hangup,
+    sendDTMF,
     session,
     isHeld,
     isMuted,
@@ -246,6 +247,21 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
             <XMarkIcon className="w-6 h-6" />
             <span className="font-medium">End Call</span>
           </button>
+
+          {/* DTMF Keypad */}
+          <div className="grid grid-cols-3 gap-4 w-full max-w-sm">
+            {["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"].map(
+              (digit) => (
+                <button
+                  key={digit}
+                  onClick={() => sendDTMF?.(digit)}
+                  className="flex items-center justify-center p-4 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all duration-200"
+                >
+                  <span className="text-xl font-medium">{digit}</span>
+                </button>
+              )
+            )}
+          </div>
         </div>
       )}
 
