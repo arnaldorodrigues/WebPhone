@@ -1,30 +1,85 @@
 import { fetchWithAuth } from "@/utils/api";
 
+export const readMessage = async (messageId: string) => {
+  try {
+    const response = await fetchWithAuth("/api/messages", {
+      method: "PUT",
+      body: JSON.stringify({
+        messageId,
+        status: "read",
+      }),
+    });
+    return response.json();
+  } catch (error) {
+    console.error("Error setting message as read:", error);
+    return null;
+  }
+};
+
 export const fetchMessageCountByContact = async (contact: string, status: string) => {
   try {
-    const res = await fetchWithAuth(
+    const response = await fetchWithAuth(
       `/api/messages/status?contact=${contact}&status=${status}`
     );
-    const data = await res.json();
-  
-    return data.count;
-  } catch(error) {
+    const data = await response.json();
+    return data.success ? data.count : 0;
+  } catch (error) {
+    console.error("Error fetching message count:", error);
     return 0;
   }
 };
 
-export const readMessage = async (messageId: string) => {
+export const fetchContactMessages = async (contact: string) => {
   try {
-    const res = await fetchWithAuth(
-      `/api/messages`,
-      {
-        method: "PUT",
-        body: JSON.stringify({ messageId, status: "read" }),
-      }
-    );
-    const data = await res.json();
-    return data;
+    const response = await fetchWithAuth(`/api/messages?contact=${contact}`);
+    const data = await response.json();
+    return data.success ? data.data : [];
   } catch (error) {
-    console.error("Error reading message:", error);
+    console.error("Error fetching messages:", error);
+    return [];
   }
 };
+
+export const sendMessage = async (to: string, messageBody: string, sessionManager: any, domain: string) => {
+  try {
+
+    if(!sessionManager || domain.length === 0) throw new Error("Session manager or domain not found");
+
+    if (sessionManager) {
+      await sessionManager.message(
+        `sip:${to}@${domain}`,
+        messageBody
+      );
+    }
+    const response = await fetchWithAuth('/api/messages', {
+      method: "POST",
+      body: JSON.stringify({ to, messageBody }),
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      return data.data;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error sending message:", error);
+    return null;
+  }
+};
+
+export async function sendSMSMessage(to: string, messageBody: string) {
+  try {
+    const response = await fetchWithAuth('/api/sms', {
+      method: "POST",
+      body: JSON.stringify({ to, messageBody }),
+    });
+    const data = await response.json();
+    if (data.success) {
+      return data.data;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error sending SMS message:", error);
+    return null;
+  }
+}

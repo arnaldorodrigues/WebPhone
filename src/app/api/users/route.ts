@@ -4,10 +4,10 @@ import UserModel from '@/models/User';
 import { Settings } from '@/models/Settings';
 import { _parse_token } from '@/utils/auth';
 import bcrypt from 'bcryptjs';
-import mongoose, { Document, Types } from 'mongoose';
+import mongoose, { Document, isValidObjectId, Types } from 'mongoose';
 
 interface Contact {
-  id: string;
+  id?: string;
   name?: string;
   number?: string;
 }
@@ -49,6 +49,12 @@ export async function GET(request: NextRequest) {
 
     if (searchQuery && count) {
       const limit = parseInt(count);
+
+      const escapeRegex = (string: string) => {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      };
+      
+      const escapedSearchQuery = escapeRegex(searchQuery);
       
       const users = await UserModel.aggregate([
         {
@@ -71,8 +77,8 @@ export async function GET(request: NextRequest) {
         {
           $match: {
             $or: [
-              { name: { $regex: searchQuery, $options: "i" } },
-              { "settings.sipUsername": { $regex: searchQuery, $options: "i" } }
+              { name: { $regex: escapedSearchQuery, $options: "i" } },
+              { "settings.sipUsername": { $regex: escapedSearchQuery, $options: "i" } }
             ]
           }
         },
@@ -144,24 +150,32 @@ export async function GET(request: NextRequest) {
     };
 
     for (let i = 0; i < (typedUser.contacts?.length || 0); i++) {
-      const contact = await UserModel.findById(typedUser?.contacts?.[i])
-        .populate('settings')
-        .select('name settings')
-        .lean() as unknown as {
-          _id: Types.ObjectId;
-          name: string;
-          settings?: {
-            sipUsername: string;
+      if (isValidObjectId(typedUser?.contacts?.[i] as string)) {
+        const contact = await UserModel.findOne({ _id: typedUser?.contacts?.[i] })
+          .populate('settings')
+          .select('name settings')
+          .lean() as unknown as {
+            _id: Types.ObjectId;
+            name: string;
+            settings?: {
+              sipUsername: string;
+            };
           };
-        };
 
-      if (contact) {
-        const newContact: Contact = {
-          id: contact._id.toString(),
-          name: contact.name || '',
-          number: contact.settings?.sipUsername || '',
-        };
-        formattedUser.contacts.push(newContact);
+        if (contact) {
+          const newContact: Contact = {
+            id: contact._id.toString(),
+            name: contact.name || '',
+            number: contact.settings?.sipUsername || '',
+          };
+          formattedUser.contacts.push(newContact);
+        }
+      } else {
+        formattedUser.contacts.push({
+          id: '',
+          name: '',
+          number: typedUser?.contacts?.[i] as string,
+        });
       }
     }
 
@@ -179,6 +193,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Create or Update User
 export async function POST(request: NextRequest) {
   try {
     const t = request.headers.get('cookies');
@@ -357,20 +372,23 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Contact Add or Remove
 export async function PUT(request: NextRequest) {
   try {
-    const t = request.headers.get('cookies');
 
+    const t = request.headers.get('cookies');
+    
     if (!t) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
+    
     const token = _parse_token(t);
-    const { action, number } = await request.json();
+    const { action, contact } = await request.json();
+    console.log("request", action, contact);
 
     await connectDB();
 
-    if (!action || !number) {
+    if (!action || !contact) {
       return NextResponse.json(
         { success: false, error: 'Action and contact data are required' },
         { status: 400 }
@@ -385,7 +403,9 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const contact = (await UserModel.aggregate([
+    console.log("user", user)
+
+    const contactData = (await UserModel.aggregate([
       {
         $lookup: {
           from: "settings", 
@@ -395,7 +415,7 @@ export async function PUT(request: NextRequest) {
         }
       },
       { $unwind: "$settings" },
-      { $match: { "settings.sipUsername": number } }
+      { $match: { "settings.sipUsername": contact } }
     ]))[0] as unknown as {
       _id: Types.ObjectId;
       name: string;
@@ -404,30 +424,43 @@ export async function PUT(request: NextRequest) {
       };
     };
 
-    if (!contact) {
-      return NextResponse.json(
-        { success: false, error: "That number not found"},
-        { status: 404}
-      )
-    }
+    console.log("contactData", contactData);
 
     if (action === 'add') {
-      const contactExists = user.contacts.some(
-        (c: Types.ObjectId) => c.toString() === contact._id.toString()
-      );
+      let isExist = false;
       
-      if (contactExists) {
+      if(contactData) {
+        isExist = user.contacts.some(
+          (c: string) => c === contactData._id.toString()
+        );
+      } else if ( !isValidObjectId(contact as string)) {
+        isExist = user.contacts.some(
+          (c: string) => c === contact
+        );
+      }
+      
+      if (isExist) {
         return NextResponse.json(
           { success: false, error: 'Contact already exists' },
           { status: 400 }
         );
       }
       
-      if(contact && contact._id) user.contacts.push(contact._id);
+      if(contactData && contactData._id) {
+        user.contacts.push(contactData._id);
+      } else if ( !isValidObjectId(contact as string)) {
+        user.contacts.push(contact as string);
+      }
     } else if (action === 'remove') {
-      user.contacts = user.contacts.filter(
-        (c: Types.ObjectId) => c.toString() !== contact._id.toString()
-      );
+      if(contactData && contactData._id) {
+        user.contacts = user.contacts.filter(
+          (c: string) => c !== contactData._id.toString()
+        );
+      } else if ( !isValidObjectId(contact as string)) {
+        user.contacts = user.contacts.filter(
+          (c: string) => c !== contact
+        );
+      }
     } else {
       return NextResponse.json(
         { success: false, error: 'Invalid action' },
@@ -494,7 +527,7 @@ export async function PUT(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error in UPDATE request:', error);
+    console.error('Error in PUT request:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to process request' },
       { status: 500 }

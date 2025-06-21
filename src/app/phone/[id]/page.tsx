@@ -8,67 +8,49 @@ import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
 import { useUserData } from "@/hooks/use-userdata";
 import { fetchWithAuth } from "@/utils/api";
 import { useParams } from "next/navigation";
-import { readMessage } from "@/lib/message-action";
+import { readMessage, sendMessage, sendSMSMessage } from "@/lib/message-action";
+
+interface Message {
+  _id: string;
+  body: string;
+  from: string;
+  to: string;
+  timestamp: string;
+}
 
 const Page = () => {
   const params = useParams();
   const { sessionManager, messages: sipMessages } = useSIPProvider();
   const { userData, refreshUserData } = useUserData();
   const [chatInput, setChatInput] = useState("");
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isSMSMode, setIsSMSMode] = useState(false);
 
   useEffect(() => {
-    fetchMessages();
-  }, [sipMessages]);
-
-  const handleSendMessage = async (text: string) => {
-    if (!text.trim() || !sessionManager || !userData.settings?.sipUsername)
-      return;
-
-    try {
-      const contact = userData.contacts.find(
-        (contact) => contact.id === params.id
-      );
-
-      if (!contact) {
-        return;
-      }
-
-      if (sessionManager) {
-        await sessionManager.message(
-          `sip:${contact.number}@${userData.settings.domain}`,
-          text
-        );
-      }
-
-      const response = await fetchWithAuth("/api/messages", {
-        method: "POST",
-        body: JSON.stringify({
-          to: params.id,
-          messageBody: text,
-        }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setMessages((prev) => [...prev, data.data]);
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
+    const decodedId = decodeURIComponent(params.id as string);
+    if (decodedId.startsWith("+")) {
+      setIsSMSMode(true);
     }
-  };
 
-  const fetchMessages = async () => {
+    fetchChatMessages();
+  }, [params.id, sipMessages]);
+
+  const fetchChatMessages = async () => {
     try {
+      const decodedId = decodeURIComponent(params.id as string);
+
       const response = await fetchWithAuth(
-        `/api/messages?contact=${params.id}`
+        `/api/messages?contact=${decodedId}`
       );
       const data = await response.json();
 
       if (data.success) {
-        setMessages(data.data);
-        data.data.forEach(async (message: any) => {
-          await readMessage(message._id);
+        const chatMessages: Message[] = data.data;
+        setMessages(chatMessages);
+        chatMessages.forEach(async (message: Message) => {
+          if (message.from !== userData?.id) {
+            await readMessage(message._id);
+          }
         });
       }
 
@@ -78,10 +60,39 @@ const Page = () => {
     }
   };
 
+  const handleSendMessage = async (text: string) => {
+    if (!text.trim()) return;
+
+    try {
+      const decodedId = decodeURIComponent(params.id as string);
+      if (isSMSMode) {
+        const sentMessage = await sendSMSMessage(decodedId, text);
+        if (sentMessage) {
+          setMessages((prev) => [...prev, sentMessage as Message]);
+        }
+      } else {
+        const sentMessage = await sendMessage(
+          decodedId,
+          text,
+          sessionManager,
+          userData?.settings?.domain || ""
+        );
+        if (sentMessage) {
+          setMessages((prev) => [...prev, sentMessage as Message]);
+        }
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
+  const myId = isSMSMode
+    ? process.env.NEXT_PUBLIC_SIGNALWIRE_PHONE_NUMBER!
+    : userData?.id;
   return (
     <div className="w-full h-[calc(100vh-4rem)] flex flex-col justify-between bg-blue-50">
       <Title />
-      <ChatBoard messages={messages} currentUser={userData?.id || ""} />
+      <ChatBoard messages={messages} currentUser={myId || ""} />
       <ChatInput
         value={chatInput}
         setValue={setChatInput}

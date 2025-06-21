@@ -43,7 +43,7 @@ const ChatBoard = ({ messages, currentUser }: ChatBoardProps) => {
   }, []);
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex-1 overflow-y-auto px-20 space-y-4">
       {messageGroups?.map((group) => (
         <div key={group.date}>
           <ChatDateHeader date={group.date} />

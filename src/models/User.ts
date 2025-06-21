@@ -30,7 +30,7 @@ const userSchema: Schema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Settings",
   },
-  contacts: [Schema.Types.ObjectId],
+  contacts: [String],
 });
 
 const UserModel =
