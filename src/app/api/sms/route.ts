@@ -13,33 +13,29 @@ const client = new RestClient(
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const to = body.to;
-  const messageText = body.message;
-  const from = process.env.SIGNALWIRE_PHONE_NUMBER!
+  const messageBody = body.messageBody;
+  const from = process.env.NEXT_PUBLIC_SIGNALWIRE_PHONE_NUMBER!
 
   try {
     await connectDB();
 
-    // Send SMS via SignalWire
     const response = await client.messages.create({
       from,
       to,
-      body: messageText,
+      body: messageBody,
     });
 
-    // Save to database
     const message = new Message({
       from,
       to,
-      body: messageText,
-      type: 'sms',
+      body: messageBody,
       timestamp: new Date()
     });
     await message.save();
 
     return NextResponse.json({ 
       success: true,
-      sid: response.sid,
-      message
+      data: message
     });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
@@ -52,18 +48,16 @@ export async function GET(request: NextRequest) {
 
     const body = request.nextUrl.searchParams.get("body");
     const from = request.nextUrl.searchParams.get("from");
-    const to = process.env.SIGNALWIRE_PHONE_NUMBER!;
+    const to = process.env.NEXT_PUBLIC_SIGNALWIRE_PHONE_NUMBER!;
 
     if (!body || !from) {
       return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
     }
 
-    // Save incoming SMS to database
     const message = new Message({
       from,
       to,
       body,
-      type: 'sms',
       timestamp: new Date()
     });
     await message.save();

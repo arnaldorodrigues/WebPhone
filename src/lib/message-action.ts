@@ -16,10 +16,10 @@ export const readMessage = async (messageId: string) => {
   }
 };
 
-export const fetchMessageCountByContact = async (contactId: string, status: string) => {
+export const fetchMessageCountByContact = async (contact: string, status: string) => {
   try {
     const response = await fetchWithAuth(
-      `/api/messages/status?contact=${contactId}&status=${status}`
+      `/api/messages/status?contact=${contact}&status=${status}`
     );
     const data = await response.json();
     return data.success ? data.count : 0;
@@ -29,9 +29,9 @@ export const fetchMessageCountByContact = async (contactId: string, status: stri
   }
 };
 
-export const fetchContactMessages = async (contactId: string) => {
+export const fetchContactMessages = async (contact: string) => {
   try {
-    const response = await fetchWithAuth(`/api/messages?contact=${contactId}`);
+    const response = await fetchWithAuth(`/api/messages?contact=${contact}`);
     const data = await response.json();
     return data.success ? data.data : [];
   } catch (error) {
@@ -40,19 +40,25 @@ export const fetchContactMessages = async (contactId: string) => {
   }
 };
 
-export const sendMessage = async (to: string, messageBody: string, type: 'chat' | 'sms' = 'chat') => {
+export const sendMessage = async (to: string, messageBody: string, sessionManager: any, domain: string) => {
   try {
-    const endpoint = type === 'sms' ? '/api/sms' : '/api/messages';
-    const body = type === 'sms' ? { to, message: messageBody } : { to, messageBody };
 
-    const response = await fetchWithAuth(endpoint, {
+    if(!sessionManager || domain.length === 0) throw new Error("Session manager or domain not found");
+
+    if (sessionManager) {
+      await sessionManager.message(
+        `sip:${to}@${domain}`,
+        messageBody
+      );
+    }
+    const response = await fetchWithAuth('/api/messages', {
       method: "POST",
-      body: JSON.stringify(body),
+      body: JSON.stringify({ to, messageBody }),
     });
 
     const data = await response.json();
     if (data.success) {
-      return type === 'sms' ? data.message : data.data;
+      return data.data;
     }
     return null;
   } catch (error) {
@@ -61,52 +67,19 @@ export const sendMessage = async (to: string, messageBody: string, type: 'chat' 
   }
 };
 
-export const fetchSMSMessages = async (contactNumber: string) => {
+export async function sendSMSMessage(to: string, messageBody: string) {
   try {
-    const response = await fetch(`/api/sms/messages?contact=${contactNumber}`);
-    const data = await response.json();
-    if (data.success) {
-      // Transform SMS messages to match chat message format
-      return data.data.map((sms: any) => ({
-        _id: sms._id,
-        body: sms.message,
-        from: sms.from,
-        to: sms.to,
-        timestamp: sms.timestamp,
-        type: 'sms'
-      }));
-    }
-    return [];
-  } catch (error) {
-    console.error('Error fetching SMS messages:', error);
-    return [];
-  }
-};
-
-export const sendSMS = async (to: string, message: string) => {
-  try {
-    const response = await fetch('/api/sms', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ to, message }),
+    const response = await fetchWithAuth('/api/sms', {
+      method: "POST",
+      body: JSON.stringify({ to, messageBody }),
     });
     const data = await response.json();
     if (data.success) {
-      return {
-        _id: data.sms._id,
-        body: data.sms.message,
-        from: data.sms.from,
-        to: data.sms.to,
-        timestamp: data.sms.timestamp,
-        type: 'sms'
-      };
+      return data.data;
     }
     return null;
   } catch (error) {
-    console.error('Error sending SMS:', error);
+    console.error("Error sending SMS message:", error);
     return null;
   }
-};
-
+}

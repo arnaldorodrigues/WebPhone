@@ -34,7 +34,7 @@ export async function addContact(contact: Contact): Promise<boolean> {
       method: 'PUT',
       body: JSON.stringify({
         action: 'add',
-        number: contact.number
+        contact: contact.number
       }),
     });
 
@@ -61,7 +61,7 @@ export async function removeContact(contact: Contact): Promise<boolean> {
       method: 'PUT',
       body: JSON.stringify({
         action: 'remove',
-        number: contact.number
+        contact: (contact.number.startsWith("+") ? contact.number : contact.id )
       }),
     });
 

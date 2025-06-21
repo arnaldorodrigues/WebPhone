@@ -24,13 +24,13 @@ const ContactList = () => {
 
   useEffect(() => {
     const fetchAllContacts = async () => {
-      // Fetch regular contacts with unread counts
       const chatContacts = await Promise.all(
         (userData?.contacts || []).map(async (contact: any) => {
           const unreadCount = await fetchMessageCountByContact(
-            contact.id,
+            contact.id.length !== 0 ? contact.id : contact.number,
             "unread"
           );
+
           return {
             ...contact,
             unreadCount,
@@ -39,33 +39,7 @@ const ContactList = () => {
         })
       );
 
-      // Fetch SMS contacts
-      try {
-        const response = await fetch("/api/sms/contacts");
-        const result = await response.json();
-        const smsContacts = result.success
-          ? result.data.map((contact: any) => ({
-              id: contact.number,
-              name: contact.number,
-              number: contact.number,
-              unreadCount: contact.unreadCount,
-              type: "sms" as const,
-            }))
-          : [];
-
-        // Combine and sort all contacts by unread count and name
-        const allContacts = [...chatContacts, ...smsContacts].sort((a, b) => {
-          if (b.unreadCount !== a.unreadCount) {
-            return (b.unreadCount || 0) - (a.unreadCount || 0);
-          }
-          return a.name.localeCompare(b.name);
-        });
-
-        setContacts(allContacts);
-      } catch (error) {
-        console.error("Error fetching SMS contacts:", error);
-        setContacts(chatContacts);
-      }
+      setContacts(chatContacts);
     };
 
     fetchAllContacts();
@@ -99,7 +73,7 @@ const ContactList = () => {
       <div className="flex-1 p-2 space-y-1 overflow-y-auto min-h-0">
         {filteredContacts?.map((contact) => (
           <ContactCard
-            key={contact.id}
+            key={contact.id + contact.number + contact.name}
             contact={contact}
             isSelected={contact.id === id}
           />

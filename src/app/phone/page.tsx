@@ -2,7 +2,7 @@
 
 const Page = () => {
   return (
-    <div className="h-full flex items-center justify-center bg-gray-50">
+    <div className="h-full hidden sm:flex items-center justify-center bg-gray-50">
       <audio hidden id="remoteAudio" autoPlay></audio>
       <div className="text-center">
         <h3 className="text-lg font-medium text-gray-900">

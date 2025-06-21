@@ -17,17 +17,16 @@ export async function GET(request: NextRequest) {
     
     const contact = request.nextUrl.searchParams.get('contact');
     const status = request.nextUrl.searchParams.get('status');
-    const type = request.nextUrl.searchParams.get('type') || 'all';
 
     if (!contact || !status) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
-    const userId = type === 'sms' ? process.env.SIGNALWIRE_PHONE_NUMBER : token._id;
+    const to = contact.startsWith('+') ? process.env.NEXT_PUBLIC_SIGNALWIRE_PHONE_NUMBER! : token._id;
+    
     const messages = await Message.find({
-      type,
       from: contact,
-      to: userId,
+      to,
       status
     });
 

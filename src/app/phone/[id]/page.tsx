@@ -8,8 +8,7 @@ import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
 import { useUserData } from "@/hooks/use-userdata";
 import { fetchWithAuth } from "@/utils/api";
 import { useParams } from "next/navigation";
-import { readMessage } from "@/lib/message-action";
-import { fetchSMSMessages, sendSMS } from "@/lib/message-action";
+import { readMessage, sendMessage, sendSMSMessage } from "@/lib/message-action";
 
 interface Message {
   _id: string;
@@ -17,7 +16,6 @@ interface Message {
   from: string;
   to: string;
   timestamp: string;
-  type?: "chat" | "sms";
 }
 
 const Page = () => {
@@ -29,39 +27,30 @@ const Page = () => {
   const [isSMSMode, setIsSMSMode] = useState(false);
 
   useEffect(() => {
-    // Check if this is a SMS contact (number) or a chat contact (id)
-    const isSMS = !userData?.contacts?.some(
-      (contact) => contact.id === params.id
-    );
-    setIsSMSMode(isSMS);
-
-    if (isSMS) {
-      fetchSMSConversation();
-    } else {
-      fetchChatMessages();
+    const decodedId = decodeURIComponent(params.id as string);
+    if (decodedId.startsWith("+")) {
+      setIsSMSMode(true);
     }
-  }, [params.id, sipMessages]);
 
-  const fetchSMSConversation = async () => {
-    const smsMessages = await fetchSMSMessages(params.id as string);
-    setMessages(smsMessages);
-  };
+    fetchChatMessages();
+  }, [params.id, sipMessages]);
 
   const fetchChatMessages = async () => {
     try {
+      const decodedId = decodeURIComponent(params.id as string);
+
       const response = await fetchWithAuth(
-        `/api/messages?contact=${params.id}`
+        `/api/messages?contact=${decodedId}`
       );
       const data = await response.json();
 
       if (data.success) {
-        const chatMessages: Message[] = data.data.map((msg: any) => ({
-          ...msg,
-          type: "chat" as const,
-        }));
+        const chatMessages: Message[] = data.data;
         setMessages(chatMessages);
-        data.data.forEach(async (message: any) => {
-          await readMessage(message._id);
+        chatMessages.forEach(async (message: Message) => {
+          if (message.from !== userData?.id) {
+            await readMessage(message._id);
+          }
         });
       }
 
@@ -75,42 +64,21 @@ const Page = () => {
     if (!text.trim()) return;
 
     try {
+      const decodedId = decodeURIComponent(params.id as string);
       if (isSMSMode) {
-        const sentMessage = await sendSMS(params.id as string, text);
+        const sentMessage = await sendSMSMessage(decodedId, text);
         if (sentMessage) {
           setMessages((prev) => [...prev, sentMessage as Message]);
         }
       } else {
-        if (!sessionManager || !userData.settings?.sipUsername) return;
-
-        const contact = userData.contacts.find(
-          (contact) => contact.id === params.id
+        const sentMessage = await sendMessage(
+          decodedId,
+          text,
+          sessionManager,
+          userData?.settings?.domain || ""
         );
-
-        if (!contact) return;
-
-        if (sessionManager) {
-          await sessionManager.message(
-            `sip:${contact.number}@${userData.settings.domain}`,
-            text
-          );
-        }
-
-        const response = await fetchWithAuth("/api/messages", {
-          method: "POST",
-          body: JSON.stringify({
-            to: params.id,
-            messageBody: text,
-          }),
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          const newMessage: Message = {
-            ...data.data,
-            type: "chat",
-          };
-          setMessages((prev) => [...prev, newMessage]);
+        if (sentMessage) {
+          setMessages((prev) => [...prev, sentMessage as Message]);
         }
       }
     } catch (error) {
@@ -118,11 +86,12 @@ const Page = () => {
     }
   };
 
-  const myId = isSMSMode ? process.env.SIGNALWIRE_PHONE_NUMBER : userData?.id;
-
+  const myId = isSMSMode
+    ? process.env.NEXT_PUBLIC_SIGNALWIRE_PHONE_NUMBER!
+    : userData?.id;
   return (
     <div className="w-full h-[calc(100vh-4rem)] flex flex-col justify-between bg-blue-50">
-      <Title isSMS={isSMSMode} />
+      <Title />
       <ChatBoard messages={messages} currentUser={myId || ""} />
       <ChatInput
         value={chatInput}

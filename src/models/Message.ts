@@ -18,12 +18,6 @@ const messageSchema = new mongoose.Schema({
     default: 'unread',
     enum: ['unread', 'read', 'failed'],
   },
-  type: {
-    type: String,
-    required: true,
-    enum: ['chat', 'sms'],
-    default: 'chat'
-  },
   timestamp: {
     type: Date,
     default: Date.now,
@@ -31,7 +25,6 @@ const messageSchema = new mongoose.Schema({
 });
 
 messageSchema.index({ from: 1, to: 1, timestamp: -1 });
-messageSchema.index({ type: 1, from: 1, to: 1 }); // Index for faster SMS queries
 
 const Message = mongoose.models.Message || mongoose.model('Message', messageSchema);
 export default Message; 

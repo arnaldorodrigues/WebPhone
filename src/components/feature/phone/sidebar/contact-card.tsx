@@ -18,8 +18,19 @@ const ContactCard = ({
   contact: Contact;
   isSelected: boolean;
 }) => {
-  const { id, name, number, unreadCount = 0, type } = contact;
+  const { id, name, number, unreadCount = 0 } = contact;
   const [isOnline, setIsOnline] = useState(false);
+  const [type, setType] = useState<"chat" | "sms">("chat");
+
+  useEffect(() => {
+    if (id.length === 0) {
+      setType("sms");
+    }
+
+    if (id.length !== 0) {
+      setType("chat");
+    }
+  }, [number]);
 
   useEffect(() => {
     if (type === "chat") {
@@ -34,7 +45,7 @@ const ContactCard = ({
 
   return (
     <Link
-      href={`/phone/${id}`}
+      href={`/phone/${type === "chat" ? id : number}`}
       className={`w-full p-3 flex rounded-lg gap-3 border-l-4 border-transparent hover:bg-gray-100 transition-all duration-200 ease-in-out group ${
         isSelected ? "border-indigo-500! bg-blue-50" : ""
       }`}
@@ -54,7 +65,7 @@ const ContactCard = ({
         )}
         {type === "sms" && (
           <div className="absolute -top-1 -right-1">
-            <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-medium text-white bg-indigo-500 rounded-full">
+            <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-medium text-white bg-indigo-600 rounded-full">
               SMS
             </span>
           </div>
@@ -65,7 +76,7 @@ const ContactCard = ({
           <p
             className={`truncate font-medium text-gray-900 group-hover:text-indigo-600 transition-colors duration-200 ${
               isSelected ? "text-indigo-600" : ""
-            }`}
+            } ${type === "sms" ? "text-xl font-mono" : "text-lg"}`}
           >
             {name || number}
           </p>
@@ -78,7 +89,9 @@ const ContactCard = ({
           )}
         </div>
         <div className="flex flex-1 justify-between mt-1">
-          <p className="truncate flex-1 text-sm text-gray-500">{number}</p>
+          <p className="truncate flex-1 text-sm text-gray-500">
+            {type === "chat" && number}
+          </p>
         </div>
       </div>
     </Link>
