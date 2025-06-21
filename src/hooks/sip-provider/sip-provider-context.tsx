@@ -72,5 +72,6 @@ export const useSessionCall = (sessionId: string) => {
     answer: () => sessionManager?.answer(session),
     decline: () => sessionManager?.decline(session),
     hangup: () => sessionManager?.hangup(session),
+    sendDTMF: (digit: string) => sessionManager?.sendDTMF(session, digit),
   };
 };
