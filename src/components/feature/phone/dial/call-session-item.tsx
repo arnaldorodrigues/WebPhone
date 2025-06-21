@@ -8,9 +8,9 @@ import {
   PhoneIcon,
   PhoneXMarkIcon,
   XMarkIcon,
-  KeyIcon,
 } from "@heroicons/react/24/outline";
 import { PlayIcon } from "@heroicons/react/24/solid";
+import { BiDialpad } from "react-icons/bi";
 import { Session, SessionState } from "sip.js";
 import { SessionDirection } from "@/types/sip-type";
 import { PhoneStateType, usePhoneState } from "@/hooks/use-phonestate-context";
@@ -265,7 +265,7 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
                   : "bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700"
               }`}
             >
-              <KeyIcon className="w-6 h-6" />
+              <BiDialpad className="w-6 h-6" />
               <span className="text-sm font-medium">Keypad</span>
             </button>
           </div>
