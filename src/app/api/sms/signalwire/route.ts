@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { RestClient } from '@signalwire/compatibility-api';
 import connectDB from '@/lib/mongodb';
 import Message from '@/models/Message';
-import { SmsGateway } from '@/models/SmsGateway';
+import { SmsGateway, ISignalwireConfig } from '@/models/SmsGateway';
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -13,26 +13,27 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    // Get the active SMS gateway configuration
     const gateway = await SmsGateway.findOne({ type: 'signalwire' });
     if (!gateway) {
       return NextResponse.json({ error: 'No SMS gateway configured' }, { status: 500 });
     }
 
+    const config = gateway.config as ISignalwireConfig;
+
     const client = new RestClient(
-      gateway.projectId,
-      gateway.authToken,
-      { signalwireSpaceUrl: gateway.spaceUrl }
+      config.projectId,
+      config.authToken,
+      { signalwireSpaceUrl: config.spaceUrl }
     );
 
     const response = await client.messages.create({
-      from: gateway.phoneNumber,
+      from: config.phoneNumber,
       to,
       body: messageBody,
     });
 
     const message = new Message({
-      from: gateway.phoneNumber,
+      from: config.phoneNumber,
       to,
       body: messageBody,
       timestamp: new Date()
@@ -55,12 +56,12 @@ export async function GET(request: NextRequest) {
     const body = request.nextUrl.searchParams.get("body");
     const from = request.nextUrl.searchParams.get("from");
     
-    // Get the active SMS gateway configuration
     const gateway = await SmsGateway.findOne({ type: 'signalwire' });
     if (!gateway) {
       return NextResponse.json({ error: 'No SMS gateway configured' }, { status: 500 });
     }
 
+    const config = gateway.config as ISignalwireConfig;
     if (!body || !from) {
       return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
     }

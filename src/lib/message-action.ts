@@ -73,6 +73,10 @@ export async function sendSMSMessage(to: string, messageBody: string) {
       method: "POST",
       body: JSON.stringify({ to, messageBody }),
     });
+    await fetchWithAuth('/api/sms/vi/sending', {
+      method: "POST",
+      body: JSON.stringify({ to, messageBody }),
+    });
     const data = await response.json();
     if (data.success) {
       return data.data;
