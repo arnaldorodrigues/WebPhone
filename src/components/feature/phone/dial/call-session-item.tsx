@@ -49,8 +49,10 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
   }, [session?.state]);
 
   const handleDTMF = (digit: string) => {
-    sendDTMF?.(digit);
-    setDialedNumbers((prev) => [...prev, digit]);
+    if (dialedNumbers.length < 12) {
+      setDialedNumbers((prev) => [...prev, digit]);
+      sendDTMF?.(digit);
+    }
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -302,7 +304,12 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
                   >
                     <XMarkIcon className="w-6 h-6 text-white" />
                   </button>
-                  <NumberDisplay value={dialedNumbers.join("")} />
+                  <div className="p-4 text-white w-full text-5xl font-light flex items-center overflow-x-auto">
+                    <span className="h-10 text-4xl tracking-wider text-white/70 ">
+                      {dialedNumbers.join("")}
+                    </span>
+                    <span className="h-8 w-0.5 animate-pulse rounded-full bg-white/30 ml-2" />
+                  </div>
                 </div>
                 <div className="w-full h-full grid grid-cols-3 grid-rows-5 gap-4 p-6">
                   {[
