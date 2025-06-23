@@ -10,18 +10,12 @@ export async function POST(request: NextRequest) {
     // const to = '447427844303';
     // const messageBody = 'Hello, this is a test message from the VI SMS API';
 
-    console.log(to,messageBody);
-
     const ApidazeClient = new Apidaze(
-      'rts01d7g',
-      '8f02cb9cc4c8670ab5aebb364c094b2e',
+      process.env.APIDAZ_API_KEY!,
+      process.env.APIDAZ_API_SECRET!,
     );
 
-    console.log(ApidazeClient);
-
-    const response = await ApidazeClient.messages.send('18556949555', to, messageBody);
-
-    console.log(response);
+    const response = await ApidazeClient.messages.send(process.env.VI_SMS_DID!, to, messageBody);
 
     return new Response(JSON.stringify({ success: true, data: response }), { status: 200 });
 
