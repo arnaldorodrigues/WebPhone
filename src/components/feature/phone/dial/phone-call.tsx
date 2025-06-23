@@ -118,7 +118,7 @@ export function PhoneCallDialog({ isOpen, onClose }: PhoneCallProps) {
       {phoneState === "dialing"
         ? dialogContent
         : sessions &&
-          Object.keys(sessions).map((sessionId) => {
+          Object.keys(sessions).map((sessionId, index) => {
             const session = sessions[sessionId];
             if (
               ![SessionState.Terminating, SessionState.Terminated].includes(

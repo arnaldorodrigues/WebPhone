@@ -7,6 +7,8 @@ import {
   UserCircleIcon,
   Bars3Icon,
   XMarkIcon,
+  UserIcon,
+  ChatBubbleLeftIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/hooks/useAuth";
 import { getParsedToken } from "@/utils/auth";
@@ -79,6 +81,7 @@ const AdminSidebar = ({ isOpen, onToggle }: AdminSidebarProps) => {
     { name: "Dashboard", href: "/admin", icon: HomeIcon, current: true },
     { name: "Users", href: "/admin/users", icon: UsersIcon },
     { name: "Servers", href: "/admin/servers", icon: ServerIcon },
+    { name: "SMS", href: "/admin/sms", icon: ChatBubbleLeftIcon },
   ];
 
   const handleLogout = () => {

@@ -3,6 +3,16 @@ import connectDB from '@/lib/mongodb';
 import Message from '@/models/Message';
 import { _parse_token } from '@/utils/auth';
 import UserModel from '@/models/User';
+import { isValidObjectId } from 'mongoose';
+import { SmsGateway } from '@/models/SmsGateway';
+
+async function getGatewayPhoneNumber() {
+  const gateway = await SmsGateway.findOne({ type: 'signalwire' });
+  if (!gateway) {
+    throw new Error('No SMS gateway configured');
+  }
+  return gateway.phoneNumber;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,7 +25,7 @@ export async function GET(request: NextRequest) {
     
     const token = _parse_token(t);
     const url = new URL(request.url);
-    const contact = url.searchParams.get('contact');
+    const contact = url.searchParams.get('contact')?.trim();
     
     if (!contact) {
       return NextResponse.json(
@@ -24,10 +34,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const gatewayNumber = await getGatewayPhoneNumber();
+    const userId = !isValidObjectId(contact) ? gatewayNumber : token._id;
+    const recon = !isValidObjectId(contact) ? `+${contact}` : contact;
+
     const messages = await Message.find({
       $or: [
-        { from: token._id, to: contact },
-        { from: contact, to: token._id }
+        { from: userId, to: recon },
+        { from: recon, to: userId }
       ]
     })
     .sort({timestamp : 1})
@@ -57,7 +71,6 @@ export async function POST(request: NextRequest) {
     }
     
     const token = _parse_token(t);
-
     const body = await request.json();
     const { to, messageBody } = body;
 
@@ -68,8 +81,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const gatewayNumber = await getGatewayPhoneNumber();
+    const from = !isValidObjectId(to) ? gatewayNumber : token._id;
     const message = await Message.create({
-      from: token._id,
+      from,
       to,
       body: messageBody,
       timestamp: new Date(),
@@ -87,7 +102,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}
 
 export async function PUT(request: NextRequest) {
   try {
@@ -99,7 +114,6 @@ export async function PUT(request: NextRequest) {
     }
 
     const token = _parse_token(t);
-
     const user = await UserModel.findById(token._id);
 
     if (!user) {
@@ -114,9 +128,9 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ success: true, message });
 
   } catch (error) {
-    console.error('Error setting viewed:', error);
+    console.error('Error updating message:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to set viewed' },
+      { success: false, error: 'Failed to update message' },
       { status: 500 }
     );
   }

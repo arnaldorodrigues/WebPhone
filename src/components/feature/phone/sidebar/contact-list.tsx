@@ -1,5 +1,5 @@
 import ContactCard from "./contact-card";
-import { PlusIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
 import SearchInput from "@/components/ui/inputs/search-input";
 import { useEffect, useState } from "react";
 import AddContactDialog from "./add-contact-dialog";
@@ -7,30 +7,42 @@ import { useUserData } from "@/hooks/use-userdata";
 import { useParams } from "next/navigation";
 import { fetchMessageCountByContact } from "@/lib/message-action";
 
+interface Contact {
+  id: string;
+  name: string;
+  number: string;
+  unreadCount?: number;
+  type: "chat" | "sms";
+}
+
 const ContactList = () => {
   const { userData } = useUserData();
-  const [contacts, setContacts] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { id } = useParams();
 
   useEffect(() => {
-    const fetchContacts = async () => {
-      const temp = await Promise.all(
-        userData?.contacts?.map(async (contact: any) => {
+    const fetchAllContacts = async () => {
+      const chatContacts = await Promise.all(
+        (userData?.contacts || []).map(async (contact: any) => {
           const unreadCount = await fetchMessageCountByContact(
-            contact.id,
+            contact.id.length !== 0 ? contact.id : contact.number,
             "unread"
           );
+
           return {
             ...contact,
             unreadCount,
+            type: "chat" as const,
           };
         })
       );
-      setContacts(temp);
+
+      setContacts(chatContacts);
     };
-    fetchContacts();
+
+    fetchAllContacts();
   }, [userData]);
 
   const filteredContacts = contacts?.filter(
@@ -41,7 +53,7 @@ const ContactList = () => {
 
   return (
     <>
-      <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+      <div className="px-4 py-3 border-b border-gray-200">
         <div className="flex items-center gap-2">
           <SearchInput
             value={searchQuery}
@@ -61,7 +73,7 @@ const ContactList = () => {
       <div className="flex-1 p-2 space-y-1 overflow-y-auto min-h-0">
         {filteredContacts?.map((contact) => (
           <ContactCard
-            key={contact.id}
+            key={contact.id + contact.number + contact.name}
             contact={contact}
             isSelected={contact.id === id}
           />

@@ -3,6 +3,15 @@ import Message from "@/models/Message";
 import UserModel from "@/models/User";
 import connectDB from "@/lib/mongodb";
 import { _parse_token } from "@/utils/auth";
+import { SmsGateway } from '@/models/SmsGateway';
+
+async function getGatewayPhoneNumber() {
+  const gateway = await SmsGateway.findOne({ type: 'signalwire' });
+  if (!gateway) {
+    throw new Error('No SMS gateway configured');
+  }
+  return gateway.phoneNumber;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,20 +22,21 @@ export async function GET(request: NextRequest) {
     }
 
     const token = _parse_token(t);
-
     await connectDB();
-    const user = await UserModel.findById(token._id);
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
+    
     const contact = request.nextUrl.searchParams.get('contact');
     const status = request.nextUrl.searchParams.get('status');
 
+    if (!contact || !status) {
+      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    }
+
+    const gatewayNumber = await getGatewayPhoneNumber();
+    const to = contact.startsWith('+') ? gatewayNumber : token._id;
+    
     const messages = await Message.find({
       from: contact,
-      to: token._id,
+      to,
       status
     });
 
