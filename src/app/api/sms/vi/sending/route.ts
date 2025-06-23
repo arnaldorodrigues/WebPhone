@@ -3,12 +3,12 @@ import {Apidaze} from '@apidaze/node';
 
 export async function POST(request: NextRequest) {
   try {
-    // const body = await request.json();
-    // const to = body.to;
-    // const messageBody = body.messageBody;
+    const body = await request.json();
+    const to = body.to;
+    const messageBody = body.messageBody;
 
-    const to = '447427844303';
-    const messageBody = 'Hello, this is a test message from the VI SMS API';
+    // const to = '447427844303';
+    // const messageBody = 'Hello, this is a test message from the VI SMS API';
 
     console.log(to,messageBody);
 
