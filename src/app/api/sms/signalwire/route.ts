@@ -3,30 +3,36 @@ import { NextRequest, NextResponse } from 'next/server';
 import { RestClient } from '@signalwire/compatibility-api';
 import connectDB from '@/lib/mongodb';
 import Message from '@/models/Message';
-
-const client = new RestClient(
-  process.env.SIGNALWIRE_PROJECT_ID!,
-  process.env.SIGNALWIRE_AUTH_TOKEN!,
-  { signalwireSpaceUrl: process.env.SIGNALWIRE_SPACE_URL! }
-);
+import { SmsGateway } from '@/models/SmsGateway';
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const to = body.to;
   const messageBody = body.messageBody;
-  const from = process.env.NEXT_PUBLIC_SIGNALWIRE_PHONE_NUMBER!
 
   try {
     await connectDB();
 
+    // Get the active SMS gateway configuration
+    const gateway = await SmsGateway.findOne({ type: 'signalwire' });
+    if (!gateway) {
+      return NextResponse.json({ error: 'No SMS gateway configured' }, { status: 500 });
+    }
+
+    const client = new RestClient(
+      gateway.projectId,
+      gateway.authToken,
+      { signalwireSpaceUrl: gateway.spaceUrl }
+    );
+
     const response = await client.messages.create({
-      from,
+      from: gateway.phoneNumber,
       to,
       body: messageBody,
     });
 
     const message = new Message({
-      from,
+      from: gateway.phoneNumber,
       to,
       body: messageBody,
       timestamp: new Date()
@@ -48,7 +54,12 @@ export async function GET(request: NextRequest) {
 
     const body = request.nextUrl.searchParams.get("body");
     const from = request.nextUrl.searchParams.get("from");
-    const to = process.env.NEXT_PUBLIC_SIGNALWIRE_PHONE_NUMBER!;
+    
+    // Get the active SMS gateway configuration
+    const gateway = await SmsGateway.findOne({ type: 'signalwire' });
+    if (!gateway) {
+      return NextResponse.json({ error: 'No SMS gateway configured' }, { status: 500 });
+    }
 
     if (!body || !from) {
       return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
@@ -56,7 +67,7 @@ export async function GET(request: NextRequest) {
 
     const message = new Message({
       from,
-      to,
+      to: gateway.phoneNumber,
       body,
       timestamp: new Date()
     });

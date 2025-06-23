@@ -8,7 +8,12 @@ import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
 import { useUserData } from "@/hooks/use-userdata";
 import { fetchWithAuth } from "@/utils/api";
 import { useParams } from "next/navigation";
-import { readMessage, sendMessage, sendSMSMessage } from "@/lib/message-action";
+import {
+  readMessage,
+  sendMessage,
+  sendSMSMessage,
+  getGatewayNumber,
+} from "@/lib/message-action";
 
 interface Message {
   _id: string;
@@ -25,11 +30,16 @@ const Page = () => {
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isSMSMode, setIsSMSMode] = useState(false);
+  const [gatewayNumber, setGatewayNumber] = useState<string | null>(null);
 
   useEffect(() => {
     const decodedId = decodeURIComponent(params.id as string);
     if (decodedId.startsWith("+")) {
       setIsSMSMode(true);
+      // Fetch gateway number when in SMS mode
+      getGatewayNumber().then((number) => {
+        if (number) setGatewayNumber(number);
+      });
     }
 
     fetchChatMessages();
@@ -86,9 +96,16 @@ const Page = () => {
     }
   };
 
-  const myId = isSMSMode
-    ? process.env.NEXT_PUBLIC_SIGNALWIRE_PHONE_NUMBER!
-    : userData?.id;
+  const myId = isSMSMode ? gatewayNumber : userData?.id;
+
+  if (isSMSMode && !gatewayNumber) {
+    return (
+      <div className="w-full h-[calc(100vh-4rem)] flex items-center justify-center bg-blue-50">
+        Loading SMS configuration...
+      </div>
+    );
+  }
+
   return (
     <div className="w-full h-[calc(100vh-4rem)] flex flex-col justify-between bg-blue-50">
       <Title />

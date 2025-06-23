@@ -69,7 +69,7 @@ export const sendMessage = async (to: string, messageBody: string, sessionManage
 
 export async function sendSMSMessage(to: string, messageBody: string) {
   try {
-    const response = await fetchWithAuth('/api/sms', {
+    const response = await fetchWithAuth('/api/sms/signalwire', {
       method: "POST",
       body: JSON.stringify({ to, messageBody }),
     });
@@ -83,3 +83,14 @@ export async function sendSMSMessage(to: string, messageBody: string) {
     return null;
   }
 }
+
+export const getGatewayNumber = async () => {
+  try {
+    const response = await fetchWithAuth('/api/sms/gateway/signalwire');
+    const data = await response.json();
+    return data.success ? data.phoneNumber : null;
+  } catch (error) {
+    console.error("Error fetching gateway number:", error);
+    return null;
+  }
+};

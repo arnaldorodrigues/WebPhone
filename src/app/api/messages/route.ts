@@ -4,6 +4,15 @@ import Message from '@/models/Message';
 import { _parse_token } from '@/utils/auth';
 import UserModel from '@/models/User';
 import { isValidObjectId } from 'mongoose';
+import { SmsGateway } from '@/models/SmsGateway';
+
+async function getGatewayPhoneNumber() {
+  const gateway = await SmsGateway.findOne({ type: 'signalwire' });
+  if (!gateway) {
+    throw new Error('No SMS gateway configured');
+  }
+  return gateway.phoneNumber;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,7 +34,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const userId = !isValidObjectId(contact) ? process.env.NEXT_PUBLIC_SIGNALWIRE_PHONE_NUMBER! : token._id;
+    const gatewayNumber = await getGatewayPhoneNumber();
+    const userId = !isValidObjectId(contact) ? gatewayNumber : token._id;
     const recon = !isValidObjectId(contact) ? `+${contact}` : contact;
 
     const messages = await Message.find({
@@ -71,7 +81,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const from = !isValidObjectId(to) ? process.env.NEXT_PUBLIC_SIGNALWIRE_PHONE_NUMBER! : token._id;
+    const gatewayNumber = await getGatewayPhoneNumber();
+    const from = !isValidObjectId(to) ? gatewayNumber : token._id;
     const message = await Message.create({
       from,
       to,
