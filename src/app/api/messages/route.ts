@@ -11,7 +11,7 @@ async function getGatewayPhoneNumber() {
   if (!gateway) {
     throw new Error('No SMS gateway configured');
   }
-  return gateway.phoneNumber;
+  return gateway?.config?.phoneNumber;
 }
 
 export async function GET(request: NextRequest) {
