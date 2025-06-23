@@ -1,29 +1,45 @@
-import { NextRequest } from "next/server";
-import {Apidaze} from '@apidaze/node';
+import { NextRequest, NextResponse } from 'next/server';
+import { Apidaze } from '@apidaze/node';
+import connectDB from '@/lib/mongodb';
+import Message from '@/models/Message';
+import { SmsGateway } from '@/models/SmsGateway';
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const to = body.to;
-    const messageBody = body.messageBody;
+  const body = await request.json();
+  const to = body.to;
+  const messageBody = body.messageBody;
 
-    // const to = '447427844303';
-    // const messageBody = 'Hello, this is a test message from the VI SMS API';
+  try {
+    await connectDB();
+
+    const gateway = await SmsGateway.findOne({ type: 'vi' });
+    if (!gateway) {
+      return NextResponse.json({ error: 'No VI SMS gateway configured' }, { status: 500 });
+    }
+
+    const config = gateway.config as { apiKey: string; apiSecret: string; phoneNumber: string };
 
     const ApidazeClient = new Apidaze(
-      process.env.APIDAZ_API_KEY!,
-      process.env.APIDAZ_API_SECRET!,
+      config.apiKey,
+      config.apiSecret
     );
 
-    const response = await ApidazeClient.messages.send(process.env.VI_SMS_DID!, to, messageBody);
+    const response = await ApidazeClient.messages.send(config.phoneNumber, to, messageBody);
 
-    return new Response(JSON.stringify({ success: true, data: response }), { status: 200 });
+    const message = new Message({
+      from: config.phoneNumber,
+      to,
+      body: messageBody,
+      timestamp: new Date()
+    });
+    await message.save();
 
+    return NextResponse.json({ 
+      success: true,
+      data: response
+    });
   } catch (error) {
-    console.error('Error sending SMS:', error);
-    return new Response(
-      JSON.stringify({ error: (error as Error).message }),
-      { status: 500 }
-    );
+    console.error('Error sending SMS through VI:', error);
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }

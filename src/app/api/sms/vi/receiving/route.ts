@@ -1,35 +1,57 @@
-import type { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
+import connectDB from '@/lib/mongodb';
+import { SmsGateway, IViConfig } from '@/models/SmsGateway';
+import Message from '@/models/Message';
 
 // In-memory store for demonstration; use a database in production
 let messages: { from: string; to: string; body: string }[] = [];
 
-function validateSignature(req: NextRequest): boolean {
-  const signature = req.headers.get('x-signalwire-signature'); // Assuming similar to SignalWire
-  const timestamp = req.headers.get('x-timestamp');
-  const body = JSON.stringify(req.body || {});
-  const data = timestamp + body;
-  const expectedSignature = crypto
-    .createHmac('sha256', process.env.SANGOMA_AUTH_TOKEN!)
-    .update(data)
-    .digest('base64');
-  return signature === expectedSignature;
+async function validateSignature(req: NextRequest): Promise<boolean> {
+  try {
+    await connectDB();
+    const gateway = await SmsGateway.findOne({ type: 'vi' });
+    if (!gateway) {
+      throw new Error('No VI gateway configured');
+    }
+
+    const config = gateway.config as IViConfig;
+    const signature = req.headers.get('x-vi-signature');
+    const timestamp = req.headers.get('x-timestamp');
+    const body = await req.text();
+    const data = timestamp + body;
+    const expectedSignature = crypto
+      .createHmac('sha256', config.apiSecret)
+      .update(data)
+      .digest('base64');
+    return signature === expectedSignature;
+  } catch (error) {
+    console.error('Error validating signature:', error);
+    return false;
+  }
 }
 
 export async function POST(req: NextRequest) {
-  if (!validateSignature(req)) {
-    return new Response(JSON.stringify({ error: 'Invalid signature' }), { status: 401 });
+  if (!await validateSignature(req)) {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
   try {
     const { From, To, Body } = await req.json();
-    messages.push({ from: From, to: To, body: Body });
+    const message = new Message({
+      from: From,
+      to: To,
+      body: Body,
+      timestamp: new Date()
+    });
+    await message.save();
+
     console.log(`Received SMS from ${From} to ${To}: ${Body}`);
-    return new Response('OK', { status: 200 });
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error processing webhook:', error);
-    return new Response(
-      JSON.stringify({ error: (error as Error).message }),
+    return NextResponse.json(
+      { error: (error as Error).message },
       { status: 500 }
     );
   }

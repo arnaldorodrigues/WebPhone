@@ -1,4 +1,4 @@
-import { ISmsGateway } from "@/models/SmsGateway";
+import { ISmsGateway, ISignalwireConfig, IViConfig } from "@/models/SmsGateway";
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { Dialog } from "@/components/ui/dialogs/dialog";
 import { useState } from "react";
@@ -54,6 +54,66 @@ export function SmsGatewayCards({
       return value ? "••••••••••" : "Not configured";
     };
 
+    const renderGatewayFields = () => {
+      if (!gateway?.config) return null;
+
+      if (isSignalwire) {
+        const config = gateway.config as ISignalwireConfig;
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <div className="text-sm font-medium text-gray-500">
+                Phone Number
+              </div>
+              <div className="mt-1 text-sm">{config.phoneNumber}</div>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-500">
+                Project ID
+              </div>
+              <div className="mt-1 text-sm">{config.projectId}</div>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-500">Space URL</div>
+              <div className="mt-1 text-sm">{config.spaceUrl}</div>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-500">
+                Auth Token
+              </div>
+              <div className="mt-1 text-sm font-mono">
+                {maskValue(config.authToken)}
+              </div>
+            </div>
+          </div>
+        );
+      } else {
+        const config = gateway.config as IViConfig;
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <div className="text-sm font-medium text-gray-500">
+                Phone Number
+              </div>
+              <div className="mt-1 text-sm">{config.phoneNumber}</div>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-500">API Key</div>
+              <div className="mt-1 text-sm">{config.apiKey}</div>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-500">
+                API Secret
+              </div>
+              <div className="mt-1 text-sm font-mono">
+                {maskValue(config.apiSecret)}
+              </div>
+            </div>
+          </div>
+        );
+      }
+    };
+
     return (
       <div className={`rounded-lg border ${borderColor} ${bgColor} p-6 w-full`}>
         <div className="flex justify-between items-start mb-4">
@@ -86,32 +146,7 @@ export function SmsGatewayCards({
         </div>
 
         {gateway ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <div className="text-sm font-medium text-gray-500">
-                Phone Number
-              </div>
-              <div className="mt-1 text-sm">{gateway.phoneNumber}</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-500">
-                Project ID
-              </div>
-              <div className="mt-1 text-sm">{gateway.projectId}</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-500">Space URL</div>
-              <div className="mt-1 text-sm">{gateway.spaceUrl}</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-500">
-                Auth Token
-              </div>
-              <div className="mt-1 text-sm font-mono">
-                {maskValue(gateway.authToken)}
-              </div>
-            </div>
-          </div>
+          renderGatewayFields()
         ) : (
           <div className="text-sm text-gray-500">No configuration found</div>
         )}
