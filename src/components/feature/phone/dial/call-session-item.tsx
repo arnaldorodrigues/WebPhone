@@ -1,6 +1,7 @@
 import { useSessionCall } from "@/hooks/sip-provider/sip-provider-context";
 import {
   BackspaceIcon,
+  CalculatorIcon,
   CheckIcon,
   MicrophoneIcon,
   MicrophoneIcon as MicrophoneSlashIcon,
@@ -10,12 +11,10 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { PlayIcon } from "@heroicons/react/24/solid";
-import { BiDialpad } from "react-icons/bi";
 import { Session, SessionState } from "sip.js";
 import { SessionDirection } from "@/types/sip-type";
 import { PhoneStateType, usePhoneState } from "@/hooks/use-phonestate-context";
 import { useEffect, useState } from "react";
-import NumberDisplay from "./number-display";
 
 export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
   const sessionCall = useSessionCall(sessionId);
@@ -67,6 +66,8 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
       return () => document.removeEventListener("keydown", handleKeyDown);
     }
   }, [showDialpad]);
+
+  console.log("123123123", session?.state);
 
   return (
     <>
@@ -267,7 +268,7 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
                   : "bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700"
               }`}
             >
-              <BiDialpad className="w-6 h-6" />
+              <CalculatorIcon className="w-6 h-6" />
               <span className="text-sm font-medium">Keypad</span>
             </button>
           </div>
