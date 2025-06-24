@@ -32,7 +32,6 @@ const ContactList = () => {
             "unread"
           );
 
-          // Fetch latest message for the contact
           const messages = await fetchMessage(
             contact.id.length !== 0 ? contact.id : contact.number
           );
@@ -50,7 +49,6 @@ const ContactList = () => {
         })
       );
 
-      // Sort contacts by latest message timestamp
       const sortedContacts = chatContacts.sort((a, b) => {
         return (
           (b.latestMessageTimestamp?.getTime() || 0) -
