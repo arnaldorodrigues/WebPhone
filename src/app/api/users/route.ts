@@ -5,6 +5,7 @@ import { Settings } from '@/models/Settings';
 import { _parse_token } from '@/utils/auth';
 import bcrypt from 'bcryptjs';
 import mongoose, { Document, isValidObjectId, Types } from 'mongoose';
+import MessageModel from '@/models/Message';
 
 interface Contact {
   id?: string;
@@ -505,6 +506,27 @@ export async function PUT(request: NextRequest) {
       .populate('did')
       .select('-password')
       .lean();
+
+    if (action === 'add') {
+      let message : any | null = null;
+      if (contactData && contactData._id) {
+         message = new MessageModel({
+          from: user._id,
+          to: contactData._id,
+          body: "",
+          timestamp: new Date(),
+        });
+      } else if ( !isValidObjectId(contact as string)) {
+        message = new MessageModel({
+          from: user.did.config.phoneNumber,
+          to: contact,
+          body: "",
+          timestamp: new Date(),
+        });
+      }
+
+      await message.save();
+    }
 
     if (!updatedUser) {
       return NextResponse.json(
