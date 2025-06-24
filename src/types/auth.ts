@@ -5,6 +5,7 @@ export interface User {
   name: string;
   role: 'admin' | 'user';
   createdAt: Date;
+  did?: string;  // Reference to SmsGateway
 }
 
 export interface SignUpRequest {

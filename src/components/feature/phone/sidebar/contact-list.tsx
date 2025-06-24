@@ -1,11 +1,11 @@
 import ContactCard from "./contact-card";
-import { PlusIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
+import { PlusIcon } from "@heroicons/react/24/solid";
 import SearchInput from "@/components/ui/inputs/search-input";
 import { useEffect, useState } from "react";
 import AddContactDialog from "./add-contact-dialog";
 import { useUserData } from "@/hooks/use-userdata";
 import { useParams } from "next/navigation";
-import { fetchMessageCountByContact } from "@/lib/message-action";
+import { fetchMessageCountByContact, fetchMessage } from "@/lib/message-action";
 
 interface Contact {
   id: string;
@@ -13,6 +13,7 @@ interface Contact {
   number: string;
   unreadCount?: number;
   type: "chat" | "sms";
+  latestMessageTimestamp?: Date;
 }
 
 const ContactList = () => {
@@ -31,15 +32,33 @@ const ContactList = () => {
             "unread"
           );
 
+          // Fetch latest message for the contact
+          const messages = await fetchMessage(
+            contact.id.length !== 0 ? contact.id : contact.number
+          );
+          const latestMessage =
+            messages.length > 0 ? messages[messages.length - 1] : null;
+
           return {
             ...contact,
             unreadCount,
             type: "chat" as const,
+            latestMessageTimestamp: latestMessage
+              ? new Date(latestMessage.timestamp)
+              : new Date(0),
           };
         })
       );
 
-      setContacts(chatContacts);
+      // Sort contacts by latest message timestamp
+      const sortedContacts = chatContacts.sort((a, b) => {
+        return (
+          (b.latestMessageTimestamp?.getTime() || 0) -
+          (a.latestMessageTimestamp?.getTime() || 0)
+        );
+      });
+
+      setContacts(sortedContacts);
     };
 
     fetchAllContacts();
@@ -75,7 +94,7 @@ const ContactList = () => {
           <ContactCard
             key={contact.id + contact.number + contact.name}
             contact={contact}
-            isSelected={contact.id === id}
+            isSelected={contact.id === id || contact.number === id}
           />
         ))}
       </div>

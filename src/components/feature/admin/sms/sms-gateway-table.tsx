@@ -1,199 +1,256 @@
-import { ISmsGateway, ISignalwireConfig, IViConfig } from "@/models/SmsGateway";
-import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { Dialog } from "@/components/ui/dialogs/dialog";
-import { useState } from "react";
+"use client";
 
-interface SmsGatewayCardsProps {
+import { ISmsGateway, ISignalwireConfig, IViConfig } from "@/models/SmsGateway";
+import { EyeIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { useState, useEffect } from "react";
+import ConfirmDialog from "@/components/ui/dialogs/confirm-dialog";
+import { SmsGatewayEditDialog } from "./sms-gateway-edit-dialog";
+import { SmsGatewayDetailDialog } from "./sms-gateway-detail-dialog";
+import Pagination from "@/components/ui/pagination/pagination";
+import { fetchWithAuth } from "@/utils/api";
+
+interface SmsGatewayTableProps {
   gateways: ISmsGateway[];
-  onEdit: (gateway: ISmsGateway) => void;
-  onDelete: (id: string) => void;
+  onRefresh?: () => void;
 }
 
-export function SmsGatewayCards({
-  gateways,
-  onEdit,
-  onDelete,
-}: SmsGatewayCardsProps) {
-  const signalwireGateway = gateways.find((g) => g.type === "signalwire");
-  const viGateway = gateways.find((g) => g.type === "vi");
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+export function SmsGatewayTable({ gateways, onRefresh }: SmsGatewayTableProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(6);
+  const [currentGateways, setCurrentGateways] = useState<ISmsGateway[]>([]);
+  const [selectedGateway, setSelectedGateway] = useState<ISmsGateway | null>(
+    null
+  );
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [gatewayToDelete, setGatewayToDelete] = useState<ISmsGateway | null>(
     null
   );
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
-  const handleDeleteClick = (gateway: ISmsGateway) => {
-    setGatewayToDelete(gateway);
-    setDeleteConfirmOpen(true);
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentGateways = gateways.slice(startIndex, endIndex);
+
+    setCurrentGateways(currentGateways);
+  }, [currentPage, itemsPerPage, gateways]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [gateways.length]);
+
+  const handleViewGatewayDetail = (gateway: ISmsGateway) => {
+    setSelectedGateway(gateway);
+    setIsDetailDialogOpen(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (gatewayToDelete?._id) {
-      onDelete(gatewayToDelete._id);
-      setDeleteConfirmOpen(false);
+  const handleCloseDetailDialog = () => {
+    setIsDetailDialogOpen(false);
+    setSelectedGateway(null);
+  };
+
+  const handleEditGateway = (gateway: ISmsGateway) => {
+    setSelectedGateway(gateway);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    setIsEditDialogOpen(false);
+    setSelectedGateway(null);
+  };
+
+  const handleDeleteGateway = (gateway: ISmsGateway) => {
+    setGatewayToDelete(gateway);
+    setIsConfirmDialogOpen(true);
+  };
+
+  const confirmDeleteGateway = async () => {
+    if (!gatewayToDelete || !gatewayToDelete._id) return;
+
+    try {
+      const response = await fetchWithAuth(
+        `/api/admin/sms-gateways?id=${gatewayToDelete._id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete SMS gateway");
+      }
+
+      if (onRefresh) {
+        onRefresh();
+      }
+
+      if (isDetailDialogOpen) {
+        setIsDetailDialogOpen(false);
+        setSelectedGateway(null);
+      }
+    } catch (error) {
+      console.error("Error deleting gateway:", error);
+      alert("Failed to delete SMS gateway. Please try again.");
+    } finally {
       setGatewayToDelete(null);
+      setIsConfirmDialogOpen(false);
     }
   };
 
-  const GatewayCard = ({
-    type,
-    gateway,
-  }: {
-    type: "signalwire" | "vi";
-    gateway?: ISmsGateway;
-  }) => {
-    const isSignalwire = type === "signalwire";
-    const title = isSignalwire ? "Signalwire" : "VI/Sangoma";
-    const bgColor = isSignalwire ? "bg-purple-50" : "bg-blue-50";
-    const borderColor = isSignalwire ? "border-purple-200" : "border-blue-200";
-    const textColor = isSignalwire ? "text-purple-700" : "text-blue-700";
-    const bgHoverColor = isSignalwire
-      ? "hover:bg-purple-100"
-      : "hover:bg-blue-100";
-
-    const maskValue = (value: string) => {
-      return value ? "••••••••••" : "Not configured";
-    };
-
-    const renderGatewayFields = () => {
-      if (!gateway?.config) return null;
-
-      if (isSignalwire) {
-        const config = gateway.config as ISignalwireConfig;
-        return (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <div className="text-sm font-medium text-gray-500">
-                Phone Number
-              </div>
-              <div className="mt-1 text-sm">{config.phoneNumber}</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-500">
-                Project ID
-              </div>
-              <div className="mt-1 text-sm">{config.projectId}</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-500">Space URL</div>
-              <div className="mt-1 text-sm">{config.spaceUrl}</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-500">
-                Auth Token
-              </div>
-              <div className="mt-1 text-sm font-mono">
-                {maskValue(config.authToken)}
-              </div>
-            </div>
-          </div>
-        );
-      } else {
-        const config = gateway.config as IViConfig;
-        return (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div>
-              <div className="text-sm font-medium text-gray-500">
-                Phone Number
-              </div>
-              <div className="mt-1 text-sm">{config.phoneNumber}</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-500">API Key</div>
-              <div className="mt-1 text-sm">{config.apiKey}</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-500">
-                API Secret
-              </div>
-              <div className="mt-1 text-sm font-mono">
-                {maskValue(config.apiSecret)}
-              </div>
-            </div>
-          </div>
-        );
-      }
-    };
-
-    return (
-      <div className={`rounded-lg border ${borderColor} ${bgColor} p-6 w-full`}>
-        <div className="flex justify-between items-start mb-4">
-          <h3 className={`text-lg font-medium ${textColor}`}>{title}</h3>
-          <div className="flex space-x-2">
-            {gateway ? (
-              <>
-                <button
-                  onClick={() => onEdit(gateway)}
-                  className={`${textColor} ${bgHoverColor} p-1 rounded transition-colors duration-200`}
-                >
-                  <PencilIcon className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => handleDeleteClick(gateway)}
-                  className="text-red-500 hover:bg-red-100 p-1 rounded transition-colors duration-200"
-                >
-                  <TrashIcon className="h-4 w-4" />
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => onEdit({ type } as ISmsGateway)}
-                className={`${textColor} ${bgHoverColor} px-3 py-1 rounded transition-colors duration-200 text-sm`}
-              >
-                Configure
-              </button>
-            )}
-          </div>
-        </div>
-
-        {gateway ? (
-          renderGatewayFields()
-        ) : (
-          <div className="text-sm text-gray-500">No configuration found</div>
-        )}
-      </div>
-    );
+  const handleCloseConfirmDialog = () => {
+    setIsConfirmDialogOpen(false);
+    setGatewayToDelete(null);
   };
 
+  const totalPages = Math.ceil(gateways.length / itemsPerPage);
+
   return (
-    <>
-      <div className="space-y-6 w-full">
-        <GatewayCard type="signalwire" gateway={signalwireGateway} />
-        <GatewayCard type="vi" gateway={viGateway} />
-      </div>
+    <div>
+      <table className="min-w-full divide-y divide-gray-100 overflow-x-hidden">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+              Phone Number
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Type
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              projectId / apikey
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              SpaceUrl
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              AuthToken / apiSecret
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Created
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-100">
+          {currentGateways.map((gateway) => (
+            <tr
+              key={gateway._id}
+              className="hover:bg-gray-50 transition-colors duration-200"
+            >
+              <td className="px-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900">
+                {gateway.config.phoneNumber}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 capitalize">
+                {gateway.type}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                {(() => {
+                  const value =
+                    gateway.type === "signalwire"
+                      ? (gateway.config as ISignalwireConfig).projectId
+                      : (gateway.config as IViConfig).apiKey;
+                  return value && value.length > 10
+                    ? value.slice(0, 10) + "..."
+                    : value;
+                })()}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                {gateway.type === "signalwire"
+                  ? (() => {
+                      const spaceUrl = (gateway.config as ISignalwireConfig)
+                        .spaceUrl;
+                      if (!spaceUrl) return "";
+                      const firstWord = spaceUrl.split(".")[0];
+                      return firstWord + "...";
+                    })()
+                  : ""}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                &#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                {new Date(gateway.createdAt).toLocaleDateString()}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-xs font-medium">
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleViewGatewayDetail(gateway)}
+                    className="text-indigo-500 hover:text-indigo-700 p-1 rounded hover:bg-indigo-50 transition-colors duration-200"
+                    title="View Gateway"
+                  >
+                    <EyeIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleEditGateway(gateway)}
+                    className="text-indigo-500 hover:text-indigo-700 p-1 rounded hover:bg-indigo-50 transition-colors duration-200"
+                    title="Edit Gateway"
+                  >
+                    <PencilIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteGateway(gateway)}
+                    className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors duration-200"
+                    title="Delete Gateway"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
-      <Dialog
-        isOpen={deleteConfirmOpen}
-        onClose={() => setDeleteConfirmOpen(false)}
-        title="Confirm Delete"
-      >
-        <div className="mt-2">
-          <p className="text-sm text-gray-500">
-            Are you sure you want to delete this{" "}
-            {gatewayToDelete?.type === "signalwire"
-              ? "Signalwire"
-              : "VI/Sangoma"}{" "}
-            gateway? This action cannot be undone and may affect SMS
-            functionality.
-          </p>
+      {gateways.length > 0 && (
+        <div className="mx-4 my-6">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={gateways.length}
+            itemsPerPage={itemsPerPage}
+          />
         </div>
+      )}
 
-        <div className="mt-6 flex justify-end space-x-3">
-          <button
-            type="button"
-            onClick={() => setDeleteConfirmOpen(false)}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleConfirmDelete}
-            className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-          >
-            Delete Gateway
-          </button>
+      {gateways.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-gray-500">No SMS gateways found</p>
         </div>
-      </Dialog>
-    </>
+      )}
+
+      <SmsGatewayDetailDialog
+        isOpen={isDetailDialogOpen}
+        onClose={handleCloseDetailDialog}
+        gateway={selectedGateway}
+        onEdit={() => {
+          setIsDetailDialogOpen(false);
+          setIsEditDialogOpen(true);
+        }}
+        onDelete={(gatewayId: string) => {
+          const gateway = gateways.find((g) => g._id === gatewayId);
+          if (gateway) handleDeleteGateway(gateway);
+        }}
+      />
+
+      <SmsGatewayEditDialog
+        isOpen={isEditDialogOpen}
+        onClose={handleCloseEditDialog}
+        gateway={selectedGateway || undefined}
+        onRefresh={onRefresh}
+      />
+
+      <ConfirmDialog
+        isOpen={isConfirmDialogOpen}
+        onClose={handleCloseConfirmDialog}
+        onConfirm={confirmDeleteGateway}
+        title="Delete SMS Gateway"
+        message={`Are you sure you want to delete the SMS gateway with number ${gatewayToDelete?.config.phoneNumber}? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
+    </div>
   );
 }

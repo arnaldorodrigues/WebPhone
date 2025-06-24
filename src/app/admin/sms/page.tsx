@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ISmsGateway } from "@/models/SmsGateway";
-import { SmsGatewayCards } from "@/components/feature/admin/sms/sms-gateway-table";
+import { ISmsGateway, IViConfig, ISignalwireConfig } from "@/models/SmsGateway";
+import { SmsGatewayTable } from "@/components/feature/admin/sms/sms-gateway-table";
 import { SmsGatewayEditDialog } from "@/components/feature/admin/sms/sms-gateway-edit-dialog";
-// import { Button } from "@/components/ui/buttons/button";
 import { useNotification } from "@/contexts/notification-context";
 import SearchInput from "@/components/ui/inputs/search-input";
 import { PlusIcon } from "@heroicons/react/24/outline";
+import SmsGatewayPageSkeleton from "@/components/feature/admin/sms/sms-gateway-page-skeleton";
 
 export default function SmsGatewaysPage() {
   const [gateways, setGateways] = useState<ISmsGateway[]>([]);
@@ -19,6 +19,7 @@ export default function SmsGatewaysPage() {
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState<string>("");
+
   const fetchGateways = async () => {
     try {
       setLoading(true);
@@ -49,44 +50,17 @@ export default function SmsGatewaysPage() {
     setIsEditDialogOpen(true);
   };
 
-  const handleSave = async (gatewayData: Partial<ISmsGateway>) => {
-    try {
-      const existingGateway = gateways.find((g) => g.type === gatewayData.type);
-      const url = "/api/admin/sms-gateways";
-      const method = existingGateway ? "PUT" : "POST";
-      const body = existingGateway
-        ? JSON.stringify({ ...gatewayData, id: existingGateway._id })
-        : JSON.stringify(gatewayData);
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body,
-      });
-
-      if (!response.ok) throw new Error("Failed to save gateway");
-
-      showNotification(
-        `SMS gateway ${existingGateway ? "updated" : "created"} successfully`,
-        "success"
-      );
-      setIsEditDialogOpen(false);
-      fetchGateways();
-    } catch (error) {
-      console.error("Error saving gateway:", error);
-      showNotification("Failed to save SMS gateway", "error");
-    }
-  };
-
   const handleDelete = async (id: string) => {
     try {
       const response = await fetch(`/api/admin/sms-gateways?id=${id}`, {
         method: "DELETE",
       });
 
-      if (!response.ok) throw new Error("Failed to delete gateway");
+      if (!response.ok) {
+        const data = await response.json();
+        showNotification(data.error || "Failed to delete SMS gateway", "error");
+        return;
+      }
 
       showNotification("SMS gateway deleted successfully", "success");
       fetchGateways();
@@ -95,6 +69,23 @@ export default function SmsGatewaysPage() {
       showNotification("Failed to delete SMS gateway", "error");
     }
   };
+
+  const filteredGateways = gateways.filter((gateway) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      gateway.type.toLowerCase().includes(searchLower) ||
+      gateway.config.phoneNumber.toLowerCase().includes(searchLower) ||
+      (gateway.config as ISignalwireConfig)?.projectId
+        ?.toLowerCase()
+        ?.includes(searchLower) ||
+      (gateway.config as ISignalwireConfig)?.spaceUrl
+        ?.toLowerCase()
+        ?.includes(searchLower) ||
+      (gateway.config as IViConfig)?.apiKey
+        ?.toLowerCase()
+        ?.includes(searchLower)
+    );
+  });
 
   if (error) {
     return (
@@ -118,34 +109,43 @@ export default function SmsGatewaysPage() {
   }
 
   if (loading) {
-    return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-6">
-          <div className="h-32 bg-gray-200 rounded-lg w-full"></div>
-          <div className="h-32 bg-gray-200 rounded-lg w-full"></div>
-        </div>
-      </div>
-    );
+    return <SmsGatewayPageSkeleton />;
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <SearchInput
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder="Search by type or phone number..."
+          className="flex-1"
+        />
+        <button
+          onClick={handleAdd}
+          className="flex items-center px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors duration-200 shadow-sm"
+        >
+          <PlusIcon className="h-4 w-4 mr-2" />
+          Add Gateway
+        </button>
+      </div>
+
       <div className="mt-4 bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <SmsGatewayCards
-            gateways={gateways}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
+          <SmsGatewayTable
+            gateways={filteredGateways}
+            onRefresh={fetchGateways}
           />
         </div>
       </div>
 
       <SmsGatewayEditDialog
         isOpen={isEditDialogOpen}
-        onClose={() => setIsEditDialogOpen(false)}
-        onSave={handleSave}
+        onClose={() => {
+          setIsEditDialogOpen(false);
+        }}
         gateway={selectedGateway || undefined}
-        selectedGateway={selectedGateway || undefined}
+        onRefresh={fetchGateways}
       />
     </div>
   );

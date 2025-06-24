@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
       role: { $ne: 'admin' }
     })
       .populate('settings')
+      .populate('did')
       .select('-password')
       .lean();
 
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest) {
         email: user.email,
         role: user.role,
         status: userSettings ? 'active' : 'inactive', 
+        did: user.did,
         createdAt: user.createdAt,
         settings: userSettings ? {
           wsServer: userSettings.wsServer,
@@ -103,6 +105,10 @@ export async function POST(request: NextRequest) {
         const hashedPassword = await bcrypt.hash(userData.password, 10);
         updateData.password = hashedPassword;
       }
+
+      if (userData.did !== undefined) {
+        updateData.did = userData.did;
+      }
       
       savedUser = await UserModel.findByIdAndUpdate(
         existingUser._id,
@@ -133,6 +139,7 @@ export async function POST(request: NextRequest) {
         name: userData.name,
         password: hashedPassword,
         role: userData.role || 'user',
+        did: userData.did,
       });
     }
 

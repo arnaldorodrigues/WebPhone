@@ -2,56 +2,86 @@ import { ISmsGateway, ISignalwireConfig, IViConfig } from "@/models/SmsGateway";
 import { Dialog } from "@/components/ui/dialogs/dialog";
 import Input from "@/components/ui/inputs/input";
 import { useState, useEffect } from "react";
+import DropdownSelect from "@/components/ui/inputs/dropdown-select";
+import { useNotification } from "@/contexts/notification-context";
 
 interface SmsGatewayEditDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (gateway: Partial<ISmsGateway>) => void;
   gateway?: ISmsGateway;
-  selectedGateway?: ISmsGateway;
+  onRefresh?: () => void;
 }
 
 export function SmsGatewayEditDialog({
   isOpen,
   onClose,
-  onSave,
   gateway,
-  selectedGateway,
+  onRefresh,
 }: SmsGatewayEditDialogProps) {
+  const { showNotification } = useNotification();
+  const [apiError, setApiError] = useState<string>("");
+
   const [formData, setFormData] = useState<Partial<ISmsGateway>>({
     type: "signalwire",
     config: {
+      phoneNumber: "",
       projectId: "",
       authToken: "",
       spaceUrl: "",
-      phoneNumber: "",
     } as ISignalwireConfig | IViConfig,
   });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (gateway) {
       setFormData(gateway);
-    } else if (selectedGateway?.type) {
-      const defaultConfig =
-        selectedGateway.type === "signalwire"
-          ? ({
-              projectId: "",
-              authToken: "",
-              spaceUrl: "",
-              phoneNumber: "",
-            } as ISignalwireConfig)
-          : ({
-              apiKey: "",
-              apiSecret: "",
-              phoneNumber: "",
-            } as IViConfig);
-
-      setFormData({
-        type: selectedGateway.type,
-        config: defaultConfig,
-      });
     }
-  }, [gateway, selectedGateway]);
+  }, [gateway]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setErrors({});
+    }
+  }, [isOpen]);
+
+  const validateForm = (): boolean => {
+    const config = formData.config as ISignalwireConfig | IViConfig;
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.type) {
+      newErrors.type = "Type is required";
+    }
+
+    if (!config.phoneNumber?.trim()) {
+      newErrors.phoneNumber = "Phone number is required";
+    }
+
+    if (formData.type === "signalwire") {
+      const swConfig = config as ISignalwireConfig;
+      if (!swConfig.projectId?.trim()) {
+        newErrors.projectId = "Project ID is required";
+      }
+      if (!swConfig.authToken?.trim()) {
+        newErrors.authToken = "Auth Token is required";
+      }
+      if (!swConfig.spaceUrl?.trim()) {
+        newErrors.spaceUrl = "Space URL is required";
+      }
+    } else if (formData.type === "vi") {
+      const viConfig = config as IViConfig;
+      if (!viConfig.apiKey?.trim()) {
+        newErrors.apiKey = "API Key is required";
+      }
+      if (!viConfig.apiSecret?.trim()) {
+        newErrors.apiSecret = "API Secret is required";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -62,15 +92,68 @@ export function SmsGatewayEditDialog({
         [name]: value,
       } as ISignalwireConfig | IViConfig,
     }));
+
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSave = async (gatewayData: Partial<ISmsGateway>) => {
+    try {
+      const url = "/api/admin/sms-gateways";
+      const method = gateway ? "PUT" : "POST";
+      const body = gateway
+        ? JSON.stringify({ ...gatewayData, id: gateway._id })
+        : JSON.stringify(gatewayData);
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showNotification(data.error || "Failed to save gateway", "error");
+        setApiError(data.error || "Failed to save gateway");
+        return false;
+      }
+
+      showNotification(
+        `SMS gateway ${gateway ? "updated" : "created"} successfully`,
+        "success"
+      );
+      return true;
+    } catch (error) {
+      console.error("Error saving gateway:", error);
+      showNotification("Failed to save SMS gateway", "error");
+      return false;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
-  };
+    if (!validateForm()) return;
 
-  const getTypeLabel = (type: string) => {
-    return type === "signalwire" ? "Signalwire" : "VI/Sangoma";
+    setIsSubmitting(true);
+    try {
+      const success = await handleSave(formData);
+      if (success) {
+        onRefresh?.();
+        setErrors({});
+        onClose();
+      }
+    } catch (error) {
+      console.error("Error saving gateway:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderFields = () => {
@@ -80,23 +163,24 @@ export function SmsGatewayEditDialog({
         <>
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Phone Number
+              Phone Number *
             </label>
             <Input
               id="phoneNumber"
               type="text"
               name="phoneNumber"
-              value={config?.phoneNumber || ""}
+              value={config.phoneNumber || ""}
               onChange={handleChange}
-              required
+              required={false}
               className="mt-1"
-              placeholder="+1234567890"
+              placeholder="2134567890"
+              error={errors.phoneNumber}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Project ID
+              Project ID *
             </label>
             <Input
               id="projectId"
@@ -104,14 +188,15 @@ export function SmsGatewayEditDialog({
               name="projectId"
               value={config?.projectId || ""}
               onChange={handleChange}
-              required
+              required={false}
               className="mt-1"
+              error={errors.projectId}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Space URL
+              Space URL *
             </label>
             <Input
               id="spaceUrl"
@@ -119,15 +204,16 @@ export function SmsGatewayEditDialog({
               name="spaceUrl"
               value={config?.spaceUrl || ""}
               onChange={handleChange}
-              required
+              required={false}
               className="mt-1"
               placeholder="example.signalwire.com"
+              error={errors.spaceUrl}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Auth Token
+              Auth Token *
             </label>
             <Input
               id="authToken"
@@ -135,8 +221,9 @@ export function SmsGatewayEditDialog({
               name="authToken"
               value={config?.authToken || ""}
               onChange={handleChange}
-              required
+              required={false}
               className="mt-1"
+              error={errors.authToken}
             />
           </div>
         </>
@@ -147,23 +234,24 @@ export function SmsGatewayEditDialog({
         <>
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Phone Number
+              Phone Number *
             </label>
             <Input
               id="phoneNumber"
               type="text"
               name="phoneNumber"
-              value={config?.phoneNumber || ""}
+              value={config.phoneNumber || ""}
               onChange={handleChange}
-              required
+              required={false}
               className="mt-1"
-              placeholder="+1234567890"
+              placeholder="2134567890"
+              error={errors.phoneNumber}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              API Key
+              API Key *
             </label>
             <Input
               id="apiKey"
@@ -171,14 +259,15 @@ export function SmsGatewayEditDialog({
               name="apiKey"
               value={config?.apiKey || ""}
               onChange={handleChange}
-              required
+              required={false}
               className="mt-1"
+              error={errors.apiKey}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              API Secret
+              API Secret *
             </label>
             <Input
               id="apiSecret"
@@ -186,8 +275,9 @@ export function SmsGatewayEditDialog({
               name="apiSecret"
               value={config?.apiSecret || ""}
               onChange={handleChange}
-              required
+              required={false}
               className="mt-1"
+              error={errors.apiSecret}
             />
           </div>
         </>
@@ -199,16 +289,48 @@ export function SmsGatewayEditDialog({
     <Dialog
       isOpen={isOpen}
       onClose={onClose}
-      title={gateway ? "Edit SMS Gateway" : "Add SMS Gateway"}
+      title={!gateway ? "Edit SMS Gateway" : "Add SMS Gateway"}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {apiError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+            <p className="text-sm text-red-600">{apiError}</p>
+          </div>
+        )}
+
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Type
+            Type *
           </label>
-          <div className="mt-1 block w-full px-3 py-2 text-base border border-gray-300 rounded-md bg-gray-50 text-gray-500">
-            {getTypeLabel(formData.type || "")}
-          </div>
+          <DropdownSelect
+            value={formData.type || ""}
+            onChange={(value: string) =>
+              setFormData({
+                ...formData,
+                type: value as "signalwire" | "vi",
+                config:
+                  value === "signalwire"
+                    ? ({
+                        phoneNumber: "",
+                        projectId: "",
+                        authToken: "",
+                        spaceUrl: "",
+                      } as ISignalwireConfig)
+                    : ({
+                        phoneNumber: "",
+                        apiKey: "",
+                        apiSecret: "",
+                      } as IViConfig),
+              })
+            }
+            options={[
+              { value: "signalwire", label: "SignalWire" },
+              { value: "vi", label: "VI" },
+            ]}
+            className={`mt-1`}
+            disabled={!!gateway}
+            placeholder="Select Type"
+          />
         </div>
 
         {renderFields()}
@@ -218,14 +340,25 @@ export function SmsGatewayEditDialog({
             type="button"
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200 disabled:opacity-50"
+            disabled={isSubmitting}
           >
             Cancel
           </button>
           <button
             type="submit"
             className="flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-500 border border-transparent rounded-lg hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200 disabled:opacity-50"
+            disabled={isSubmitting}
           >
-            Save
+            {isSubmitting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                {!gateway ? "Saving..." : "Create"}
+              </>
+            ) : !gateway ? (
+              "Save Changes"
+            ) : (
+              "Create Gateway"
+            )}
           </button>
         </div>
       </form>

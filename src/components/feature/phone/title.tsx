@@ -16,7 +16,7 @@ const Title = () => {
   );
   const displayName = currentContact?.name || param || "";
   const displayNumber = currentContact?.number || "";
-  const isSMS = param.startsWith("+");
+  const isSMS = !/^[a-f\d]{24}$/i.test(param);
 
   return (
     <div className="w-full p-4 flex gap-4 shadow-sm bg-white border-b border-gray-100">

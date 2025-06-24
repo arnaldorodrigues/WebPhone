@@ -36,7 +36,7 @@ const AddContactDialog = ({ isOpen, onClose }: AddContactDialogProps) => {
   const handleAddContact = async () => {
     let number = "";
     if (!selectedContact) {
-      number = searchQuery.startsWith("+") ? searchQuery : "+" + searchQuery;
+      number = searchQuery;
     } else {
       number = selectedContact.number;
     }
@@ -66,7 +66,7 @@ const AddContactDialog = ({ isOpen, onClose }: AddContactDialogProps) => {
         <div>
           <SearchInput
             value={searchQuery}
-            onChange={setSearchQuery}
+            onChange={(s) => (s.length <= 10 ? setSearchQuery(s) : null)}
             placeholder="Search by name or number..."
             className="w-full h-12"
           />
