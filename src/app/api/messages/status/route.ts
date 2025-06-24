@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       from: contact,
       to,
       status
-    });
+    }).then((msgs: any[]) => msgs.filter((msg: any) => msg.body !== ""));
 
     return NextResponse.json({ success: true, count: messages.length });
   } catch (error) {

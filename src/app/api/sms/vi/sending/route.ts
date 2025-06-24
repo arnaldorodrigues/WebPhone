@@ -11,8 +11,6 @@ export async function POST(request: NextRequest) {
   const to = body.to;
   const messageBody = body.messageBody;
 
-  console.log("vi    123222", body);
-
   try {
     await connectDB();
 

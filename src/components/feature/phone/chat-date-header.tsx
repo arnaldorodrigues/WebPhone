@@ -5,7 +5,10 @@ interface ChatDateHeaderProps {
 }
 
 const ChatDateHeader = ({ date }: ChatDateHeaderProps) => {
-  const formattedDate = format(new Date(date), "EEEE, MMMM d, yyyy");
+  const formattedDate = format(
+    new Date(date + "T00:00:00"),
+    "EEEE, MMMM d, yyyy"
+  );
 
   return (
     <div className="flex items-center justify-center my-6">

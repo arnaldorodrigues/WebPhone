@@ -289,7 +289,7 @@ export function SmsGatewayEditDialog({
     <Dialog
       isOpen={isOpen}
       onClose={onClose}
-      title={!gateway ? "Edit SMS Gateway" : "Add SMS Gateway"}
+      title={gateway ? "Edit SMS Gateway" : "Add SMS Gateway"}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {apiError && (
@@ -354,7 +354,7 @@ export function SmsGatewayEditDialog({
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
                 {!gateway ? "Saving..." : "Create"}
               </>
-            ) : !gateway ? (
+            ) : gateway ? (
               "Save Changes"
             ) : (
               "Create Gateway"

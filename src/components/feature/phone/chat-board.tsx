@@ -48,14 +48,18 @@ const ChatBoard = ({ messages, currentUser }: ChatBoardProps) => {
         <div key={group.date}>
           <ChatDateHeader date={group.date} />
           <div className="space-y-4">
-            {group.messages.map((message) => (
-              <ChatUnit
-                key={message._id + message.body + message.timestamp}
-                text={message.body}
-                date={format(new Date(message.timestamp), "HH:mm")}
-                isMe={message.from === currentUser}
-              />
-            ))}
+            {group.messages.map(
+              (message) =>
+                message.body &&
+                message.body.length > 0 && (
+                  <ChatUnit
+                    key={message._id + message.body + message.timestamp}
+                    text={message.body}
+                    date={format(new Date(message.timestamp), "HH:mm")}
+                    isMe={message.from === currentUser}
+                  />
+                )
+            )}
           </div>
         </div>
       ))}

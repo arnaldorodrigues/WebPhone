@@ -4,12 +4,15 @@ import Message from "@/models/Message";
 import { NextRequest, NextResponse } from "next/server";
 // @ts-ignore: SignalWire types export issue
 import { RestClient } from "@signalwire/compatibility-api";
+import connectDB  from "@/lib/mongodb";
 
 export async function POST  (request: NextRequest) {
   try {
     const { body, from, to } = await request.json();
+
+    await connectDB();
     
-    const gateway = await SmsGateway.findOne({ type: 'signalwire', config: { phoneNumber: to.replace('+1', '') } });
+    const gateway = await SmsGateway.findOne({ type: 'signalwire', "config.phoneNumber": `${to.replace('+1', '')}` });
     if (!gateway) {
       return NextResponse.json({ error: 'No SMS gateway configured' }, { status: 500 });
     }
