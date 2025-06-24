@@ -8,6 +8,7 @@ import { UserIcon, CogIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { User } from "@/types/user";
 import { fetchWithAuth } from "@/utils/api";
 import { ServerConfig } from "@/types/server-type";
+import { ISmsGateway } from "@/models/SmsGateway";
 
 interface UserEditDialogProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ interface FormData {
     wsPort: string;
     wsPath: string;
   };
+  did: string;
 }
 
 const UserEditDialog = ({
@@ -50,11 +52,13 @@ const UserEditDialog = ({
       wsPort: "",
       wsPath: "/",
     },
+    did: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverList, setServerList] = useState<ServerConfig[]>([]);
+  const [smsServices, setSmsServices] = useState<ISmsGateway[]>([]);
 
   const isCreateMode = !user;
   const dialogTitle = isCreateMode ? "Create New User" : "Edit User";
@@ -75,7 +79,22 @@ const UserEditDialog = ({
         console.error("Error loading server list:", error);
       }
     };
+    const getSmsServices = async () => {
+      try {
+        const data = await fetchWithAuth("/api/admin/sms-gateways", {
+          method: "GET",
+        });
+        if (!data.ok) throw new Error("Failed to fetch gateways");
+
+        const result = await data.json();
+        setSmsServices(result || []);
+      } catch (error) {
+        console.error("Error loading server list:", error);
+      }
+    };
+
     getServerList();
+    getSmsServices();
   }, []);
 
   useEffect(() => {
@@ -93,6 +112,7 @@ const UserEditDialog = ({
           wsPort: user.settings?.wsPort || "",
           wsPath: user.settings?.wsPath || "/",
         },
+        did: user?.did?._id?.toString() || "",
       });
     } else {
       setFormData({
@@ -108,6 +128,7 @@ const UserEditDialog = ({
           wsPort: "",
           wsPath: "/",
         },
+        did: "",
       });
     }
     setErrors({});
@@ -397,6 +418,37 @@ const UserEditDialog = ({
                   </p>
                 )}
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  SMS Service
+                </label>
+                <DropdownSelect
+                  placeholder="Select SMS Service"
+                  value={formData.did}
+                  onChange={(value) => {
+                    handleInputChange("did", value);
+                  }}
+                  className={`font-mono ${
+                    errors.domain ? "border-red-300" : ""
+                  }`}
+                  options={
+                    smsServices
+                      ? smsServices.map((smsService) => {
+                          return {
+                            value: smsService._id || "",
+                            label:
+                              smsService.config.phoneNumber +
+                                " - " +
+                                smsService.type || "",
+                          };
+                        })
+                      : []
+                  }
+                />
+                {errors.did && (
+                  <p className="mt-1 text-sm text-red-600">{errors.did}</p>
+                )}
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -435,75 +487,6 @@ const UserEditDialog = ({
                 />
                 {errors.domain && (
                   <p className="mt-1 text-sm text-red-600">{errors.domain}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  WS Server
-                </label>
-                <Input
-                  id="wsServer"
-                  name="wsServer"
-                  type="text"
-                  required={true}
-                  placeholder="Enter WebSocket server"
-                  value={formData.settings.wsServer}
-                  onChange={(e) =>
-                    handleInputChange("settings.wsServer", e.target.value)
-                  }
-                  className={`font-mono ${
-                    errors.wsServer ? "border-red-300" : ""
-                  }`}
-                />
-                {errors.wsServer && (
-                  <p className="mt-1 text-sm text-red-600">{errors.wsServer}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  WS Port
-                </label>
-                <Input
-                  id="wsPort"
-                  name="wsPort"
-                  type="text"
-                  required={true}
-                  placeholder="Enter WebSocket port"
-                  value={formData.settings.wsPort}
-                  onChange={(e) =>
-                    handleInputChange("settings.wsPort", e.target.value)
-                  }
-                  className={`font-mono ${
-                    errors.wsPort ? "border-red-300" : ""
-                  }`}
-                />
-                {errors.wsPort && (
-                  <p className="mt-1 text-sm text-red-600">{errors.wsPort}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  WS Path
-                </label>
-                <Input
-                  id="wsPath"
-                  name="wsPath"
-                  type="text"
-                  required={true}
-                  placeholder="Enter WebSocket path"
-                  value={formData.settings.wsPath}
-                  onChange={(e) =>
-                    handleInputChange("settings.wsPath", e.target.value)
-                  }
-                  className={`font-mono ${
-                    errors.wsPath ? "border-red-300" : ""
-                  }`}
-                />
-                {errors.wsPath && (
-                  <p className="mt-1 text-sm text-red-600">{errors.wsPath}</p>
                 )}
               </div>
             </div>

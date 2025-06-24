@@ -26,6 +26,7 @@ interface Props {
   readOnly?: boolean;
   options?: DropdownOption[];
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  error?: string;
 }
 
 const Input = ({
@@ -40,6 +41,7 @@ const Input = ({
   readOnly = false,
   options = [],
   onKeyDown,
+  error,
 }: Props) => {
   const [mounted, setMounted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -88,11 +90,33 @@ const Input = ({
     : type;
 
   const baseClassName =
-    "appearance-none block w-full px-4 py-2.5 border border-gray-200 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all duration-200 hover:border-gray-300";
+    "appearance-none block w-full px-4 py-2.5 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm transition-all duration-200";
 
-  const finalClassName = `${baseClassName} ${
+  const errorClassName = error
+    ? "border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500 hover:border-red-400"
+    : "border-gray-200 focus:ring-indigo-500 focus:border-indigo-500 hover:border-gray-300";
+
+  const finalClassName = `${baseClassName} ${errorClassName} ${
     isPasswordType ? "pr-10" : ""
   } ${className}`;
+
+  const renderInput = () => (
+    <>
+      <input
+        id={id}
+        name={name}
+        type={inputType}
+        required={required}
+        className={finalClassName}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        readOnly={readOnly}
+        onKeyDown={onKeyDown}
+      />
+      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+    </>
+  );
 
   if (!mounted) {
     return (
@@ -132,7 +156,7 @@ const Input = ({
           name={name}
           type="text"
           required={required}
-          className={`${baseClassName} pr-10`}
+          className={`${baseClassName} ${errorClassName} pr-10`}
           placeholder={placeholder}
           value={value}
           onChange={handleInputChange}
@@ -174,6 +198,7 @@ const Input = ({
             )}
           </div>
         )}
+        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
       </div>
     );
   }
@@ -181,46 +206,23 @@ const Input = ({
   if (isPasswordType) {
     return (
       <div className="relative">
-        <input
-          id={id}
-          name={name}
-          type={inputType}
-          required={required}
-          className={finalClassName}
-          placeholder={placeholder}
-          value={value}
-          onChange={onChange}
-          readOnly={readOnly}
-        />
+        {renderInput()}
         <button
           type="button"
           className="absolute inset-y-0 right-0 pr-3 flex items-center"
           onClick={togglePasswordVisibility}
         >
           {showPassword ? (
-            <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+            <EyeSlashIcon className="h-5 w-5 text-gray-400" />
           ) : (
-            <EyeIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+            <EyeIcon className="h-5 w-5 text-gray-400" />
           )}
         </button>
       </div>
     );
   }
 
-  return (
-    <input
-      id={id}
-      name={name}
-      type={inputType}
-      required={required}
-      className={finalClassName}
-      placeholder={placeholder}
-      value={value}
-      onChange={onChange}
-      readOnly={readOnly}
-      onKeyDown={onKeyDown}
-    />
-  );
+  return renderInput();
 };
 
 export default Input;

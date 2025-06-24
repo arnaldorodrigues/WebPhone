@@ -14,6 +14,18 @@ interface User {
   email: string;
   role: "admin" | "user" | "moderator";
   status: "active" | "inactive" | "suspended";
+  did: {
+    _id: string;
+    type: string;
+    config: {
+      phoneNumber: string;
+      projectId: string;
+      authToken: string;
+      spaceUrl: string;
+      apiKey: string;
+      apiSecret: string;
+    };
+  };
   createdAt: string;
   settings?: UserSettings;
 }
@@ -37,6 +49,18 @@ export interface UserData {
   createdAt: string;
   settings: UserSettings | null;
   contacts: Contact[];
+  did?: {
+    _id: string;
+    type: string;
+    config: {
+      phoneNumber: string;
+      projectId: string;
+      authToken: string;
+      spaceUrl: string;
+      apiKey: string;
+      apiSecret: string;
+    };
+  };
 }
 
 export const defaultUserData: UserData = {
@@ -56,6 +80,18 @@ export const defaultUserData: UserData = {
     updatedAt: new Date().toISOString(),
   },
   contacts: [],
+  did: {
+    _id: "",
+    type: "",
+    config: {
+      phoneNumber: "",
+      projectId: "",
+      authToken: "",
+      spaceUrl: "",
+      apiKey: "",
+      apiSecret: "",
+    },
+  },
 };
 
 export type { UserSettings, User, Contact };

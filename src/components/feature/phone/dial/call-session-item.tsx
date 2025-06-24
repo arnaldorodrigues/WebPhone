@@ -67,8 +67,6 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
     }
   }, [showDialpad]);
 
-  console.log("123123123", session?.state);
-
   return (
     <>
       {direction === SessionDirection.OUTGOING &&

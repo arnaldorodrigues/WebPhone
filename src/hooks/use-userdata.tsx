@@ -38,6 +38,7 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
   const getUserData = useCallback(async () => {
     try {
       const loadedData = await userAction.get();
+
       return loadedData;
     } catch (err) {
       console.error("Error getting user data:", err);

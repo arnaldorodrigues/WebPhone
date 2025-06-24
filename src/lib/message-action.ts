@@ -16,6 +16,17 @@ export const readMessage = async (messageId: string) => {
   }
 };
 
+export const fetchMessage = async (contactId: string) =>{ 
+   try {
+    const response = await fetchWithAuth(`/api/messages?contact=${contactId}`);
+    const data = await response.json();
+    return data.success ? data.data : [];
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    return [];
+  }
+}
+
 export const fetchMessageCountByContact = async (contact: string, status: string) => {
   try {
     const response = await fetchWithAuth(
@@ -67,16 +78,17 @@ export const sendMessage = async (to: string, messageBody: string, sessionManage
   }
 };
 
-export async function sendSMSMessage(to: string, messageBody: string) {
+export async function sendSMSMessage(fromId: string, to: string, messageBody: string, smsType: string) {
   try {
-    const response = await fetchWithAuth('/api/sms/signalwire', {
+    const response = smsType === 'signalwire' ? await fetchWithAuth('/api/sms/signalwire/sending', {
+        method: "POST",
+        body: JSON.stringify({fromId, to, messageBody }),
+      })
+    : await fetchWithAuth('/api/sms/vi/sending', {
       method: "POST",
-      body: JSON.stringify({ to, messageBody }),
+      body: JSON.stringify({fromId, to, messageBody }),
     });
-    await fetchWithAuth('/api/sms/vi/sending', {
-      method: "POST",
-      body: JSON.stringify({ to, messageBody }),
-    });
+    
     const data = await response.json();
     if (data.success) {
       return data.data;

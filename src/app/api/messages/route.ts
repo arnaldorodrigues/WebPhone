@@ -22,6 +22,11 @@ export async function GET(request: NextRequest) {
     if (!t) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const user = await UserModel.findById(_parse_token(t)._id);
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
     
     const token = _parse_token(t);
     const url = new URL(request.url);
@@ -34,9 +39,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const gatewayNumber = await getGatewayPhoneNumber();
-    const userId = !isValidObjectId(contact) ? gatewayNumber : token._id;
-    const recon = !isValidObjectId(contact) ? `+${contact}` : contact;
+    
+    const smsGateway = user.did ? await SmsGateway.findById(user.did) : null;
+    const userId = !isValidObjectId(contact) ? smsGateway?._id : token._id;
+    const recon = !isValidObjectId(contact) ? `${contact}` : contact;
 
     const messages = await Message.find({
       $or: [

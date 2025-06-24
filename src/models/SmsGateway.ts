@@ -22,16 +22,16 @@ export interface ISmsGateway {
 }
 
 const signalwireConfigSchema = new mongoose.Schema({
+  phoneNumber: { type: String, required: true },
   projectId: { type: String, required: true },
   authToken: { type: String, required: true },
   spaceUrl: { type: String, required: true },
-  phoneNumber: { type: String, required: true }
 }, { _id: false });
 
 const viConfigSchema = new mongoose.Schema({
+  phoneNumber: { type: String, required: true },
   apiKey: { type: String, required: true },
   apiSecret: { type: String, required: true },
-  phoneNumber: { type: String, required: true }
 }, { _id: false });
 
 const smsGatewaySchema = new mongoose.Schema<ISmsGateway>(
@@ -44,17 +44,6 @@ const smsGatewaySchema = new mongoose.Schema<ISmsGateway>(
     config: {
       type: mongoose.Schema.Types.Mixed,
       required: true,
-      validate: {
-        validator: function(value: any) {
-          if (this.type === 'signalwire') {
-            return value.projectId && value.authToken && value.spaceUrl && value.phoneNumber;
-          } else if (this.type === 'vi') {
-            return value.apiKey && value.apiSecret && value.phoneNumber;
-          }
-          return false;
-        },
-        message: 'Invalid configuration for SMS gateway type'
-      }
     }
   },
   {

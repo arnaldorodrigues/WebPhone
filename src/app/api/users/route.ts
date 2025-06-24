@@ -30,6 +30,18 @@ interface UserDocument extends Document {
     updatedAt: Date;
   };
   createdAt: Date;
+  did?: {
+    _id: string;
+    type: 'signalwire' | 'vi';
+    config: {
+      phoneNumber: string;
+      projectId?: string;
+      authToken?: string;
+      spaceUrl?: string;
+      apiKey?: string;
+      apiSecret?: string;
+    };
+  };
 }
 
 export async function GET(request: NextRequest) {
@@ -101,6 +113,7 @@ export async function GET(request: NextRequest) {
 
     const user = await UserModel.findById(token._id)
       .populate('settings')
+      .populate('did')
       .select('-password')
       .lean();
       
@@ -121,6 +134,13 @@ export async function GET(request: NextRequest) {
       status: string;
       createdAt: Date;
       contacts: Contact[];
+      did?: {
+        _id: string;
+        type: string;
+        config: {
+          phoneNumber: string;
+        };
+      } | null;
       settings: {
         wsServer: string;
         wsPort: string;
@@ -138,6 +158,7 @@ export async function GET(request: NextRequest) {
       status: typedUser.settings ? 'active' : 'inactive',
       createdAt: typedUser.createdAt,
       contacts: [],
+      did: typedUser.did || null,
       settings: typedUser.settings ? {
         wsServer: typedUser.settings.wsServer,
         wsPort: typedUser.settings.wsPort,
@@ -239,6 +260,10 @@ export async function POST(request: NextRequest) {
       role: userData.role || existingUser.role,
       password: userData.newPassword ? await bcrypt.hash(userData.newPassword, 10) : undefined,
     };
+
+    if (userData.did !== undefined) {
+      updateData.did = userData.did;
+    }
     
     const updatedUser = await UserModel.findByIdAndUpdate(
       existingUser._id,
@@ -294,6 +319,7 @@ export async function POST(request: NextRequest) {
 
     const responseUser = await UserModel.findById(updatedUser._id)
       .populate('settings')
+      .populate('did')
       .select('-password')
       .lean();
 
@@ -314,6 +340,13 @@ export async function POST(request: NextRequest) {
       status: string;
       createdAt: Date;
       contacts: Contact[];
+      did?: {
+        _id: string;
+        type: string;
+        config: {
+          phoneNumber: string;
+        };
+      } | null;
       settings: {
         wsServer: string;
         wsPort: string;
@@ -331,6 +364,7 @@ export async function POST(request: NextRequest) {
       status: typedResponseUser.settings ? 'active' : 'inactive',
       createdAt: typedResponseUser.createdAt,
       contacts: typedResponseUser.contacts || [],
+      did: typedResponseUser.did || null,
       settings: typedResponseUser.settings ? {
         wsServer: typedResponseUser.settings.wsServer,
         wsPort: typedResponseUser.settings.wsPort,
@@ -384,7 +418,6 @@ export async function PUT(request: NextRequest) {
     
     const token = _parse_token(t);
     const { action, contact } = await request.json();
-    console.log("request", action, contact);
 
     await connectDB();
 
@@ -403,7 +436,6 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    console.log("user", user)
 
     const contactData = (await UserModel.aggregate([
       {
@@ -423,8 +455,6 @@ export async function PUT(request: NextRequest) {
         sipUsername: string;
       };
     };
-
-    console.log("contactData", contactData);
 
     if (action === 'add') {
       let isExist = false;
@@ -472,6 +502,7 @@ export async function PUT(request: NextRequest) {
 
     const updatedUser = await UserModel.findById(user._id)
       .populate('settings')
+      .populate('did')
       .select('-password')
       .lean();
 
@@ -492,6 +523,13 @@ export async function PUT(request: NextRequest) {
       status: string;
       createdAt: Date;
       contacts: Contact[];
+      did?: {
+        _id: string;
+        type: string;
+        config: {
+          phoneNumber: string;
+        };
+      } | null;
       settings: {
         wsServer: string;
         wsPort: string;
@@ -509,6 +547,7 @@ export async function PUT(request: NextRequest) {
       status: typedUser.settings ? 'active' : 'inactive',
       createdAt: typedUser.createdAt,
       contacts: typedUser.contacts || [],
+      did: typedUser.did || null,
       settings: typedUser.settings ? {
         wsServer: typedUser.settings.wsServer,
         wsPort: typedUser.settings.wsPort,

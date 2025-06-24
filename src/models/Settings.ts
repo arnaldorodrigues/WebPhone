@@ -10,9 +10,11 @@ const settingsSchema = new mongoose.Schema({
   },
   wsPort: {
     type: String,
+    default: "7443",
   },
   wsPath: {
     type: String,
+    default: "/",
   },
   domain: {
     type: String,

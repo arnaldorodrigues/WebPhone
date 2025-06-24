@@ -14,7 +14,6 @@ export const userAction = {
         throw new Error('Failed to fetch user data');
       }
       const data = await response.json();
-
       return data.data;
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -36,6 +35,7 @@ export const userAction = {
           password: userData.password,
           newPassword: userData.newPassword,
           settings: userData.settings,
+          did: userData.did,
         }),
       });
 
