@@ -1,0 +1,13 @@
+diff --git a/node_modules/sip.js/lib/platform/web/session-manager/session-manager.js b/node_modules/sip.js/lib/platform/web/session-manager/session-manager.js
+index 60bebf8..bfda0d3 100644
+--- a/node_modules/sip.js/lib/platform/web/session-manager/session-manager.js
++++ b/node_modules/sip.js/lib/platform/web/session-manager/session-manager.js
+@@ -669,7 +669,7 @@ export class SessionManager {
+             // time.
+             // https://tools.ietf.org/html/draft-kaplan-dispatch-info-dtmf-package-00#section-5.3
+             const dtmf = tone;
+-            const duration = 2000;
++            const duration = 500;
+             const body = {
+                 contentDisposition: "render",
+                 contentType: "application/dtmf-relay",
