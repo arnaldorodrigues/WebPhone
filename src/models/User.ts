@@ -31,6 +31,11 @@ const userSchema: Schema = new Schema({
     ref: "Settings",
   },
   contacts: [String],
+  did: {
+    type: Schema.Types.ObjectId,
+    ref: "SmsGateway",
+    required: false,
+  },
 });
 
 const UserModel =

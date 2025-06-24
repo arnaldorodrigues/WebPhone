@@ -9,6 +9,7 @@ import {
   CogIcon,
   PencilIcon,
   TrashIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
 import { User } from "@/types/user";
 
@@ -28,40 +29,6 @@ const UserDetailDialog = ({
   onDelete,
 }: UserDetailDialogProps) => {
   if (!user) return null;
-
-  const getStatusBadge = (status: string) => {
-    const statusClasses = {
-      active: "bg-green-100 text-green-700",
-      inactive: "bg-gray-100 text-gray-700",
-    };
-
-    return (
-      <span
-        className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-          statusClasses[status as keyof typeof statusClasses]
-        }`}
-      >
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </span>
-    );
-  };
-
-  const getRoleBadge = (role: string) => {
-    const roleClasses = {
-      admin: "bg-purple-100 text-purple-700",
-      user: "bg-yellow-100 text-yellow-700",
-    };
-
-    return (
-      <span
-        className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-          roleClasses[role as keyof typeof roleClasses]
-        }`}
-      >
-        {role.charAt(0).toUpperCase() + role.slice(1)}
-      </span>
-    );
-  };
 
   const handleEdit = () => {
     if (onEdit) {
@@ -136,23 +103,13 @@ const UserDetailDialog = ({
                   <p className="text-gray-900">{user.email}</p>
                 </div>
               </div>
-
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <CalendarIcon className="w-4 h-4 text-gray-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Status</p>
-                  <p className="text-gray-900 capitalize">{user.status}</p>
-                </div>
-              </div>
             </div>
           </div>
 
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
               <CogIcon className="w-5 h-5 mr-2 text-indigo-500" />
-              SIP Configuration
+              Configuration
             </h3>
 
             <div className="space-y-3">
@@ -186,48 +143,38 @@ const UserDetailDialog = ({
 
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <ChatBubbleLeftRightIcon className="w-4 h-4 text-gray-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">
+                    SMS Service
+                  </p>
+                  <p className="text-gray-900 font-mono">
+                    {user.did
+                      ? typeof user.did === "object" &&
+                        user.did !== null &&
+                        "type" in user.did
+                        ? `${(user.did as any).config.phoneNumber} - ${
+                            (user.did as any).type === "signalwire"
+                              ? "signalwire"
+                              : "vi"
+                          }`
+                        : typeof user.did === "string"
+                        ? `${user.did} - Unknown`
+                        : "Not configured"
+                      : "Not configured"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
                   <CogIcon className="w-4 h-4 text-gray-600" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Domain</p>
                   <p className="text-gray-900 font-mono">
                     {user.settings?.domain || "Not configured"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <CogIcon className="w-4 h-4 text-gray-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">WS Server</p>
-                  <p className="text-gray-900 font-mono">
-                    {user.settings?.wsServer || "Not configured"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <CogIcon className="w-4 h-4 text-gray-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">WS Port</p>
-                  <p className="text-gray-900 font-mono">
-                    {user.settings?.wsPort || "Not configured"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <CogIcon className="w-4 h-4 text-gray-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">WS Path</p>
-                  <p className="text-gray-900 font-mono">
-                    {user.settings?.wsPath || "Not configured"}
                   </p>
                 </div>
               </div>

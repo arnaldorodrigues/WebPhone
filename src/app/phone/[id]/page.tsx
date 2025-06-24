@@ -6,13 +6,12 @@ import ChatInput from "@/components/feature/phone/chat-input";
 import ChatBoard from "@/components/feature/phone/chat-board";
 import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
 import { useUserData } from "@/hooks/use-userdata";
-import { fetchWithAuth } from "@/utils/api";
 import { useParams } from "next/navigation";
 import {
   readMessage,
   sendMessage,
   sendSMSMessage,
-  getGatewayNumber,
+  fetchMessage,
 } from "@/lib/message-action";
 
 interface Message {
@@ -30,32 +29,30 @@ const Page = () => {
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isSMSMode, setIsSMSMode] = useState(false);
-  const [gatewayNumber, setGatewayNumber] = useState<string | null>(null);
+  const [didId, setDidId] = useState<string | null>(null);
 
   useEffect(() => {
     const decodedId = decodeURIComponent(params.id as string);
-    if (decodedId.startsWith("+")) {
-      setIsSMSMode(true);
-      // Fetch gateway number when in SMS mode
-      getGatewayNumber().then((number) => {
-        if (number) setGatewayNumber(number);
-      });
-    }
 
+    if (!/^[a-f\d]{24}$/i.test(decodedId)) {
+      setIsSMSMode(true);
+      setDidId(userData?.did?._id?.toString() || null);
+    }
+  }, [userData, params.id]);
+
+  useEffect(() => {
     fetchChatMessages();
-  }, [params.id, sipMessages]);
+    refreshUserData();
+  }, [params.id, sipMessages, refreshUserData]);
 
   const fetchChatMessages = async () => {
     try {
       const decodedId = decodeURIComponent(params.id as string);
 
-      const response = await fetchWithAuth(
-        `/api/messages?contact=${decodedId}`
-      );
-      const data = await response.json();
+      const messages = await fetchMessage(decodedId);
 
-      if (data.success) {
-        const chatMessages: Message[] = data.data;
+      if (messages) {
+        const chatMessages: Message[] = messages;
         setMessages(chatMessages);
         chatMessages.forEach(async (message: Message) => {
           if (message.from !== userData?.id) {
@@ -76,7 +73,12 @@ const Page = () => {
     try {
       const decodedId = decodeURIComponent(params.id as string);
       if (isSMSMode) {
-        const sentMessage = await sendSMSMessage(decodedId, text);
+        const sentMessage = await sendSMSMessage(
+          userData?.did?._id?.toString() || "",
+          decodedId,
+          text,
+          userData?.did?.type || ""
+        );
         if (sentMessage) {
           setMessages((prev) => [...prev, sentMessage as Message]);
         }
@@ -96,9 +98,9 @@ const Page = () => {
     }
   };
 
-  const myId = isSMSMode ? gatewayNumber : userData?.id;
+  const myId = isSMSMode ? didId : userData?.id;
 
-  if (isSMSMode && !gatewayNumber) {
+  if (isSMSMode && !didId) {
     return (
       <div className="w-full h-[calc(100vh-4rem)] flex items-center justify-center bg-blue-50">
         Loading SMS configuration...
@@ -116,6 +118,7 @@ const Page = () => {
         onEnter={() => {
           if (!chatInput.trim()) return;
           handleSendMessage(chatInput);
+          refreshUserData();
           setChatInput("");
         }}
       />

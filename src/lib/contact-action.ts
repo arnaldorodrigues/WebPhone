@@ -61,7 +61,7 @@ export async function removeContact(contact: Contact): Promise<boolean> {
       method: 'PUT',
       body: JSON.stringify({
         action: 'remove',
-        contact: (contact.number.startsWith("+") ? contact.number : contact.id )
+        contact: (!/^[a-f\d]{24}$/i.test(contact.number) ? contact.number : contact.id)
       }),
     });
 

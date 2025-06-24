@@ -4,13 +4,13 @@ import connectDB from '@/lib/mongodb';
 import { SmsGateway, IViConfig } from '@/models/SmsGateway';
 import Message from '@/models/Message';
 
-// In-memory store for demonstration; use a database in production
-let messages: { from: string; to: string; body: string }[] = [];
-
-async function validateSignature(req: NextRequest): Promise<boolean> {
+export async function POST(req: NextRequest) {
   try {
     await connectDB();
-    const gateway = await SmsGateway.findOne({ type: 'vi' });
+    
+    const { From, To, Body } = await req.json();
+
+    const gateway = await SmsGateway.findOne({ type: 'vi', config: { phoneNumber: To.slice(1, -1) } });
     if (!gateway) {
       throw new Error('No VI gateway configured');
     }
@@ -24,23 +24,14 @@ async function validateSignature(req: NextRequest): Promise<boolean> {
       .createHmac('sha256', config.apiSecret)
       .update(data)
       .digest('base64');
-    return signature === expectedSignature;
-  } catch (error) {
-    console.error('Error validating signature:', error);
-    return false;
-  }
-}
+      
+    if (signature !== expectedSignature) {
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    }
 
-export async function POST(req: NextRequest) {
-  if (!await validateSignature(req)) {
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
-  }
-
-  try {
-    const { From, To, Body } = await req.json();
     const message = new Message({
-      from: From,
-      to: To,
+      from: From.slice(1, -1),
+      to: gateway._id,
       body: Body,
       timestamp: new Date()
     });
@@ -55,8 +46,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-export async function GET() {
-  return new Response(JSON.stringify(messages), { status: 200 });
 }

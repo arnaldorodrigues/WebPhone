@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Apidaze } from '@apidaze/node';
+// @ts-ignore: SignalWire types export issue
+import { RestClient } from '@signalwire/compatibility-api';
 import connectDB from '@/lib/mongodb';
 import Message from '@/models/Message';
-import { SmsGateway } from '@/models/SmsGateway';
+import { SmsGateway, ISignalwireConfig } from '@/models/SmsGateway';
 import { isValidObjectId } from 'mongoose';
 
 export async function POST(request: NextRequest) {
@@ -11,7 +12,7 @@ export async function POST(request: NextRequest) {
   const to = body.to;
   const messageBody = body.messageBody;
 
-  console.log("vi    123222", body);
+  console.log("signalwire    123222", body);
 
   try {
     await connectDB();
@@ -25,33 +26,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'SMS gateway not found' }, { status: 404 });
     }
 
-    if (gateway.type !== 'vi') {
-      return NextResponse.json({ error: 'Invalid gateway type. Expected VI gateway.' }, { status: 400 });
+    if (gateway.type !== 'signalwire') {
+      return NextResponse.json({ error: 'Invalid gateway type. Expected SignalWire gateway.' }, { status: 400 });
     }
 
-    const config = gateway.config as { apiKey: string; apiSecret: string; phoneNumber: string };
+    const config = gateway.config as ISignalwireConfig;
 
-    const ApidazeClient = new Apidaze(
-      config.apiKey,
-      config.apiSecret
+    const client = new RestClient(
+      config.projectId,
+      config.authToken,
+      { signalwireSpaceUrl: config.spaceUrl }
     );
 
-    const response = await ApidazeClient.messages.send('1' + config.phoneNumber, '1' + to, messageBody);
+    const response = await client.messages.create({
+      from: '+1' + config.phoneNumber,
+      to: '+1' + to,
+      body: messageBody,
+    });
+
+    if (!response.sid || response.sid.toString().length === 0) {
+      return NextResponse.json({ error: 'Failed to send SMS' }, { status: 500 });
+    }
 
     const message = new Message({
       from: fromId,
-      to: to,
+      to,
       body: messageBody,
       timestamp: new Date()
     });
+
     await message.save();
 
     return NextResponse.json({ 
       success: true,
-      data: response
+      data: message
     });
   } catch (error) {
-    console.error('Error sending SMS through VI:', error);
+    console.error('Error sending SMS through SignalWire:', error);
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }
