@@ -3,6 +3,8 @@ import crypto from 'crypto';
 import connectDB from '@/lib/mongodb';
 import { SmsGateway, IViConfig } from '@/models/SmsGateway';
 import Message from '@/models/Message';
+import { sendInternalMessage } from "@/utils/internal-websocket";
+import UserModel from "@/models/User";
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,6 +38,21 @@ export async function POST(req: NextRequest) {
       timestamp: new Date()
     });
     await message.save();
+
+    // Find all users who have this DID assigned and send them the message via websocket
+    const targets = await UserModel.find({
+      "did": gateway._id
+    });
+
+    targets.forEach(target => {
+      sendInternalMessage(target._id.toString(), 'new_sms', {
+        messageId: message._id,
+        from: message.from,
+        to: gateway._id.toString(),
+        body: message.body,
+        timestamp: message.timestamp    
+      });
+    });
 
     console.log(`Received SMS from ${From} to ${To}: ${Body}`);
     return NextResponse.json({ success: true });
