@@ -174,9 +174,9 @@ export const SIPProvider = (props: {
               );
               setStatus(CONNECT_STATUS.DISCONNECTED);
               showNotification(
-                "Connection Error",
-                "Failed to connect to SIP server",
-                "error"
+                "Disconnected",
+                "Disconnected from SIP server",
+                "warning"
               );
             },
             onMessageReceived: (message) => {

@@ -14,6 +14,7 @@ import {
   fetchMessage,
 } from "@/lib/message-action";
 import { useWebSocket } from "@/contexts/websocket-context";
+import { addContact } from "@/lib/contact-action";
 
 interface Message {
   _id: string;
@@ -44,9 +45,37 @@ const Page = () => {
   }, [userData, params.id]);
 
   useEffect(() => {
+    const processNewContacts = async () => {
+      let newContacts: string[] = [];
+      for (let i = 0; i < wsMessages.length; i++) {
+        if (newContacts.includes(wsMessages[i].from)) {
+          continue;
+        }
+        if (
+          userData.contacts.some(
+            (contact) => contact.number === wsMessages[i].from
+          )
+        ) {
+          continue;
+        }
+        newContacts.push(wsMessages[i].from);
+      }
+      await Promise.all(
+        newContacts.map((contactId) =>
+          addContact({
+            id: "",
+            name: "",
+            number: contactId,
+          })
+        )
+      );
+    };
+
+    processNewContacts();
+
     fetchChatMessages();
     refreshUserData();
-  }, [params.id, sipMessages, wsMessages, refreshUserData]);
+  }, [params.id, wsMessages, refreshUserData]);
 
   useEffect(() => {
     const unsubscribe = subscribe((wsMessage: any) => {
@@ -95,8 +124,15 @@ const Page = () => {
           setMessages((prev) => [...prev, sentMessage as Message]);
         }
       } else {
+        const contact = userData.contacts.find(
+          (contact) => contact.id === decodedId
+        );
+
+        if (!contact) {
+          return;
+        }
         const sentMessage = await sendMessage(
-          decodedId,
+          contact,
           text,
           sessionManager,
           userData?.settings?.domain || ""

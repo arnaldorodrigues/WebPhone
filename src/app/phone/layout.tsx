@@ -56,11 +56,7 @@ const RootLayout = ({
         wsMessage?.from &&
         wsMessage?.timestamp
       ) {
-        showNotification(
-          "New SMS",
-          `You got a new SMS from ${wsMessage.from}`,
-          "info"
-        );
+        showNotification("New SMS", `New SMS from ${wsMessage.from}`, "info");
       }
     });
 
