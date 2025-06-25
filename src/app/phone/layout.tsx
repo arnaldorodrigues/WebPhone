@@ -2,11 +2,12 @@
 
 import Sidebar from "@/components/feature/phone/sidebar/sidebar";
 import { usePathname } from "next/navigation";
-import ProtectedRoute from "@/components/ui/ProtectedRoute";
 import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
 import { useUserData } from "@/hooks/use-userdata";
 import { useEffect, useRef } from "react";
 import { CONNECT_STATUS, RegisterStatus } from "@/types/sip-type";
+import { useNotification } from "@/contexts/notification-context";
+import { useWebSocket } from "@/contexts/websocket-context";
 
 interface Props {}
 
@@ -21,6 +22,9 @@ const RootLayout = ({
   const { connectAndRegister, connectStatus, registerStatus } =
     useSIPProvider();
   const hasAttemptedConnect = useRef(false);
+  const { showNotification } = useNotification();
+  const { userData, refreshUserData } = useUserData();
+  const { subscribe } = useWebSocket();
 
   useEffect(() => {
     if (
@@ -30,6 +34,7 @@ const RootLayout = ({
       sipConfig.password &&
       sipConfig.server &&
       !isLoading &&
+      sipConfig &&
       connectStatus === CONNECT_STATUS.WAIT_REQUEST_CONNECT &&
       registerStatus !== RegisterStatus.REGISTERED
     ) {
@@ -42,13 +47,33 @@ const RootLayout = ({
     }
   }, [sipConfig, connectAndRegister, isLoading, connectStatus, registerStatus]);
 
+  useEffect(() => {
+    const unsubscribe = subscribe((wsMessage: any) => {
+      if (
+        wsMessage?.type === "new_sms" &&
+        wsMessage?.messageId &&
+        wsMessage?.body &&
+        wsMessage?.from &&
+        wsMessage?.timestamp
+      ) {
+        showNotification(
+          "New SMS",
+          `You got a new SMS from ${wsMessage.from}`,
+          "info"
+        );
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [userData?.id, subscribe]);
+
   return (
-    // <ProtectedRoute requiredRole="user">
     <div className="w-full h-full flex-1 flex flex-row ">
       <Sidebar hidden={!sidebarVisible} />
       <div className={`flex-1 ${sidebarVisible && "hidden"}}`}>{children}</div>
     </div>
-    // </ProtectedRoute>
   );
 };
 

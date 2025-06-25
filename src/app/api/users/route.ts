@@ -6,6 +6,7 @@ import { _parse_token } from '@/utils/auth';
 import bcrypt from 'bcryptjs';
 import mongoose, { Document, isValidObjectId, Types } from 'mongoose';
 import MessageModel from '@/models/Message';
+import '@/models/SmsGateway';
 
 interface Contact {
   id?: string;
@@ -126,7 +127,7 @@ export async function GET(request: NextRequest) {
     }
       
     const typedUser = user as unknown as UserDocument;
-      
+
     const formattedUser: {
       id: string;
       name: string;
@@ -518,12 +519,13 @@ export async function PUT(request: NextRequest) {
         });
       } else if ( !isValidObjectId(contact as string)) {
         message = new MessageModel({
-          from: user.did.config.phoneNumber,
+          from: user.did,
           to: contact,
           body: "",
           timestamp: new Date(),
         });
       }
+
 
       await message.save();
     }

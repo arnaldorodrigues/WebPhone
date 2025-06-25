@@ -11,7 +11,8 @@ const messageSchema = new mongoose.Schema({
   },
   body: {
     type: String,
-    required: true,
+    required: false,
+    default: "",
   },
   status: {
     type: String,

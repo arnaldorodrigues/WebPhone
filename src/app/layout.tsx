@@ -6,6 +6,7 @@ import { PhoneStateProvider } from "@/hooks/use-phonestate-context";
 import { UserDataProvider } from "@/hooks/use-userdata";
 import { NotificationProvider } from "@/contexts/notification-context";
 import ProtectedRoute from "@/components/ui/ProtectedRoute";
+import { WebSocketProvider } from "@/contexts/websocket-context";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -30,11 +31,13 @@ export default function RootLayout({
             <PhoneStateProvider>
               <SIPProvider>
                 <ProtectedRoute>
-                  <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
-                    <div className="max-w-7xl min-h-screen flex flex-col mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                      {children}
+                  <WebSocketProvider>
+                    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
+                      <div className="max-w-7xl min-h-screen flex flex-col mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        {children}
+                      </div>
                     </div>
-                  </div>
+                  </WebSocketProvider>
                 </ProtectedRoute>
               </SIPProvider>
             </PhoneStateProvider>
