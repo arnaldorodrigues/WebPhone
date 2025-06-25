@@ -5,6 +5,7 @@ import { CheckIcon } from "@heroicons/react/24/outline";
 import { Contact } from "@/types/user";
 import { addContact, getCandidates } from "@/lib/contact-action";
 import { useUserData } from "@/hooks/use-userdata";
+import { useRouter } from "next/navigation";
 
 interface AddContactDialogProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface AddContactDialogProps {
 }
 
 const AddContactDialog = ({ isOpen, onClose }: AddContactDialogProps) => {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [candidates, setCandidates] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -48,6 +50,11 @@ const AddContactDialog = ({ isOpen, onClose }: AddContactDialogProps) => {
 
     if (contact) {
       await addContact(contact);
+      if (contact?.id && contact?.id !== "") {
+        router.push(`/phone/${contact.id}`);
+      } else {
+        router.push(`/phone/${number}`);
+      }
     }
 
     await refreshUserData();

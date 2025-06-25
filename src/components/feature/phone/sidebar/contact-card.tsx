@@ -7,6 +7,7 @@ import {
 } from "@/lib/contact-action";
 import { useUserData } from "@/hooks/use-userdata";
 import ConfirmDialog from "@/components/ui/dialogs/confirm-dialog";
+import { useRouter } from "next/navigation";
 
 interface Contact {
   id: string;
@@ -28,6 +29,7 @@ const ContactCard = ({
   const [type, setType] = useState<"chat" | "sms">("chat");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { refreshUserData } = useUserData();
+  const router = useRouter();
 
   useEffect(() => {
     if (id.length === 0) {
@@ -54,6 +56,7 @@ const ContactCard = ({
     await removeContact(contact);
     await refreshUserData();
     setIsDeleteDialogOpen(false);
+    router.push(`/phone`);
   };
 
   return (
