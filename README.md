@@ -57,6 +57,7 @@ Before you begin, ensure you have the following installed:
    ```
 
    The application will be available at `https://localhost:3000`
+   The WebSocket server will be available at `wss://localhost:3001`
 
 ## Project Structure
 
@@ -94,11 +95,17 @@ Before you begin, ensure you have the following installed:
 - Contact-based conversations
 - Message status tracking
 
+### WebSocket Communication
+- Secure WebSocket server for real-time updates
+- Message handling and routing
+- Client authentication
+- Automatic reconnection
+
 ## Development
 
 ### Available Scripts
 
-- `npm run dev` - Start development server with HTTPS
+- `npm run dev` - Start development server with HTTPS and WebSocket server
 - `npm run build` - Build the production application
 - `npm run start` - Start the production server
 - `npm run lint` - Run ESLint for code quality

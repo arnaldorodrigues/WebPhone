@@ -1,3 +1,4 @@
+import { Contact } from "@/types/user";
 import { fetchWithAuth } from "@/utils/api";
 
 export const readMessage = async (messageId: string) => {
@@ -51,20 +52,20 @@ export const fetchContactMessages = async (contact: string) => {
   }
 };
 
-export const sendMessage = async (to: string, messageBody: string, sessionManager: any, domain: string) => {
+export const sendMessage = async (to: Contact, messageBody: string, sessionManager: any, domain: string) => {
   try {
 
     if(!sessionManager || domain.length === 0) throw new Error("Session manager or domain not found");
 
     if (sessionManager) {
       await sessionManager.message(
-        `sip:${to}@${domain}`,
+        `sip:${to.number}@${domain}`,
         messageBody
       );
     }
     const response = await fetchWithAuth('/api/messages', {
       method: "POST",
-      body: JSON.stringify({ to, messageBody }),
+      body: JSON.stringify({ to: to.id, messageBody }),
     });
 
     const data = await response.json();

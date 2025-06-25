@@ -3,15 +3,8 @@ import Message from "@/models/Message";
 import UserModel from "@/models/User";
 import connectDB from "@/lib/mongodb";
 import { _parse_token } from "@/utils/auth";
-import { SmsGateway } from '@/models/SmsGateway';
-
-async function getGatewayPhoneNumber() {
-  const gateway = await SmsGateway.findOne({ type: 'signalwire' });
-  if (!gateway) {
-    throw new Error('No SMS gateway configured');
-  }
-  return gateway.phoneNumber;
-}
+import { isValidObjectId } from "mongoose";
+import { SmsGateway } from "@/models/SmsGateway";
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,10 +23,16 @@ export async function GET(request: NextRequest) {
     if (!contact || !status) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
-
-    const gatewayNumber = await getGatewayPhoneNumber();
-    const to = contact.startsWith('+') ? gatewayNumber : token._id;
     
+    let to = null;
+    if (!isValidObjectId(contact)) {
+      const me = await UserModel.findById(token._id);
+      to = me?.did;
+    }
+    else {
+      to = token._id;
+    }
+
     const messages = await Message.find({
       from: contact,
       to,
