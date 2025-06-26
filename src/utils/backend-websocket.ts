@@ -1,6 +1,8 @@
-import WebSocket from 'ws';
+import * as ws from 'ws';
 
-let wsClient: WebSocket | null = null;
+const WebSocket = ws.WebSocket;
+
+let wsClient: ws.WebSocket | null = null;
 let messageQueue: string[] = [];
 let isConnecting = false;
 
