@@ -45,7 +45,11 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
 
     const wsPort = process.env.NEXT_PUBLIC_WS_PORT || "8080";
     const hostname = window.location.hostname;
-    const ws = new WebSocket(`ws://${hostname}:${wsPort}`);
+    const ws = new WebSocket(
+      process.env.PRODUCTION
+        ? `wss://${hostname}/ws`
+        : `ws://${hostname}:${wsPort}`
+    );
 
     ws.onopen = () => {
       console.log("WebSocket connected successfully");
