@@ -3,8 +3,8 @@ import connectDB from '@/lib/mongodb';
 import UserModel from '@/models/User';
 import Message from '@/models/Message';
 import { _parse_token } from '@/utils/auth';
-import { sendSignalWireSMS } from './signalwire/sending/route';
-import { sendViSMS } from './vi/sending/route';
+import { sendSignalWireSMS } from './signalwire/sending/send';
+import { sendViSMS } from './vi/sending/send';
 import { SmsGateway } from '@/models/SmsGateway';
 
 export async function POST (request: NextRequest) {
