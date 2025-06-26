@@ -3,7 +3,7 @@ import Message from "@/models/Message";
 import { sendToSocket } from "@/utils/backend-websocket";
 import { NextRequest, NextResponse } from "next/server";
 // @ts-ignore: SignalWire types export issue
-import { RestClient } from "@signalwire/compatibility-api";
+// import { RestClient } from "@signalwire/compatibility-api";
 import connectDB  from "@/lib/mongodb";
 import UserModel from "@/models/User";
 
