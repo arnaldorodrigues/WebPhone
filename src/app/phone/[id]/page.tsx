@@ -45,34 +45,6 @@ const Page = () => {
   }, [userData, params.id]);
 
   useEffect(() => {
-    const processNewContacts = async () => {
-      let newContacts: string[] = [];
-      for (let i = 0; i < wsMessages.length; i++) {
-        if (newContacts.includes(wsMessages[i].from)) {
-          continue;
-        }
-        if (
-          userData.contacts.some(
-            (contact) => contact.number === wsMessages[i].from
-          )
-        ) {
-          continue;
-        }
-        newContacts.push(wsMessages[i].from);
-      }
-      await Promise.all(
-        newContacts.map((contactId) =>
-          addContact({
-            id: "",
-            name: "",
-            number: contactId,
-          })
-        )
-      );
-    };
-
-    processNewContacts();
-
     fetchChatMessages();
     refreshUserData();
   }, [params.id, wsMessages, refreshUserData]);
@@ -114,12 +86,7 @@ const Page = () => {
     try {
       const decodedId = decodeURIComponent(params.id as string);
       if (isSMSMode) {
-        const sentMessage = await sendSMSMessage(
-          userData?.did?._id?.toString() || "",
-          decodedId,
-          text,
-          userData?.did?.type || ""
-        );
+        const sentMessage = await sendSMSMessage(decodedId, text);
         if (sentMessage) {
           setMessages((prev) => [...prev, sentMessage as Message]);
         }

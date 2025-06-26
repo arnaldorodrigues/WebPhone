@@ -79,16 +79,12 @@ export const sendMessage = async (to: Contact, messageBody: string, sessionManag
   }
 };
 
-export async function sendSMSMessage(fromId: string, to: string, messageBody: string, smsType: string) {
+export async function sendSMSMessage(to: string, messageBody: string) {
   try {
-    const response = smsType === 'signalwire' ? await fetchWithAuth('/api/sms/signalwire/sending', {
+    const response = await fetchWithAuth('/api/sms', {
         method: "POST",
-        body: JSON.stringify({fromId, to, messageBody }),
-      })
-    : await fetchWithAuth('/api/sms/vi/sending', {
-      method: "POST",
-      body: JSON.stringify({fromId, to, messageBody }),
-    });
+        body: JSON.stringify({to, messageBody }),
+      });
     
     const data = await response.json();
     if (data.success) {
