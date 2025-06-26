@@ -1,6 +1,6 @@
 import { ISignalwireConfig, SmsGateway } from "@/models/SmsGateway";
 import Message from "@/models/Message";
-import { sendInternalMessage } from "@/utils/internal-websocket";
+import { sendToSocket } from "@/utils/backend-websocket";
 import { NextRequest, NextResponse } from "next/server";
 // @ts-ignore: SignalWire types export issue
 import { RestClient } from "@signalwire/compatibility-api";
@@ -39,7 +39,7 @@ export async function POST  (request: NextRequest) {
     });
 
     targets.forEach(target => {
-      sendInternalMessage(target._id.toString(), 'new_sms', {
+      sendToSocket(target._id.toString(), 'new_sms', {
         messageId: message._id,
         from: message.from,
         to: gateway._id.toString(),

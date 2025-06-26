@@ -4,7 +4,6 @@ import UserModel from "@/models/User";
 import connectDB from "@/lib/mongodb";
 import { _parse_token } from "@/utils/auth";
 import { isValidObjectId } from "mongoose";
-import { SmsGateway } from "@/models/SmsGateway";
 
 export async function GET(request: NextRequest) {
   try {
