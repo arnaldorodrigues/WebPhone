@@ -28,7 +28,7 @@ function connectToWebSocket() {
     }
   });
 
-  wsClient.on('error', (err) => {
+  wsClient.on('error', (err: any) => {
     console.error('Backend WebSocket error:', err);
     if (wsClient?.readyState !== WebSocket.OPEN) {
       wsClient = null;

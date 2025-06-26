@@ -48,14 +48,10 @@ export async function POST  (request: NextRequest) {
       });
     }); 
 
-    const response = new RestClient.LaML.MessagingResponse();
-    response.message(body);
+    // const response = new RestClient.LaML.MessagingResponse();
+    // response.message(body);
 
-    return new NextResponse(response.toString(), {
-      headers: {
-        "Content-Type": "application/xml",
-      },
-    });
+    return new NextResponse();
   } catch (error) {
     console.error('Error handling incoming SMS:', error);
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
