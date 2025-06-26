@@ -40,11 +40,11 @@ export async function POST  (request: NextRequest) {
 
     targets.forEach(target => {
       sendToSocket(target._id.toString(), 'new_sms', {
-        messageId: message._id,
+        messageId: message._id.toString(),
         from: message.from,
         to: gateway._id.toString(),
         body: message.body,
-        timestamp: message.timestamp    
+        timestamp: message.timestamp.toISOString()
       });
     }); 
 
