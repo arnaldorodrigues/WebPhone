@@ -25,8 +25,8 @@ function connectToWebSocket() {
     isConnecting = false;
     while (messageQueue.length > 0) {
       console.log("++++++++++++++++ Sending Message from Queue")
-      wsClient?.send("+++++++++++++++++++++");
       const msg = messageQueue.shift();
+      console.log("++++++++++++++++ Sending Message from Queue", msg)
       if (msg !== undefined) {
         wsClient?.send(msg);
       }
