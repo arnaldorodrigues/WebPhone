@@ -38,8 +38,10 @@ export function getConnectedClients() {
 }
 
 export function sendToUser(userId: string, type: string, data: any) {
+  console.log("++++++++++++++++ Send Message")
   const client = getClient(userId);
   if (client && client.readyState === WebSocket.OPEN) {
+    console.log("++++++++++++++++ Send Message To User")
     client.send(JSON.stringify({ type, ...data }));
   }
 }
@@ -53,6 +55,7 @@ export function broadcastToAll(type: string, data: any) {
 }
 
 function handleMessage(ws: WebSocket, message: string) {
+  console.log("++++++++++++++++ Handle Message")
   try {
     const data = JSON.parse(message.toString()) as WebSocketMessage;
     

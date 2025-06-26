@@ -1,7 +1,7 @@
 export const runtime = 'nodejs';
 
 import { ISignalwireConfig, SmsGateway } from "@/models/SmsGateway";
-// import Message from "@/models/Message";
+import Message from "@/models/Message";
 import { sendToSocket } from "@/utils/backend-websocket";
 import { NextRequest, NextResponse } from "next/server";
 import connectDB  from "@/lib/mongodb";
@@ -21,32 +21,48 @@ export async function POST  (request: NextRequest) {
       return NextResponse.json({ error: 'No SMS gateway configured' }, { status: 500 });
     }
 
+    console.log("++++++++++++++++ Get Config")
+
     const config = gateway.config as ISignalwireConfig;
     if (!body || !from) {
       return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
     }
 
-    // const message = new Message({
-    //   from: from.replace('+1', ''),
-    //   to: gateway._id,
-    //   body,
-    //   timestamp: new Date()
-    // });
-    // await message.save();
+    console.log("++++++++++++++++ Create Message")
+
+    const message = new Message({
+      from: from.replace('+1', ''),
+      to: gateway._id,
+      body,
+      timestamp: new Date()
+    });
+    await message.save();
+
+    console.log("++++++++++++++++ Get Targets")
 
     const targets = await UserModel.find({
       "did": gateway._id
     });
 
-    targets.forEach(target => {
-      sendToSocket(target._id.toString(), 'new_sms', {
-        messageId: "",
-        from: from,
-        to: gateway._id.toString(),
-        body: body,
-        timestamp: new Date()
-      });
-    }); 
+    // targets.forEach(target => {
+    //   sendToSocket(target._id.toString(), 'new_sms', {
+    //     messageId: message._id,
+    //     from: message.from,
+    //     to: gateway._id.toString(),
+    //     body: message.body,
+    //     timestamp: message.timestamp    
+    //   });
+    // }); 
+
+    console.log("++++++++++++++++ SendtoSocket")
+
+    sendToSocket("684ddafe70074dddcc978244", 'new_sms', {
+      messageId: message._id,
+      from: message.from,
+      to: gateway._id.toString(),
+      body: message.body,
+      timestamp: message.timestamp    
+    });
 
     // @ts-ignore
     const { RestClient } = await import("@signalwire/compatibility-api");

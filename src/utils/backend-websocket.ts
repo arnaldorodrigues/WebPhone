@@ -54,7 +54,11 @@ export function sendToSocket(userId: string, type: string, data: any) {
     data
   });
 
+  console.log("++++++++++++++++ Connect  Socket on Backend")
+
   connectToWebSocket();
+
+  console.log("++++++++++++++++ Send Message on Backend")
 
   if (wsClient && wsClient.readyState === WebSocket.OPEN) {
     wsClient.send(message);
