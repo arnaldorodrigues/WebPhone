@@ -1,5 +1,5 @@
 import http from 'http';
-import WebSocket from 'ws';
+import { WebSocketServer } from 'ws';
 import express from 'express';
 import bodyParser from 'body-parser';
 
@@ -7,7 +7,7 @@ const app = express();
 app.use(bodyParser.json());
 
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocketServer({ server });
 
 let clients = [];
 
