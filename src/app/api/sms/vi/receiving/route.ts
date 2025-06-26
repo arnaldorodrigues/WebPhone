@@ -3,24 +3,26 @@ import crypto from 'crypto';
 import connectDB from '@/lib/mongodb';
 import { SmsGateway, IViConfig } from '@/models/SmsGateway';
 import Message from '@/models/Message';
-import { sendInternalMessage } from "@/utils/internal-websocket";
+import { sendToSocket } from "@/utils/backend-websocket";
 import UserModel from "@/models/User";
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
+    const formData = await request.formData();
+    const from = formData.get('msisdn')?.toString();
+    const to = formData.get('to')?.toString();
+    const body = formData.get('text')?.toString() || '';
+
     await connectDB();
     
-    const { From, To, Body } = await req.json();
-
-    const gateway = await SmsGateway.findOne({ type: 'vi', config: { phoneNumber: To.slice(1, -1) } });
+    const gateway = await SmsGateway.findOne({ type: 'vi', "config.phoneNumber": `${to}` });
     if (!gateway) {
-      throw new Error('No VI gateway configured');
+      return NextResponse.json({ error: 'No SMS gateway configured' }, { status: 500 });
     }
 
     const config = gateway.config as IViConfig;
-    const signature = req.headers.get('x-vi-signature');
-    const timestamp = req.headers.get('x-timestamp');
-    const body = await req.text();
+    const signature = request.headers.get('x-vi-signature');
+    const timestamp = request.headers.get('x-timestamp');
     const data = timestamp + body;
     const expectedSignature = crypto
       .createHmac('sha256', config.apiSecret)
@@ -31,10 +33,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
+    if (!body || !from) {
+      return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
+    }
+
     const message = new Message({
-      from: From.slice(1, -1),
+      from: from,
       to: gateway._id,
-      body: Body,
+      body,
       timestamp: new Date()
     });
     await message.save();
@@ -45,7 +51,7 @@ export async function POST(req: NextRequest) {
     });
 
     targets.forEach(target => {
-      sendInternalMessage(target._id.toString(), 'new_sms', {
+      sendToSocket(target._id.toString(), 'new_sms', {
         messageId: message._id,
         from: message.from,
         to: gateway._id.toString(),
@@ -54,13 +60,10 @@ export async function POST(req: NextRequest) {
       });
     });
 
-    console.log(`Received SMS from ${From} to ${To}: ${Body}`);
+    console.log(`Received SMS from ${from} to ${to}: ${body}`);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error processing webhook:', error);
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 }
-    );
+    console.error('Error handling incoming SMS:', error);
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }

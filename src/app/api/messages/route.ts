@@ -87,8 +87,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const gatewayNumber = await getGatewayPhoneNumber();
-    const from = !isValidObjectId(to) ? gatewayNumber : token._id;
+    const user = await UserModel.findById(token._id);
+
+    if (!user) {
+      return NextResponse.json(
+        {success:false, error: "User not Found"},
+        {status: 404}
+      )
+    }
+
+    const smsGatewayId = user.did;
+    const from = !isValidObjectId(to) ? smsGatewayId : token._id;
+
+    if (!from) {
+      return NextResponse.json(
+        {success:false, error:"You have no DID number"},
+        {status: 404}
+      )
+    }
+
     const message = await Message.create({
       from,
       to,

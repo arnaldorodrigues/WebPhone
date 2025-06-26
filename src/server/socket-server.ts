@@ -1,25 +1,24 @@
 import { WebSocketServer, WebSocket } from 'ws';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import http from 'http';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 interface WebSocketMessage {
   type: string;
   userId?: string;
+  targetUserId?: string;
+  messageType?: string;
+  data?: any;
   [key: string]: any;
 }
 
 const DEFAULT_PORT = 8080;
-const INTERNAL_PORT = 8081;
+
+// Create a singleton instance
+let wssInstance: WebSocketServer | null = null;
 
 (globalThis as any).globalClients = (globalThis as any).globalClients ?? new Map<string, WebSocket>();
 
 export function addClient(userId: string, ws: WebSocket) {
   (globalThis as any).globalClients.set(userId, ws);
-}   
+}
 
 export function removeClient(userId: string) {
   (globalThis as any).globalClients.delete(userId);
@@ -53,55 +52,36 @@ export function broadcastToAll(type: string, data: any) {
   });
 }
 
-function handleInternalMessage(message: string) {
+function handleMessage(ws: WebSocket, message: string) {
   try {
-    const data = JSON.parse(message);
-    const { userId, type, payload } = data;
+    const data = JSON.parse(message.toString()) as WebSocketMessage;
     
-    if (userId) {
-      sendToUser(userId, type, payload);
-    } else {
-      broadcastToAll(type, payload);
+    if (data.type === 'auth' && data.userId) {
+      addClient(data.userId, ws);
+      console.log(`Client authenticated: ${data.userId}`);
+    } else if (data.type === 'backend_message' && data.targetUserId) {
+      // Handle messages from backend
+      sendToUser(data.targetUserId, data.messageType!, data.data);
     }
   } catch (error) {
-    console.error('Error handling internal message:', error);
+    console.error('Error processing message:', error);
   }
 }
 
 export function startWebSocketServer(port: number = DEFAULT_PORT) {
+  if (wssInstance) {
+    return wssInstance;
+  }
+
   try {
-    const wss = new WebSocketServer({ port });
+    wssInstance = new WebSocketServer({ port, path: process.env.NODE_ENV === 'production' ? '/ws' : undefined });
     console.log(`WebSocket server is running on port ${port}`);
 
-    const internalWss = new WebSocketServer({ port: INTERNAL_PORT });
-    console.log(`Internal WebSocket server is running on port ${INTERNAL_PORT}`);
-
-    internalWss.on('connection', (ws) => {
-      console.log('Next.js backend connected to internal WebSocket server');
-
-      ws.on('message', (message: string) => {
-        handleInternalMessage(message.toString());
-      });
-
-      ws.on('error', (error) => {
-        console.error('Internal WebSocket error:', error);
-      });
-    });
-
-    wss.on('connection', (ws) => {
+    wssInstance.on('connection', (ws) => {
       console.log('New client connected');
 
       ws.on('message', (message: string) => {
-        try {
-          const data = JSON.parse(message.toString()) as WebSocketMessage;
-          
-          if (data.type === 'auth' && data.userId) {
-            addClient(data.userId, ws);
-            console.log(`Client authenticated: ${data.userId}`);
-          }
-        } catch (error) {
-          console.error('Error processing message:', error);
-        }
+        handleMessage(ws, message);
       });
 
       ws.on('close', () => {
@@ -116,9 +96,14 @@ export function startWebSocketServer(port: number = DEFAULT_PORT) {
       });
     });
 
-    return wss;
+    return wssInstance;
   } catch (error) {
     console.error('Failed to start WebSocket server:', error);
     throw error;
   }
+}
+
+// Export the instance getter
+export function getWebSocketServer() {
+  return wssInstance;
 } 

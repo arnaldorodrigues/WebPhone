@@ -4,10 +4,11 @@ import Sidebar from "@/components/feature/phone/sidebar/sidebar";
 import { usePathname } from "next/navigation";
 import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";
 import { useUserData } from "@/hooks/use-userdata";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CONNECT_STATUS, RegisterStatus } from "@/types/sip-type";
 import { useNotification } from "@/contexts/notification-context";
 import { useWebSocket } from "@/contexts/websocket-context";
+import { addContact } from "@/lib/contact-action";
 
 interface Props {}
 
@@ -25,7 +26,7 @@ const RootLayout = ({
   const { showNotification } = useNotification();
   const { userData, refreshUserData } = useUserData();
   const { subscribe } = useWebSocket();
-
+  const [wsMessages, setWsMessages] = useState<any[]>([]);
   useEffect(() => {
     if (
       !hasAttemptedConnect.current &&
@@ -64,6 +65,47 @@ const RootLayout = ({
       unsubscribe();
     };
   }, [userData?.id, subscribe]);
+
+  useEffect(() => {
+    const processNewContacts = async () => {
+      let newContacts: string[] = [];
+      for (let i = 0; i < wsMessages.length; i++) {
+        if (newContacts.includes(wsMessages[i].from)) {
+          continue;
+        }
+        if (
+          userData.contacts.some(
+            (contact) => contact.number === wsMessages[i].from
+          )
+        ) {
+          continue;
+        }
+        newContacts.push(wsMessages[i].from);
+      }
+      await Promise.all(
+        newContacts.map((contactId) =>
+          addContact({
+            id: "",
+            name: "",
+            number: contactId,
+          })
+        )
+      );
+    };
+
+    processNewContacts();
+
+    refreshUserData();
+  }, [wsMessages, refreshUserData]);
+
+  useEffect(() => {
+    const unsubscribe = subscribe((wsMessage: any) => {
+      setWsMessages((prev) => [...prev, wsMessage]);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, [subscribe, setWsMessages]);
 
   return (
     <div className="w-full h-full flex-1 flex flex-row ">
