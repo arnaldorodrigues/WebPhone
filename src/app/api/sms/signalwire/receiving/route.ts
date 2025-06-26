@@ -7,8 +7,6 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB  from "@/lib/mongodb";
 import UserModel from "@/models/User";
 
-const { RestClient } = await import("@signalwire/compatibility-api");
-
 export async function POST  (request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -51,6 +49,8 @@ export async function POST  (request: NextRequest) {
     }); 
 
     // @ts-ignore
+    const { RestClient } = await import("@signalwire/compatibility-api");
+    
     const response = new RestClient.LaML.MessagingResponse();
     response.message(body);
 
