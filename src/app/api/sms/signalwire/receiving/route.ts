@@ -3,7 +3,7 @@ import Message from "@/models/Message";
 import { sendToSocket } from "@/utils/backend-websocket";
 import { NextRequest, NextResponse } from "next/server";
 // @ts-ignore: SignalWire types export issue
-// import { RestClient } from "@signalwire/compatibility-api";
+import { RestClient } from "@signalwire/compatibility-api";
 import connectDB  from "@/lib/mongodb";
 import UserModel from "@/models/User";
 
@@ -40,18 +40,23 @@ export async function POST  (request: NextRequest) {
 
     targets.forEach(target => {
       sendToSocket(target._id.toString(), 'new_sms', {
-        messageId: message._id.toString(),
+        messageId: message._id,
         from: message.from,
         to: gateway._id.toString(),
         body: message.body,
-        timestamp: message.timestamp.toISOString()
+        timestamp: message.timestamp    
       });
     }); 
 
-    // const response = new RestClient.LaML.MessagingResponse();
-    // response.message(body);
+    // @ts-ignore
+    const response = new RestClient.LaML.MessagingResponse();
+    response.message(body);
 
-    return new NextResponse();
+    return new NextResponse(response.toString(), {
+      headers: {
+        "Content-Type": "application/xml",
+      },
+    });
   } catch (error) {
     console.error('Error handling incoming SMS:', error);
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
