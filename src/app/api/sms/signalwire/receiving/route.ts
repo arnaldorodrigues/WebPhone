@@ -1,7 +1,7 @@
 export const runtime = 'nodejs';
 
 import { ISignalwireConfig, SmsGateway } from "@/models/SmsGateway";
-import Message from "@/models/Message";
+// import Message from "@/models/Message";
 import { sendToSocket } from "@/utils/backend-websocket";
 import { NextRequest, NextResponse } from "next/server";
 import connectDB  from "@/lib/mongodb";
@@ -26,13 +26,13 @@ export async function POST  (request: NextRequest) {
       return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
     }
 
-    const message = new Message({
-      from: from.replace('+1', ''),
-      to: gateway._id,
-      body,
-      timestamp: new Date()
-    });
-    await message.save();
+    // const message = new Message({
+    //   from: from.replace('+1', ''),
+    //   to: gateway._id,
+    //   body,
+    //   timestamp: new Date()
+    // });
+    // await message.save();
 
     const targets = await UserModel.find({
       "did": gateway._id
@@ -40,11 +40,11 @@ export async function POST  (request: NextRequest) {
 
     targets.forEach(target => {
       sendToSocket(target._id.toString(), 'new_sms', {
-        messageId: message._id,
-        from: message.from,
+        messageId: "",
+        from: from,
         to: gateway._id.toString(),
-        body: message.body,
-        timestamp: message.timestamp    
+        body: body,
+        timestamp: new Date()
       });
     }); 
 
