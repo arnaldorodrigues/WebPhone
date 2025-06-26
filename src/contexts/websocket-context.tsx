@@ -60,7 +60,8 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
 
     ws.onmessage = (event) => {
       try {
-        const message = JSON.parse(event.data) as WebSocketMessage;
+        console.log("++++++++++++++++++ onmessage on client");
+        const message = JSON.parse(event.data) as WebSocketMessage;        
         console.log("onmessage", message);
         subscribers.forEach((callback) => callback(message));
       } catch (error) {
