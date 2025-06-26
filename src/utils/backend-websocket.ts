@@ -24,6 +24,7 @@ function connectToWebSocket() {
     console.log('Backend connected to WebSocket server');
     isConnecting = false;
     while (messageQueue.length > 0) {
+      console.log("++++++++++++++++ Sending Message from Queue")
       wsClient?.send(messageQueue.shift()!);
     }
   });
@@ -61,8 +62,10 @@ export function sendToSocket(userId: string, type: string, data: any) {
   console.log("++++++++++++++++ Send Message on Backend")
 
   if (wsClient && wsClient.readyState === WebSocket.OPEN) {
+    console.log("++++++++++++++++ Sending on Backend")
     wsClient.send(message);
   } else {
+    console.log("++++++++++++++++ Pushing Message")
     messageQueue.push(message);
   }
 } 
