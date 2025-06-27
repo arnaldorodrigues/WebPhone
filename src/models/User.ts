@@ -1,5 +1,14 @@
 import mongoose, { Schema } from 'mongoose';
-import { User } from '../types/auth';
+
+export interface User {
+  _id: string;
+  email: string;
+  password: string;
+  name: string;
+  role: 'admin' | 'user';
+  createdAt: Date;
+  did?: string;  // Reference to SmsGateway
+}
 
 const userSchema: Schema = new Schema({
   email: {

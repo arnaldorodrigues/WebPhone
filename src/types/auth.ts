@@ -1,12 +1,4 @@
-export interface User {
-  _id: string;
-  email: string;
-  password: string;
-  name: string;
-  role: 'admin' | 'user';
-  createdAt: Date;
-  did?: string;  // Reference to SmsGateway
-}
+import { User } from "@/models/User";
 
 export interface SignUpRequest {
   extensionNumber: string;
