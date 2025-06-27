@@ -7,7 +7,7 @@ import { useUserData } from "@/hooks/use-userdata";
 import { useEffect, useRef, useState } from "react";
 import { CONNECT_STATUS, RegisterStatus } from "@/types/sip-type";
 import { useNotification } from "@/contexts/notification-context";
-import { useWebSocket } from "@/contexts/websocket-context";
+import { useSmsReceived } from "@/contexts/sms-context";
 import { addContact } from "@/lib/contact-action";
 
 interface Props {}
@@ -25,7 +25,7 @@ const RootLayout = ({
   const hasAttemptedConnect = useRef(false);
   const { showNotification } = useNotification();
   const { userData, refreshUserData } = useUserData();
-  const { subscribe } = useWebSocket();
+  const { subscribe } = useSmsReceived();
   const [wsMessages, setWsMessages] = useState<any[]>([]);
   useEffect(() => {
     if (

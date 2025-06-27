@@ -1,8 +1,7 @@
 export const runtime = 'nodejs';
 
-import { ISignalwireConfig, SmsGateway } from "@/models/SmsGateway";
+import { SmsGateway } from "@/models/SmsGateway";
 import Message from "@/models/Message";
-import { sendToSocket } from "@/utils/backend-websocket";
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import UserModel from "@/models/User";
@@ -12,67 +11,60 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const from = formData.get('From')?.toString();
     const to = formData.get('To')?.toString();
-    const message = formData.get('Body')?.toString();
+    const body = formData.get('Body')?.toString();
+
+    if (!body || !from) {
+      return NextResponse.json({ error: "Invalid parameters" }, { status: 404 });
+    }
 
     await connectDB();
 
+    const gateway = await SmsGateway.findOne({
+      type: 'signalwire',
+      "config.phoneNumber": `${to?.replace('+1', '')}`
+    });
+    if (!gateway) {
+      return NextResponse.json({ error: "No SMS Gateway configured" }, { status: 404 });
+    }
+
+    const message = new Message({
+      from: from.replace('+1', ''),
+      to: gateway._id,
+      body,
+      timestamp: new Date()
+    });
+    await message.save();
+
+    const targetUsers = await UserModel.find({
+      "did": gateway._id
+    });
+
+    if (!targetUsers || targetUsers.length < 1) {
+      return NextResponse.json({ error: "No Users" }, { status: 404 });
+    }
+
+    const targets = targetUsers.map((target: any) => target._id);
+
     await fetch('http://localhost:8080/broadcast', {
       method: 'POST',
-      headers: { 'Content-Type': 'applicatioin/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        type: 'sms-received',
-        data: { from, to, message },
+        targets: targets,
+        data: {
+          type: 'new_sms',
+          messageId: message._id,
+          from: message.from,
+          body: message.body,
+          timestamp: message.timestamp
+        },
       })
-    })
-
-    // console.log("++++++++++++++++ Get Config")
-
-    // const config = gateway.config as ISignalwireConfig;
-    // if (!body || !from) {
-    //   return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
-    // }
-
-    // console.log("++++++++++++++++ Create Message")
-
-    // const message = new Message({
-    //   from: from.replace('+1', ''),
-    //   to: gateway._id,
-    //   body,
-    //   timestamp: new Date()
-    // });
-    // await message.save();
-
-    // console.log("++++++++++++++++ Get Targets")
-
-    // const targets = await UserModel.find({
-    //   "did": gateway._id
-    // });
-
-    // // targets.forEach(target => {
-    // //   sendToSocket(target._id.toString(), 'new_sms', {
-    // //     messageId: message._id,
-    // //     from: message.from,
-    // //     to: gateway._id.toString(),
-    // //     body: message.body,
-    // //     timestamp: message.timestamp    
-    // //   });
-    // // }); 
-
-    // console.log("++++++++++++++++ SendtoSocket")
-
-    // sendToSocket("684ddafe70074dddcc978244", 'new_sms', {
-    //   messageId: message._id,
-    //   from: message.from,
-    //   to: gateway._id.toString(),
-    //   body: message.body,
-    //   timestamp: message.timestamp    
-    // });
+    });
 
     // @ts-ignore
     const { RestClient } = await import("@signalwire/compatibility-api");
 
     const response = new RestClient.LaML.MessagingResponse();
-    response.message(message);
+    response.message(body);
 
     return new NextResponse(response.toString(), {
       headers: {

@@ -10,7 +10,7 @@ import {
 } from "react";
 import { useUserData } from "@/hooks/use-userdata";
 
-interface WebSocketMessage {
+interface SmsMessage {
   type: string;
   messageId?: string;
   from?: string;
@@ -19,23 +19,23 @@ interface WebSocketMessage {
   [key: string]: any;
 }
 
-interface WebSocketContextType {
+interface SmsContextType {
   isConnected: boolean;
-  sendMessage: (message: WebSocketMessage) => void;
-  subscribe: (callback: (message: WebSocketMessage) => void) => () => void;
+  sendMessage: (message: SmsMessage) => void;
+  subscribe: (callback: (message: SmsMessage) => void) => () => void;
 }
 
-const WebSocketContext = createContext<WebSocketContextType | null>(null);
+const SmsContext = createContext<SmsContextType | null>(null);
 
-interface WebSocketProviderProps {
+interface SmsProviderProps {
   children: ReactNode;
 }
 
-export function WebSocketProvider({ children }: WebSocketProviderProps) {
+export function SmsProvider({ children }: SmsProviderProps) {
   const { userData } = useUserData();
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [subscribers] = useState<Set<(message: WebSocketMessage) => void>>(
+  const [subscribers] = useState<Set<(message: SmsMessage) => void>>(
     new Set()
   );
 
@@ -54,15 +54,12 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
     ws.onopen = () => {
       console.log("WebSocket connected successfully");
       setIsConnected(true);
-      // Authenticate the connection
       ws.send(JSON.stringify({ type: "auth", userId: userData.id }));
     };
 
     ws.onmessage = (event) => {
       try {
-        console.log("++++++++++++++++++ onmessage on client");
-        const message = JSON.parse(event.data) as WebSocketMessage;        
-        console.log("onmessage", message);
+        const message = JSON.parse(event.data) as SmsMessage;        
         subscribers.forEach((callback) => callback(message));
       } catch (error) {
         console.error("Error processing WebSocket message:", error);
@@ -78,7 +75,6 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
       console.log("WebSocket disconnected");
       setIsConnected(false);
       setSocket(null);
-      // Attempt to reconnect after 5 seconds
       setTimeout(connectWebSocket, 5000);
     };
 
@@ -99,7 +95,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
   }, [connectWebSocket]);
 
   const sendMessage = useCallback(
-    (message: WebSocketMessage) => {
+    (message: SmsMessage) => {
       if (socket?.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify(message));
       }
@@ -108,7 +104,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
   );
 
   const subscribe = useCallback(
-    (callback: (message: WebSocketMessage) => void) => {
+    (callback: (message: SmsMessage) => void) => {
       subscribers.add(callback);
       return () => {
         subscribers.delete(callback);
@@ -118,14 +114,14 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
   );
 
   return (
-    <WebSocketContext.Provider value={{ isConnected, sendMessage, subscribe }}>
+    <SmsContext.Provider value={{ isConnected, sendMessage, subscribe }}>
       {children}
-    </WebSocketContext.Provider>
+    </SmsContext.Provider>
   );
 }
 
-export function useWebSocket() {
-  const context = useContext(WebSocketContext);
+export function useSmsReceived() {
+  const context = useContext(SmsContext);
   if (!context) {
     throw new Error("useWebSocket must be used within a WebSocketProvider");
   }

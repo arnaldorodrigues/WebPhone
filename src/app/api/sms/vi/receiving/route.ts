@@ -3,7 +3,6 @@ import crypto from 'crypto';
 import connectDB from '@/lib/mongodb';
 import { SmsGateway, IViConfig } from '@/models/SmsGateway';
 import Message from '@/models/Message';
-import { sendToSocket } from "@/utils/backend-websocket";
 import UserModel from "@/models/User";
 
 export async function POST(request: NextRequest) {
@@ -50,15 +49,15 @@ export async function POST(request: NextRequest) {
       "did": gateway._id
     });
 
-    targets.forEach(target => {
-      sendToSocket(target._id.toString(), 'new_sms', {
-        messageId: message._id,
-        from: message.from,
-        to: gateway._id.toString(),
-        body: message.body,
-        timestamp: message.timestamp    
-      });
-    });
+    // targets.forEach(target => {
+    //   sendToSocket(target._id.toString(), 'new_sms', {
+    //     messageId: message._id,
+    //     from: message.from,
+    //     to: gateway._id.toString(),
+    //     body: message.body,
+    //     timestamp: message.timestamp    
+    //   });
+    // });
 
     console.log(`Received SMS from ${from} to ${to}: ${body}`);
     return NextResponse.json({ success: true });
