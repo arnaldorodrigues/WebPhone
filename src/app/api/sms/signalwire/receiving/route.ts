@@ -14,7 +14,10 @@ export async function POST(request: NextRequest) {
     const body = formData.get('Body')?.toString();
 
     if (!body || !from) {
-      return NextResponse.json({ error: "Invalid parameters" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Invalid parameters" },
+        { status: 404 }
+      );
     }
 
     await connectDB();
@@ -24,7 +27,10 @@ export async function POST(request: NextRequest) {
       "config.phoneNumber": `${to?.replace('+1', '')}`
     });
     if (!gateway) {
-      return NextResponse.json({ error: "No SMS Gateway configured" }, { status: 404 });
+      return NextResponse.json(
+        { error: "No SMS Gateway configured" },
+        { status: 404 }
+      );
     }
 
     const message = new Message({
@@ -40,7 +46,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!targetUsers || targetUsers.length < 1) {
-      return NextResponse.json({ error: "No Users" }, { status: 404 });
+      return NextResponse.json(
+        { error: "No Users" },
+        { status: 404 }
+      );
     }
 
     const targets = targetUsers.map((target: any) => target._id);
@@ -60,17 +69,10 @@ export async function POST(request: NextRequest) {
       })
     });
 
-    // @ts-ignore
-    const { RestClient } = await import("@signalwire/compatibility-api");
-
-    const response = new RestClient.LaML.MessagingResponse();
-    response.message(body);
-
-    return new NextResponse(response.toString(), {
-      headers: {
-        "Content-Type": "application/xml",
-      },
-    });
+    return NextResponse.json(
+      { message: "Successfully Received" },
+      { status: 200 }
+    );
   } catch (error) {
     console.error('Error handling incoming SMS:', error);
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
