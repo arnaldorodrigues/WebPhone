@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"next dev --turbopack --experimental-https\" \"npm run dev:socket\"",
+    "dev": "next dev --turbopack --experimental-https",
     "build": "next build",
-    "start": "NODE_ENV=production concurrently \"next start\" \"npm run start:socket\"",
+    "start": "NODE_ENV=production next start",
     "lint": "next lint",
     "seed:admin": "node scripts/seed-admin.js",
     "postinstall": "patch-package",
@@ -14,7 +14,8 @@
     "dev:socket": "node --loader ts-node/esm scripts/start-socket-server.ts",
     "start:socket": "NODE_ENV=production node --loader ts-node/esm scripts/start-socket-server.ts",
     "start:next": "next start",
-    "dev:next": "next dev --turbopack --experimental-https"
+    "dev:next": "next dev --turbopack --experimental-https",
+    "start-sms": "node --loader ts-node/esm sms-server.js"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.4",
@@ -24,8 +25,11 @@
     "@types/jsonwebtoken": "^9.0.9",
     "@types/ws": "^8.5.10",
     "bcryptjs": "^3.0.2",
+    "body-parser": "^2.2.0",
     "concurrently": "^8.2.2",
     "date-fns": "^4.1.0",
+    "dotenv": "^16.6.0",
+    "express": "^5.1.0",
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.2",
     "modesl": "^0.0.4",
