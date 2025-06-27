@@ -13,7 +13,7 @@ import {
   sendSMSMessage,
   fetchMessage,
 } from "@/lib/message-action";
-import { useWebSocket } from "@/contexts/websocket-context";
+import { useSmsReceived } from "@/contexts/sms-context";
 import { addContact } from "@/lib/contact-action";
 
 interface Message {
@@ -27,7 +27,7 @@ interface Message {
 const Page = () => {
   const params = useParams();
   const { sessionManager, messages: sipMessages } = useSIPProvider();
-  const { subscribe } = useWebSocket();
+  const { subscribe } = useSmsReceived();
   const { userData, refreshUserData } = useUserData();
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);

@@ -1,29 +1,30 @@
-import { ISignalwireConfig, SmsGateway } from "@/models/SmsGateway";
+export const runtime = 'nodejs';
+
+import { SmsGateway } from "@/models/SmsGateway";
 import Message from "@/models/Message";
-import { sendToSocket } from "@/utils/backend-websocket";
 import { NextRequest, NextResponse } from "next/server";
-// @ts-ignore: SignalWire types export issue
-import { RestClient } from "@signalwire/compatibility-api";
-import connectDB  from "@/lib/mongodb";
+import connectDB from "@/lib/mongodb";
 import UserModel from "@/models/User";
 
-export async function POST  (request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const from = formData.get('From')?.toString();
     const to = formData.get('To')?.toString();
     const body = formData.get('Body')?.toString();
 
-    await connectDB();
-    
-    const gateway = await SmsGateway.findOne({ type: 'signalwire', "config.phoneNumber": `${to?.replace('+1', '')}` });
-    if (!gateway) {
-      return NextResponse.json({ error: 'No SMS gateway configured' }, { status: 500 });
+    if (!body || !from) {
+      return NextResponse.json({ error: "Invalid parameters" }, { status: 404 });
     }
 
-    const config = gateway.config as ISignalwireConfig;
-    if (!body || !from) {
-      return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
+    await connectDB();
+
+    const gateway = await SmsGateway.findOne({
+      type: 'signalwire',
+      "config.phoneNumber": `${to?.replace('+1', '')}`
+    });
+    if (!gateway) {
+      return NextResponse.json({ error: "No SMS Gateway configured" }, { status: 404 });
     }
 
     const message = new Message({
@@ -34,19 +35,33 @@ export async function POST  (request: NextRequest) {
     });
     await message.save();
 
-    const targets = await UserModel.find({
+    const targetUsers = await UserModel.find({
       "did": gateway._id
     });
 
-    targets.forEach(target => {
-      sendToSocket(target._id.toString(), 'new_sms', {
-        messageId: message._id,
-        from: message.from,
-        to: gateway._id.toString(),
-        body: message.body,
-        timestamp: message.timestamp    
-      });
-    }); 
+    if (!targetUsers || targetUsers.length < 1) {
+      return NextResponse.json({ error: "No Users" }, { status: 404 });
+    }
+
+    const targets = targetUsers.map((target: any) => target._id);
+
+    await fetch('http://localhost:8080/broadcast', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        targets: targets,
+        data: {
+          type: 'new_sms',
+          messageId: message._id,
+          from: message.from,
+          body: message.body,
+          timestamp: message.timestamp
+        },
+      })
+    });
+
+    // @ts-ignore
+    const { RestClient } = await import("@signalwire/compatibility-api");
 
     const response = new RestClient.LaML.MessagingResponse();
     response.message(body);

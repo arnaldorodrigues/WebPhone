@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
         name: userData.name,
         password: hashedPassword,
         role: userData.role || 'user',
-        did: userData.did,
+        did: userData.did || undefined,
       });
     }
 
