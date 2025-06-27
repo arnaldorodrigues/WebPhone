@@ -122,7 +122,7 @@ const DropdownSelect = ({
       </button>
 
       {isOpen && !disabled && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded-lg shadow-lg max-h-60 overflow-auto">
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded-lg shadow-lg overflow-auto h-[80px]">
           {options.map((option) => (
             <button
               key={option.value + option.label}
