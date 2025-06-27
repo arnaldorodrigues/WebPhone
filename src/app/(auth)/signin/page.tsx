@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-
 import Input from "@/components/ui/inputs/input";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -81,11 +80,11 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-cyan-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="h-full w-full absolute flex justify-center items-center">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
         <div className="text-center">
           <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+            <div className="w-20 h-20 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
               <span className="text-white text-2xl font-bold">3CNS</span>
             </div>
           </div>
@@ -183,11 +182,10 @@ export default function SignIn() {
             <button
               type="submit"
               disabled={isLoading}
-              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 ${
-                isLoading
-                  ? "opacity-75 cursor-not-allowed"
-                  : "transform hover:scale-105"
-              }`}
+              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 ${isLoading
+                ? "opacity-75 cursor-not-allowed"
+                : "transform hover:scale-105"
+                }`}
             >
               {isLoading ? (
                 <div className="flex items-center">
@@ -211,5 +209,6 @@ export default function SignIn() {
         </form>
       </div>
     </div>
+
   );
 }

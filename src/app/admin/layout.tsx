@@ -2,7 +2,6 @@
 
 import AdminSidebar from "@/components/feature/admin/sidebar/admin-sidebar";
 import ProtectedRoute from "@/components/ui/ProtectedRoute";
-
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { usePathname } from "next/navigation";
 

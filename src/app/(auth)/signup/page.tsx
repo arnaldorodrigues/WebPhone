@@ -116,11 +116,11 @@ export default function SignUp() {
   const showPasswordStrength = formData.password.length > 0;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-cyan-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="h-full w-full absolute flex justify-center items-center">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
         <div className="text-center">
           <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+            <div className="w-20 h-20 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
               <span className="text-white text-2xl font-bold">3CNS</span>
             </div>
           </div>
@@ -221,11 +221,10 @@ export default function SignUp() {
                   </p>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div
-                      className={`flex items-center ${
-                        passwordCriteria.length
+                      className={`flex items-center ${passwordCriteria.length
                           ? "text-green-600"
                           : "text-gray-400"
-                      }`}
+                        }`}
                     >
                       {passwordCriteria.length ? (
                         <CheckCircleIcon className="h-3 w-3 mr-1" />
@@ -235,11 +234,10 @@ export default function SignUp() {
                       8+ characters
                     </div>
                     <div
-                      className={`flex items-center ${
-                        passwordCriteria.uppercase
+                      className={`flex items-center ${passwordCriteria.uppercase
                           ? "text-green-600"
                           : "text-gray-400"
-                      }`}
+                        }`}
                     >
                       {passwordCriteria.uppercase ? (
                         <CheckCircleIcon className="h-3 w-3 mr-1" />
@@ -249,11 +247,10 @@ export default function SignUp() {
                       Uppercase
                     </div>
                     <div
-                      className={`flex items-center ${
-                        passwordCriteria.lowercase
+                      className={`flex items-center ${passwordCriteria.lowercase
                           ? "text-green-600"
                           : "text-gray-400"
-                      }`}
+                        }`}
                     >
                       {passwordCriteria.lowercase ? (
                         <CheckCircleIcon className="h-3 w-3 mr-1" />
@@ -263,11 +260,10 @@ export default function SignUp() {
                       Lowercase
                     </div>
                     <div
-                      className={`flex items-center ${
-                        passwordCriteria.number
+                      className={`flex items-center ${passwordCriteria.number
                           ? "text-green-600"
                           : "text-gray-400"
-                      }`}
+                        }`}
                     >
                       {passwordCriteria.number ? (
                         <CheckCircleIcon className="h-3 w-3 mr-1" />
@@ -339,11 +335,10 @@ export default function SignUp() {
             <button
               type="submit"
               disabled={isLoading}
-              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 ${
-                isLoading
+              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 ${isLoading
                   ? "opacity-75 cursor-not-allowed"
                   : "transform hover:scale-105"
-              }`}
+                }`}
             >
               {isLoading ? (
                 <div className="flex items-center">

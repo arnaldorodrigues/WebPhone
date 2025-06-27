@@ -31,7 +31,6 @@ const ChatBoard = ({ messages, currentUser }: ChatBoardProps) => {
     { date: string; messages: Message[] }[]
   >((groups, message) => {
     const messageDate = format(new Date(message.timestamp), "yyyy-MM-dd");
-    console.log(messageDate);
     const existingGroup = groups.find((group) => group.date === messageDate);
 
     if (existingGroup) {
