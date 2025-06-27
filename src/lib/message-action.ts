@@ -17,8 +17,8 @@ export const readMessage = async (messageId: string) => {
   }
 };
 
-export const fetchMessage = async (contactId: string) =>{ 
-   try {
+export const fetchMessage = async (contactId: string) => {
+  try {
     const response = await fetchWithAuth(`/api/messages?contact=${contactId}`);
     const data = await response.json();
     return data.success ? data.data : [];
@@ -55,7 +55,7 @@ export const fetchContactMessages = async (contact: string) => {
 export const sendMessage = async (to: Contact, messageBody: string, sessionManager: any, domain: string) => {
   try {
 
-    if(!sessionManager || domain.length === 0) throw new Error("Session manager or domain not found");
+    if (!sessionManager || domain.length === 0) throw new Error("Session manager or domain not found");
 
     if (sessionManager) {
       await sessionManager.message(
@@ -82,10 +82,10 @@ export const sendMessage = async (to: Contact, messageBody: string, sessionManag
 export async function sendSMSMessage(to: string, messageBody: string) {
   try {
     const response = await fetchWithAuth('/api/sms', {
-        method: "POST",
-        body: JSON.stringify({to, messageBody }),
-      });
-    
+      method: "POST",
+      body: JSON.stringify({ to, messageBody }),
+    });
+
     const data = await response.json();
     if (data.success) {
       return data.data;
