@@ -7,10 +7,10 @@ import { sendSignalWireSMS } from './signalwire/sending/send';
 import { sendViSMS } from './vi/sending/send';
 import { SmsGateway } from '@/models/SmsGateway';
 
-export async function POST (request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-  
+
     const to = body.to;
     const messageBody = body.messageBody;
 
@@ -30,20 +30,24 @@ export async function POST (request: NextRequest) {
     }
 
     if (!user.did || user.did === "") {
-      return NextResponse.json({error: 'You have no DID number'}, {status: 404});
+      return NextResponse.json({ error: 'You have no DID number' }, { status: 404 });
     }
 
     const smsGateway = await SmsGateway.findById(user.did);
 
     if (!smsGateway) {
-      return NextResponse.json({error: "No SMS Gateway"}, {status: 404})
+      return NextResponse.json({ error: "No SMS Gateway" }, { status: 404 })
     }
 
-    const result = smsGateway.type === "signalwire" ? await sendSignalWireSMS(user.did, to, messageBody) : (smsGateway.type === "vi" ? await sendViSMS(user.did, to, messageBody) : {success:false, data:"Invalid SMS Gateway Type", status: 400});
-    
+    const result = smsGateway.type === "signalwire"
+      ? await sendSignalWireSMS(user.did, to, messageBody)
+      : smsGateway.type === "vi"
+        ? await sendViSMS(user.did, to, messageBody)
+        : { success: false, data: "Invalid SMS Gateway Type", status: 400 };
+
     if (!result.success) {
       return NextResponse.json(
-        {error:result.data}, {status:result.status}
+        { error: result.data }, { status: result.status }
       )
     }
 
@@ -57,10 +61,10 @@ export async function POST (request: NextRequest) {
     await message.save();
 
     return NextResponse.json({
-      success:true, data: result.data
+      success: true, data: message
     });
 
-  } catch(error) {
-    return NextResponse.json({ error: (error as Error).message}, {status: 500});
+  } catch (error) {
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }
