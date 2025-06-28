@@ -9,8 +9,6 @@ export async function POST(request: NextRequest) {
   try {
     const contentType = request.headers.get('content-type') || '';
 
-    console.log("++++++++++++++++", contentType);
-
     let body: any;
 
     if (contentType.includes('application/json')) {
@@ -21,8 +19,6 @@ export async function POST(request: NextRequest) {
     } else {
       return NextResponse.json({ error: 'Unsupported content type' }, { status: 415 });
     }
-
-    console.log("+++++++++++++++++++++ body", body);
 
     const { from, to, text } = body;
 
@@ -48,22 +44,6 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
-
-    const config = gateway.config as IViConfig;
-    // const signature = request.headers.get('x-vi-signature');
-    // const timestamp = request.headers.get('x-timestamp');
-    // const data = timestamp + message;
-    // const expectedSignature = crypto
-    //   .createHmac('sha256', config.apiSecret)
-    //   .update(data)
-    //   .digest('base64');
-
-    // if (signature !== expectedSignature) {
-    //   return NextResponse.json(
-    //     { error: 'Invalid signature' },
-    //     { status: 401 }
-    //   );
-    // }
 
     console.log(`Received SMS from ${from} to ${to}: ${text}`);
 
