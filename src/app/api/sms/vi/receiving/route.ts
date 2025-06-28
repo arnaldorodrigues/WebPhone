@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     const newMessage = new Message({
       from: fromNumber.replace('+1', ''),
       to: gateway._id,
-      text,
+      body: text,
       timestamp: new Date()
     });
     await newMessage.save();
