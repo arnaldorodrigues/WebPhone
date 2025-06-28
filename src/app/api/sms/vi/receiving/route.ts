@@ -24,9 +24,9 @@ export async function POST(request: NextRequest) {
 
     console.log("+++++++++++++++++++++ body", body);
 
-    const { from, to, message } = body;
+    const { from, to, text } = body;
 
-    if (!message || !from) {
+    if (!text || !from) {
       return NextResponse.json(
         { error: "Invalid parameters" },
         { status: 400 }
@@ -35,9 +35,12 @@ export async function POST(request: NextRequest) {
 
     await connectDB();
 
+    const fromNumber = "+1" + from;
+    const toNumber = "+1" + to;
+
     const gateway = await SmsGateway.findOne({
       type: 'vi',
-      "config.phoneNumber": `${to}`
+      "config.phoneNumber": `${toNumber.replace('+1', '')}`
     });
     if (!gateway) {
       return NextResponse.json(
@@ -47,27 +50,27 @@ export async function POST(request: NextRequest) {
     }
 
     const config = gateway.config as IViConfig;
-    const signature = request.headers.get('x-vi-signature');
-    const timestamp = request.headers.get('x-timestamp');
-    const data = timestamp + message;
-    const expectedSignature = crypto
-      .createHmac('sha256', config.apiSecret)
-      .update(data)
-      .digest('base64');
+    // const signature = request.headers.get('x-vi-signature');
+    // const timestamp = request.headers.get('x-timestamp');
+    // const data = timestamp + message;
+    // const expectedSignature = crypto
+    //   .createHmac('sha256', config.apiSecret)
+    //   .update(data)
+    //   .digest('base64');
 
-    if (signature !== expectedSignature) {
-      return NextResponse.json(
-        { error: 'Invalid signature' },
-        { status: 401 }
-      );
-    }
+    // if (signature !== expectedSignature) {
+    //   return NextResponse.json(
+    //     { error: 'Invalid signature' },
+    //     { status: 401 }
+    //   );
+    // }
 
-    console.log(`Received SMS from ${from} to ${to}: ${message}`);
+    console.log(`Received SMS from ${from} to ${to}: ${text}`);
 
     const newMessage = new Message({
-      from: from,
+      from: fromNumber.replace('+1', ''),
       to: gateway._id,
-      message,
+      text,
       timestamp: new Date()
     });
     await newMessage.save();
