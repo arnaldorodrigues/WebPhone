@@ -35,8 +35,8 @@ export async function POST(request: NextRequest) {
 
     await connectDB();
 
-    const fromNumber = "+1" + from;
-    const toNumber = "+1" + to;
+    const fromNumber = "+" + from;
+    const toNumber = "+" + to;
 
     const gateway = await SmsGateway.findOne({
       type: 'vi',
