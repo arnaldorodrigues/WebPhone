@@ -7,16 +7,30 @@ import UserModel from "@/models/User";
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("+++++++++++++++++++++ request", request);
     const formData = await request.formData();
     const from = formData.get('msisdn')?.toString();
     const to = formData.get('to')?.toString();
     const body = formData.get('text')?.toString() || '';
 
+    if (!body || !from) {
+      return NextResponse.json(
+        { error: "Invalid parameters" },
+        { status: 400 }
+      );
+    }
+
     await connectDB();
-    
-    const gateway = await SmsGateway.findOne({ type: 'vi', "config.phoneNumber": `${to}` });
+
+    const gateway = await SmsGateway.findOne({
+      type: 'vi',
+      "config.phoneNumber": `${to}`
+    });
     if (!gateway) {
-      return NextResponse.json({ error: 'No SMS gateway configured' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'No SMS gateway configured' },
+        { status: 404 }
+      );
     }
 
     const config = gateway.config as IViConfig;
@@ -27,14 +41,15 @@ export async function POST(request: NextRequest) {
       .createHmac('sha256', config.apiSecret)
       .update(data)
       .digest('base64');
-      
+
     if (signature !== expectedSignature) {
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Invalid signature' },
+        { status: 401 }
+      );
     }
 
-    if (!body || !from) {
-      return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
-    }
+    console.log(`Received SMS from ${from} to ${to}: ${body}`);
 
     const message = new Message({
       from: from,
@@ -44,23 +59,38 @@ export async function POST(request: NextRequest) {
     });
     await message.save();
 
-    // Find all users who have this DID assigned and send them the message via websocket
-    const targets = await UserModel.find({
+    const targetUsers = await UserModel.find({
       "did": gateway._id
     });
 
-    // targets.forEach(target => {
-    //   sendToSocket(target._id.toString(), 'new_sms', {
-    //     messageId: message._id,
-    //     from: message.from,
-    //     to: gateway._id.toString(),
-    //     body: message.body,
-    //     timestamp: message.timestamp    
-    //   });
-    // });
+    if (!targetUsers || targetUsers.length < 1) {
+      return NextResponse.json(
+        { error: "No Users" },
+        { status: 404 }
+      );
+    }
 
-    console.log(`Received SMS from ${from} to ${to}: ${body}`);
-    return NextResponse.json({ success: true });
+    const targets = targetUsers.map((target: any) => target._id);
+
+    await fetch('http://localhost:8080/broadcast', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        targets: targets,
+        data: {
+          type: 'new_sms',
+          messageId: message._id,
+          from: message.from,
+          body: message.body,
+          timestamp: message.timestamp
+        },
+      })
+    });
+
+    return NextResponse.json(
+      { message: "Successfully Received" },
+      { status: 200 }
+    );
   } catch (error) {
     console.error('Error handling incoming SMS:', error);
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
