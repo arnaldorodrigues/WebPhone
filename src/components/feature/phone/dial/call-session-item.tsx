@@ -14,7 +14,7 @@ import { PlayIcon } from "@heroicons/react/24/solid";
 import { Session, SessionState } from "sip.js";
 import { SessionDirection } from "@/types/sip-type";
 import { PhoneStateType, usePhoneState } from "@/hooks/use-phonestate-context";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
   const sessionCall = useSessionCall(sessionId);
@@ -35,6 +35,9 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
 
   const [showDialpad, setShowDialpad] = useState(false);
   const [dialedNumbers, setDialedNumbers] = useState<string[]>([]);
+
+  const outgoingAudioRef = useRef<HTMLAudioElement | null>(null);
+  const incomingAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (
@@ -66,6 +69,39 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
       return () => document.removeEventListener("keydown", handleKeyDown);
     }
   }, [showDialpad]);
+
+  useEffect(() => {
+    if (direction === SessionDirection.OUTGOING && (
+      session?.state === SessionState.Initial ||
+      session?.state === SessionState.Establishing
+    )) {
+      if (!outgoingAudioRef.current) {
+        outgoingAudioRef.current = new Audio("sounds/outgoing-ring.mp3");
+        outgoingAudioRef.current.loop = true;
+      }
+      outgoingAudioRef.current.play().catch((err: any) =>
+        console.warn("Failed to play outgoing ring: ", err)
+      );
+    }
+
+    if (direction === SessionDirection.INCOMING && (
+      session?.state === SessionState.Initial ||
+      session?.state === SessionState.Establishing
+    )) {
+      if (!incomingAudioRef.current) {
+        incomingAudioRef.current = new Audio("sounds/incoming-ring.mp3");
+        incomingAudioRef.current.loop = true;
+      }
+      incomingAudioRef.current.play().catch((err: any) =>
+        console.warn("Failed to play outgoing ring: ", err)
+      );
+    }
+
+    if (session?.state === SessionState.Established || session?.state === SessionState.Terminated) {
+      incomingAudioRef.current?.pause();
+      outgoingAudioRef.current?.pause();
+    }
+  }, [session?.state, direction])
 
   return (
     <>
@@ -137,6 +173,7 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
               <button
                 onClick={async () => {
                   try {
+                    incomingAudioRef.current?.pause();
                     await answer?.();
                   } catch (error) {
                     console.error("Failed to answer call:", error);
@@ -150,6 +187,7 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
               <button
                 onClick={async () => {
                   try {
+                    incomingAudioRef.current?.pause();
                     await hangup?.();
                   } catch (error) {
                     console.error("Failed to decline call:", error);

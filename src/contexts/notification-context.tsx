@@ -29,6 +29,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   const showNotification = useCallback(
     (title: string, message: string, type: NotificationType = "info") => {
       setNotification({ title, message, type });
+
+      const audio = new Audio("/sounds/notification.mp3");
+      audio.play().catch((err: any) => {
+        console.warn("Unable to play notification sound", err);
+      })
     },
     []
   );
