@@ -156,8 +156,8 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
           session?.state === SessionState.Establishing) && (
           <div className="flex flex-col items-center justify-center gap-8 py-16">
             <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg animate-pulse">
-                <PhoneIcon className="w-12 h-12 text-white animate-bounce" />
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg">
+                <PhoneIcon className="w-12 h-12 text-white" />
               </div>
               <div className="absolute inset-0 w-24 h-24 rounded-full bg-emerald-400 animate-ping opacity-75"></div>
             </div>
