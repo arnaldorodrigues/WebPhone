@@ -3,10 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import Input from "@/components/ui/inputs/input";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SignIn() {
-  const { signin } = useAuth();
+  const { login } = useAuth();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -56,11 +56,10 @@ export default function SignIn() {
 
     setIsLoading(true);
 
+    console.log("++++++++++++++++++++", formData);
+
     try {
-      await signin({
-        email: formData.email,
-        password: formData.password,
-      });
+      await login(formData.email, formData.password);
     } catch (err: any) {
       setError(err.message || "Invalid email or password. Please try again.");
     } finally {

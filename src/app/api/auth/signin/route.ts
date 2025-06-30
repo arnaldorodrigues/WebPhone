@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { findUserByEmail, validatePassword } from '@/lib/users';
-import { generateToken } from '@/utils/jwt';
 import { SignInRequest } from '@/types/auth';
+import { signToken } from '@/helper/jwt';
 
 export async function POST(request: Request) {
   try {
@@ -15,16 +15,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
-    }
-
     const user = await findUserByEmail(email.toLowerCase());
-    
+
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
@@ -40,10 +32,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const { password: _, ...userWithoutPassword } = user;
-    const token = generateToken(userWithoutPassword);
-    
-    return NextResponse.json({ token, user: userWithoutPassword });
+    const token = signToken({
+      userId: user._id,
+      userName: user.name,
+      email: user.email,
+      role: user.role
+    });
+
+    return NextResponse.json({ token });
   } catch (error) {
     console.error('Signin error:', error);
     return NextResponse.json(

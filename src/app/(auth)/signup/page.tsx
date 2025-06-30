@@ -5,7 +5,7 @@ import Link from "next/link";
 import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 
 import Input from "@/components/ui/inputs/input";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SignUp() {
   const { signup } = useAuth();

@@ -1,4 +1,11 @@
-import { User } from "@/models/User";
+import { IUser } from "@/models/User";
+
+export interface IJwtPayload {
+  userId: string;
+  userName: string;
+  email: string;
+  role: string;
+}
 
 export interface SignUpRequest {
   extensionNumber: string;
@@ -14,5 +21,5 @@ export interface SignInRequest {
 
 export interface AuthResponse {
   token: string;
-  user: Omit<User, "password">;
+  user: Omit<IUser, "password">;
 }

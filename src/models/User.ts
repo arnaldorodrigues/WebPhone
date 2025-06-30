@@ -1,16 +1,18 @@
 import mongoose, { Schema } from 'mongoose';
 
-export interface User {
+export interface IUser {
   _id: string;
   email: string;
   password: string;
   name: string;
   role: 'admin' | 'user';
   createdAt: Date;
-  did?: string;  // Reference to SmsGateway
+  did?: string;
+  settings?: string;
+  contacts?: string[];
 }
 
-const userSchema: Schema = new Schema({
+const userSchema: Schema<IUser> = new Schema<IUser>({
   email: {
     type: String,
     required: true,
@@ -48,6 +50,6 @@ const userSchema: Schema = new Schema({
 });
 
 const UserModel =
-  mongoose.models.User || mongoose.model<User>("User", userSchema);
+  mongoose.models.User || mongoose.model<IUser>("User", userSchema);
 
 export default UserModel;

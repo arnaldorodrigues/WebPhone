@@ -1,10 +1,10 @@
-import { UserDataProvider } from "@/hooks/use-userdata"
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <UserDataProvider>
+    <AuthProvider>
       {children}
-    </UserDataProvider>
+    </AuthProvider>
   );
 }
 
