@@ -1,0 +1,41 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build project
+      run: npm run build
+
+    - name: Deploy to correct VPS
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ github.ref == 'refs/heads/main' && secrets.PROD_HOST || secrets.DEV_HOST }}
+        username: ${{ github.ref == 'refs/heads/main' && secrets.PROD_USERNAME || secrets.DEV_USERNAME }}
+        port: ${{ github.ref == 'refs/heads/main' && secrets.PROD_PORT || secrets.DEV_PORT }}
+        key: ${{ github.ref == 'refs/heads/main' && secrets.PROD_SSH_KEY || secrets.DEV_SSH_KEY }}
+        script: |
+          cd ${{ github.ref == 'refs/heads/main' && secrets.PROD_DEPLOY_PATH || secrets.DEV_DEPLOY_PATH }}
+          git pull origin ${{ github.ref_name }}
+          npm install
+          npm run build
+          pm2 restart WebPhone-${{ github.ref_name }} || pm2 start npm --name "WebPhone-${{ github.ref_name }}" -- start
+          pm2 restart SmsServer-${{ github.ref_name }} || pm2 start sms-server.js --name "SmsServer-${{ github.ref_name }}"
