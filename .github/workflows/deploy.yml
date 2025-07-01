@@ -47,6 +47,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev
 
+    env:
+      HOST: ${{ vars.DEV_HOST }}
+      USERNAME: ${{ vars.DEV_USERNAME }}
+      PORT: ${{ vars.DEV_PORT }}
+      DEPLOY_PATH: ${{ vars.DEV_DEPLOY_PATH }}
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -65,12 +71,12 @@ jobs:
     - name: Deploy to Dev VPS
       uses: appleboy/ssh-action@master
       with:
-        host: ${{ env.DEV_HOST }}
-        username: ${{ env.DEV_USERNAME }}
-        port: ${{ env.DEV_PORT }}
+        host: ${{ env.HOST }}
+        username: ${{ env.USERNAME }}
+        port: ${{ env.PORT }}
         key: ${{ secrets.DEV_SSH_KEY }}
         script: |
-          cd ${{ env.DEV_DEPLOY_PATH }}
+          cd ${{ env.DEPLOY_PATH }}
           git pull origin dev
           npm install
           npm run build
