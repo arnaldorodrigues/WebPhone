@@ -83,7 +83,11 @@ jobs:
         port: ${{ env.PORT }}
         key: ${{ secrets.DEV_SSH_KEY }}
         script: |
-          cd ${{ env.DEPLOY_PATH }}
+          set -e
+          echo "Deploying to $DEPLOY_PATH"
+          cd $DEPLOY_PATH || exit 1
+          pwd
+          git fetch origin
           git checkout dev
           git pull origin dev
           npm install
