@@ -84,8 +84,8 @@ jobs:
         key: ${{ secrets.DEV_SSH_KEY }}
         script: |
           set -e
-          echo "Deploying to $DEPLOY_PATH"
-          cd $DEPLOY_PATH || exit 1
+          echo "Deploying to ${{ env.DEPLOY_PATH }}"
+          cd ${{ env.DEPLOY_PATH }} || exit 1
           pwd
           git fetch origin
           git checkout dev
