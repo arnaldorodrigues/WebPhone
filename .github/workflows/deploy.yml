@@ -41,7 +41,11 @@ jobs:
         port: ${{ env.PORT }}
         key: ${{ secrets.PROD_SSH_KEY }}
         script: |
-          cd ${{ env.DEPLOY_PATH }}
+          set -e
+          echo "Deploying to ${{ env.DEPLOY_PATH }}"
+          cd ${{ env.DEPLOY_PATH }} || exit 1
+          pwd
+          git fetch origin
           git checkout main
           git pull origin main
           npm install
