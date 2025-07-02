@@ -13,7 +13,7 @@ jobs:
     environment: production
 
     env:
-      HOST: ${{ vars.PROD_HOST }}
+      HOST: ${{ vars.PROD_HOST_DOLPHIN }}
       USERNAME: ${{ vars.PROD_USERNAME }}
       PORT: ${{ vars.PROD_PORT }}
       DEPLOY_PATH: ${{ vars.PROD_DEPLOY_PATH }}
