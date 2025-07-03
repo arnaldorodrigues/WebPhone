@@ -50,8 +50,8 @@ jobs:
           git pull origin main
           npm install
           npm run build
-          pm2 restart WebPhone-main || pm2 start npm --name "WebPhone-main" -- start
-          pm2 restart SmsServer-main || pm2 start sms-server.js --name "SmsServer-main"
+          pm2 restart WebPhone || pm2 start npm --name "WebPhone" -- start
+          pm2 restart SmsServer || pm2 start sms-server.js --name "SmsServer"
 
   deploy-dev:
     if: github.ref == 'refs/heads/dev'
@@ -96,5 +96,5 @@ jobs:
           git pull origin dev
           npm install
           npm run build
-          pm2 restart WebPhone-dev || pm2 start npm --name "WebPhone-dev" -- start
-          pm2 restart SmsServer-dev || pm2 start sms-server.js --name "SmsServer-dev"
+          pm2 restart WebPhone || pm2 start npm --name "WebPhone" -- start
+          pm2 restart SmsServer || pm2 start sms-server.js --name "SmsServer"
