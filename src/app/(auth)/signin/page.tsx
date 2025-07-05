@@ -56,8 +56,6 @@ export default function SignIn() {
 
     setIsLoading(true);
 
-    console.log("++++++++++++++++++++", formData);
-
     try {
       await login(formData.email, formData.password);
     } catch (err: any) {

@@ -1,6 +1,6 @@
 export const runtime = 'nodejs';
 
-import { SmsGateway } from "@/models/SmsGateway";
+import { SmsGateway } from "@/models/SmsGateway__";
 import Message from "@/models/Message";
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";

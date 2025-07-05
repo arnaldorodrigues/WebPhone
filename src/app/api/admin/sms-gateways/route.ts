@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
-import { ISignalwireConfig, ISmsGateway, IViConfig, SmsGateway } from "@/models/SmsGateway";
+import { ISignalwireConfig, ISmsGateway, IViConfig, SmsGateway } from "@/models/SmsGateway__";
 
 const validatePhoneNumber = (phoneNumber: string): string | null => {
   if (!phoneNumber.trim()) {

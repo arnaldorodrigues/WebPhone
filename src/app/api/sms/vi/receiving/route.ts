@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import connectDB from '@/lib/mongodb';
-import { SmsGateway, IViConfig } from '@/models/SmsGateway';
+import { SmsGateway, IViConfig } from '@/models/SmsGateway__';
 import Message from '@/models/Message';
 import UserModel from "@/models/User";
 

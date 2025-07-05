@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ISmsGateway, IViConfig, ISignalwireConfig } from "@/models/SmsGateway";
+import { ISmsGateway, IViConfig, ISignalwireConfig } from "@/models/SmsGateway__";
 import { SmsGatewayTable } from "@/components/feature/admin/sms/sms-gateway-table";
 import { SmsGatewayEditDialog } from "@/components/feature/admin/sms/sms-gateway-edit-dialog";
 import { useNotification } from "@/contexts/notification-context";

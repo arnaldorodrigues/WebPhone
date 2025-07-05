@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Apidaze } from '@apidaze/node';
 import connectDB from '@/lib/mongodb';
 import Message from '@/models/Message';
-import { SmsGateway } from '@/models/SmsGateway';
+import { SmsGateway } from '@/models/SmsGateway__';
 import { isValidObjectId } from 'mongoose';
 
 export async function sendViSMS( fromId:string, to:string, messageBody:string ) {

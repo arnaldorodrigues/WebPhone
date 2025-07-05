@@ -1,4 +1,4 @@
-import { ISmsGateway, ISignalwireConfig, IViConfig } from "@/models/SmsGateway";
+import { ISmsGateway, ISignalwireConfig, IViConfig } from "@/models/SmsGateway__";
 import { Dialog } from "@/components/ui/dialogs/dialog";
 import Input from "@/components/ui/inputs/input";
 import { useState, useEffect } from "react";

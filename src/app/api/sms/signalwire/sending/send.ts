@@ -1,7 +1,7 @@
 // @ts-ignore: SignalWire types export issue
 import { RestClient } from '@signalwire/compatibility-api';
 import connectDB from '@/lib/mongodb';
-import { SmsGateway, ISignalwireConfig } from '@/models/SmsGateway';
+import { SmsGateway, ISignalwireConfig } from '@/models/SmsGateway__';
 import { isValidObjectId } from 'mongoose';
 
 export async function sendSignalWireSMS( fromId: string, to:string, messageBody:string ) {

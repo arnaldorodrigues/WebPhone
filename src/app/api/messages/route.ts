@@ -4,7 +4,7 @@ import Message from '@/models/Message';
 import { _parse_token } from '@/utils/auth';
 import UserModel from '@/models/User';
 import { isValidObjectId } from 'mongoose';
-import { SmsGateway } from '@/models/SmsGateway';
+import { SmsGateway } from '@/models/SmsGateway__';
 
 async function getGatewayPhoneNumber() {
   const gateway = await SmsGateway.findOne({ type: 'signalwire' });

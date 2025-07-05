@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import UserModel from '@/models/User';
-import { Settings } from '@/models/Settings';
+import { Settings } from '@/models/Setting';
 import { _parse_token } from '@/utils/auth';
 import bcrypt from 'bcryptjs';
 import mongoose, { Document, isValidObjectId, Types } from 'mongoose';
 import MessageModel from '@/models/Message';
-import '@/models/SmsGateway';
+import '@/models/SmsGateway__';
 
 interface Contact {
   id?: string;

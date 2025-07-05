@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import { SmsGateway } from '@/models/SmsGateway';
+import { SmsGateway } from '@/models/SmsGateway__';
 
 type Context = {
   params: Promise<{ type: string }>;

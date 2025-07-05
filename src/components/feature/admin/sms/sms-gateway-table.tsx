@@ -1,6 +1,6 @@
 "use client";
 
-import { ISmsGateway, ISignalwireConfig, IViConfig } from "@/models/SmsGateway";
+import { ISmsGateway, ISignalwireConfig, IViConfig } from "@/models/SmsGateway__";
 import { EyeIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useState, useEffect } from "react";
 import ConfirmDialog from "@/components/ui/dialogs/confirm-dialog";

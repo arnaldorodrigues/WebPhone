@@ -8,7 +8,7 @@ import { UserIcon, CogIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { User } from "@/types/user";
 import { fetchWithAuth } from "@/utils/api";
 import { ServerConfig } from "@/types/server-type";
-import { ISmsGateway } from "@/models/SmsGateway";
+import { ISmsGateway } from "@/models/SmsGateway__";
 
 interface UserEditDialogProps {
   isOpen: boolean;

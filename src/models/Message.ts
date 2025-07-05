@@ -1,31 +1,50 @@
-import mongoose from 'mongoose';
+import { MessageStatus } from '@/types/common';
+import mongoose, { Document, Schema } from 'mongoose';
 
-const messageSchema = new mongoose.Schema({
-  from: {
-    type: String,
-    required: true,
-  },
-  to: {
-    type: String,
-    required: true,
-  },
-  body: {
-    type: String,
-    required: false,
-    default: "",
-  },
-  status: {
-    type: String,
-    default: 'unread',
-    enum: ['unread', 'read', 'failed'],
-  },
-  timestamp: {
-    type: Date,
-    default: Date.now,
-  },
-});
+export interface IMessage extends Document {
+  from: string;
+  to: string;
+  body: string;
+  status: MessageStatus;
+  timestamp: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-messageSchema.index({ from: 1, to: 1, timestamp: -1 });
+const messageSchema: Schema<IMessage> = new Schema<IMessage>(
+  {
+    from: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    to: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    body: {
+      type: String,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: Object.values(MessageStatus),
+      default: MessageStatus.UNREAD,
+      required: true,
+    },
+    timestamp: {
+      type: Date,
+      required: true,
+      default: Date.now,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-const Message = mongoose.models.Message || mongoose.model('Message', messageSchema);
-export default Message; 
+const MessageModel =
+  mongoose.models.Message || mongoose.model<IMessage>("Message", messageSchema);
+
+export default MessageModel;

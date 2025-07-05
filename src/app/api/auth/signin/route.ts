@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { findUserByEmail, validatePassword } from '@/lib/users';
 import { SignInRequest } from '@/types/auth';
-import { signToken } from '@/helper/jwt';
+import { signToken } from '@/utils/auth';
 
 export async function POST(request: Request) {
   try {

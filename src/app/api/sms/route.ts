@@ -5,7 +5,7 @@ import Message from '@/models/Message';
 import { _parse_token } from '@/utils/auth';
 import { sendSignalWireSMS } from './signalwire/sending/send';
 import { sendViSMS } from './vi/sending/send';
-import { SmsGateway } from '@/models/SmsGateway';
+import { SmsGateway } from '@/models/SmsGateway__';
 
 export async function POST(request: NextRequest) {
   try {

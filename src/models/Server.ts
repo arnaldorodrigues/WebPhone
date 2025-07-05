@@ -1,41 +1,48 @@
-import mongoose from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 
-const serverSchema = new mongoose.Schema({
-  domain: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-  },
-  wsServer: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  wsPort: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  wsPath: {
-    type: String,
-    default: "/",
-    trim: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+export interface IServer extends Document {
+  domain: string;
+  wsServer: string;
+  wsPort: string;
+  wsPath: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-serverSchema.pre("save", function (next) {
-  this.updatedAt = new Date();
-  next();
-});
+const serverSchema: Schema<IServer> = new Schema<IServer>(
+  {
+    domain: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    wsServer: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    wsPort: {
+      type: String,
+      required: true,
+      trim: true,
+      default: "7443",
+      match: /^\d+$/,
+    },
+    wsPath: {
+      type: String,
+      default: "/",
+      trim: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-const Server = mongoose.models.Server || mongoose.model("Server", serverSchema);
-export default Server;
+serverSchema.index({ domain: 1 }, { unique: true });
+
+const ServerModel =
+  mongoose.models.Server || mongoose.model("Server", serverSchema);
+
+export default ServerModel;

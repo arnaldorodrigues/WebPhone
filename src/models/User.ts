@@ -1,53 +1,53 @@
-import mongoose, { Schema } from 'mongoose';
+import { UserRole } from '@/types/common';
+import mongoose, { Document, Schema, Types } from 'mongoose';
 
-export interface IUser {
-  _id: string;
+export interface IUser extends Document {
   email: string;
   password: string;
   name: string;
-  role: 'admin' | 'user';
+  role: UserRole;
+  smsGatewayId?: Types.ObjectId;
+  settingId?: Types.ObjectId;
   createdAt: Date;
-  did?: string;
-  settings?: string;
-  contacts?: string[];
+  updatedAt: Date;
 }
 
-const userSchema: Schema<IUser> = new Schema<IUser>({
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
+const userSchema: Schema<IUser> = new Schema<IUser>(
+  {
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    name: {
+      type: String,
+      required: true,
+    },
+    role: {
+      type: String,
+      enum: Object.values(UserRole),
+      default: UserRole.USER,
+      required: true,
+    },
+    settingId: {
+      type: Schema.Types.ObjectId,
+      ref: "Settings",
+    },
+    smsGatewayId: {
+      type: Schema.Types.ObjectId,
+      ref: "SmsGateway",
+      required: false,
+    },
   },
-  password: {
-    type: String,
-    required: true,
-  },
-  name: {
-    type: String,
-    required: true,
-  },
-  role: {
-    type: String,
-    enum: ['admin', 'user'],
-    default: 'user',
-    required: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  settings: {
-    type: Schema.Types.ObjectId,
-    ref: "Settings",
-  },
-  contacts: [String],
-  did: {
-    type: Schema.Types.ObjectId,
-    ref: "SmsGateway",
-    required: false,
-  },
-});
+  {
+    timestamps: true
+  }
+);
 
 const UserModel =
   mongoose.models.User || mongoose.model<IUser>("User", userSchema);
