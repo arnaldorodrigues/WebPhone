@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
 
-import SearchInput from "@/components/ui/inputs/search-input";
-import DropdownSelect from "@/components/ui/inputs/dropdown-select";
-import UserTable from "@/components/feature/admin/users/user-table";
+import SearchInput from "@/components/ui/inputs/SearchInput";
+import DropdownSelect from "@/components/ui/inputs/DropdownSelect";
+import UserTable from "@/components/admin/users/UsersTable__";
 import { fetchWithAuth } from "@/utils/api";
 import UsersPageSkeleton from "@/components/feature/admin/users/users-page-skeleton";
 import { User } from "@/types/user";

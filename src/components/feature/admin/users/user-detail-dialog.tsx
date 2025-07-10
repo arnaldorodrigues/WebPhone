@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog } from "@/components/ui/dialogs/dialog";
+import { Dialog } from "@/components/ui/dialogs/Dialog";
 import {
   UserIcon,
   EnvelopeIcon,

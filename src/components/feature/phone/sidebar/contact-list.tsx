@@ -1,6 +1,6 @@
 import ContactCard from "./contact-card";
 import { PlusIcon } from "@heroicons/react/24/solid";
-import SearchInput from "@/components/ui/inputs/search-input";
+import SearchInput from "@/components/ui/inputs/SearchInput";
 import { useEffect, useState } from "react";
 import AddContactDialog from "./add-contact-dialog";
 import { useUserData } from "@/hooks/use-userdata";

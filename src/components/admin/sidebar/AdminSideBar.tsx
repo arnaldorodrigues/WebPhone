@@ -67,7 +67,7 @@ export const AdminSideBar = () => {
   const navItems: NavItem[] = [
     { name: "Dashboard", href: "/admin/dashboard", icon: HomeIcon },
     { name: "Users", href: "/admin/users", icon: UsersIcon },
-    { name: "Servers", href: "/admin/servers", icon: ServerIcon },
+    { name: "SIP Servers", href: "/admin/sip-servers", icon: ServerIcon },
     { name: "SMS Gateways", href: "/admin/sms-gateways", icon: ChatBubbleLeftIcon },
   ]
 

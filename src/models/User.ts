@@ -36,7 +36,7 @@ const userSchema: Schema<IUser> = new Schema<IUser>(
     },
     settingId: {
       type: Schema.Types.ObjectId,
-      ref: "Settings",
+      ref: "Setting",
     },
     smsGatewayId: {
       type: Schema.Types.ObjectId,

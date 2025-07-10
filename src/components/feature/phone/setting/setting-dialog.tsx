@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { getParsedToken } from "@/utils/auth";
-import { Dialog } from "@/components/ui/dialogs/dialog";
+import { Dialog } from "@/components/ui/dialogs/Dialog";
 import { TabView } from "@/components/ui/views/tab-view";
-import Input from "@/components/ui/inputs/input";
+import Input from "@/components/ui/inputs/Input";
 import { UserCircleIcon } from "@heroicons/react/24/solid";
 import { useUserData } from "@/hooks/use-userdata";
 import { useSIPProvider } from "@/hooks/sip-provider/sip-provider-context";

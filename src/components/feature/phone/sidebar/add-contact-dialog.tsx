@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Dialog } from "@/components/ui/dialogs/dialog";
-import SearchInput from "@/components/ui/inputs/search-input";
+import { Dialog } from "@/components/ui/dialogs/Dialog";
+import SearchInput from "@/components/ui/inputs/SearchInput";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { Contact } from "@/types/user";
 import { addContact, getCandidates } from "@/lib/contact-action";

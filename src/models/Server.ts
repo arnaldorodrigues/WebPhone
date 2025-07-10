@@ -43,6 +43,6 @@ const serverSchema: Schema<IServer> = new Schema<IServer>(
 serverSchema.index({ domain: 1 }, { unique: true });
 
 const ServerModel =
-  mongoose.models.Server || mongoose.model("Server", serverSchema);
+  mongoose.models.Server || mongoose.model<IServer>("Server", serverSchema);
 
 export default ServerModel;

@@ -2,7 +2,7 @@
 
 import { SplashLoader } from "@/components/ui/splash";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserRole } from "@/types/userroles";
+import { UserRole } from "@/types/common";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";

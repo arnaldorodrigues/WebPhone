@@ -1,23 +1,20 @@
 import { SmsGatewayType, SmsGatewayTypeValues } from "@/types/common";
 import mongoose, { Document, Schema } from "mongoose";
 
-export interface ISmsConfig {
-  phoneNumber: string;
-}
-
-export interface ISignalWireConfig extends ISmsConfig {
+export interface ISignalWireConfig {
   projectId: string;
   authToken: string;
   spaceUrl: string;
 }
 
-export interface IViConfig extends ISmsConfig {
+export interface IViConfig {
   apiKey: string;
   apiSecret: string;
 }
 
 export interface ISmsGateway extends Document {
   type: SmsGatewayType;
+  didNumber: string;
   config: ISignalWireConfig | IViConfig;
   createdAt: Date;
   updatedAt: Date;
@@ -29,6 +26,12 @@ const smsGatewaySchema: Schema<ISmsGateway> = new Schema<ISmsGateway>(
       type: String,
       required: true,
       enum: SmsGatewayTypeValues,
+    },
+    didNumber: {
+      type: String,
+      required: true,
+      trim: true,
+      match: /^\d+$/,
     },
     config: {
       type: Schema.Types.Mixed,

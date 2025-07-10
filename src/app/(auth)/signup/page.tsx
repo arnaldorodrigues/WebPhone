@@ -3,12 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
-
-import Input from "@/components/ui/inputs/input";
 import { useAuth } from "@/contexts/AuthContext";
+import { Input } from "@/components/ui/inputs";
 
 export default function SignUp() {
-  const { signup } = useAuth();
+  const { logout } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -90,11 +89,7 @@ export default function SignUp() {
     setIsLoading(true);
 
     try {
-      await signup({
-        password: formData.password,
-        name: formData.name.trim(),
-        email: formData.email,
-      });
+      await logout();
     } catch (err: any) {
       setError(err.message || "Registration failed. Please try again.");
     } finally {
@@ -222,8 +217,8 @@ export default function SignUp() {
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div
                       className={`flex items-center ${passwordCriteria.length
-                          ? "text-green-600"
-                          : "text-gray-400"
+                        ? "text-green-600"
+                        : "text-gray-400"
                         }`}
                     >
                       {passwordCriteria.length ? (
@@ -235,8 +230,8 @@ export default function SignUp() {
                     </div>
                     <div
                       className={`flex items-center ${passwordCriteria.uppercase
-                          ? "text-green-600"
-                          : "text-gray-400"
+                        ? "text-green-600"
+                        : "text-gray-400"
                         }`}
                     >
                       {passwordCriteria.uppercase ? (
@@ -248,8 +243,8 @@ export default function SignUp() {
                     </div>
                     <div
                       className={`flex items-center ${passwordCriteria.lowercase
-                          ? "text-green-600"
-                          : "text-gray-400"
+                        ? "text-green-600"
+                        : "text-gray-400"
                         }`}
                     >
                       {passwordCriteria.lowercase ? (
@@ -261,8 +256,8 @@ export default function SignUp() {
                     </div>
                     <div
                       className={`flex items-center ${passwordCriteria.number
-                          ? "text-green-600"
-                          : "text-gray-400"
+                        ? "text-green-600"
+                        : "text-gray-400"
                         }`}
                     >
                       {passwordCriteria.number ? (
@@ -336,8 +331,8 @@ export default function SignUp() {
               type="submit"
               disabled={isLoading}
               className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 ${isLoading
-                  ? "opacity-75 cursor-not-allowed"
-                  : "transform hover:scale-105"
+                ? "opacity-75 cursor-not-allowed"
+                : "transform hover:scale-105"
                 }`}
             >
               {isLoading ? (

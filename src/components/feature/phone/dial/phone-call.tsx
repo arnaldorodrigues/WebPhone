@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Dialog } from "@/components/ui/dialogs/dialog";
+import { Dialog } from "@/components/ui/dialogs/Dialog";
 import DialDisplay from "@/components/feature/phone/dial/dial-display";
 import DialPad from "@/components/feature/phone/dial/dial-pad";
 import { SessionState } from "sip.js";

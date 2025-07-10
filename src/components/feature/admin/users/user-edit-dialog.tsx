@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Dialog } from "@/components/ui/dialogs/dialog";
-import Input from "@/components/ui/inputs/input";
-import DropdownSelect from "@/components/ui/inputs/dropdown-select";
+import { Dialog } from "@/components/ui/dialogs/Dialog";
+import Input from "@/components/ui/inputs/Input";
+import DropdownSelect from "@/components/ui/inputs/DropdownSelect";
 import { UserIcon, CogIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { User } from "@/types/user";
 import { fetchWithAuth } from "@/utils/api";

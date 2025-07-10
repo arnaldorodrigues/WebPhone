@@ -6,7 +6,7 @@ import {
   removeContact,
 } from "@/lib/contact-action";
 import { useUserData } from "@/hooks/use-userdata";
-import ConfirmDialog from "@/components/ui/dialogs/confirm-dialog";
+import ConfirmDialog from "@/components/ui/dialogs/ConfirmDialog";
 import { useRouter } from "next/navigation";
 
 interface Contact {

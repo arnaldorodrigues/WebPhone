@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Input from "@/components/ui/inputs/input";
 import { useAuth } from "@/contexts/AuthContext";
+import { Input } from "@/components/ui/inputs";
 
 export default function SignIn() {
   const { login } = useAuth();
