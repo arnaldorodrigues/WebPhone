@@ -64,6 +64,8 @@ export const SipServerEditDialog: React.FC<Props> = ({
   }
 
   useEffect(() => {
+    setIsSubmitting(false);
+    
     if (sipServer) {
       setFormData({
         domain: sipServer.domain,
@@ -74,7 +76,7 @@ export const SipServerEditDialog: React.FC<Props> = ({
     } else {
       setFormData(initialValue);
     }
-  }, [sipServer])
+  }, [isOpen])
 
   return (
     <Dialog

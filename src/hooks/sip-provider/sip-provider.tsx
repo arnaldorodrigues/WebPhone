@@ -12,8 +12,8 @@ import {
   CONNECT_STATUS,
   SessionTimer,
 } from "../../types/sip-type";
-import { useUserData } from "../use-userdata";
-import { addContact } from "@/lib/contact-action";
+// import { useUserData } from "../use-userdata";
+// import { addContact } from "@/lib/contact-action";
 import { useNotification } from "@/contexts/notification-context";
 
 interface SipMessage {
@@ -44,7 +44,7 @@ export const SIPProvider = (props: {
     RegisterStatus.UNREGISTERED
   );
   const [messages, setMessages] = useState<Record<string, SipMessage>>({});
-  const { userData, refreshUserData } = useUserData();
+  // const { userData, refreshUserData } = useUserData();
 
   const updateSession = useCallback(
     (session: Session) => {
@@ -241,31 +241,31 @@ export const SIPProvider = (props: {
         if (newContacts.includes(messages[keys[i]].from)) {
           continue;
         }
-        if (
-          userData.contacts.some(
-            (contact) => contact.number === messages[keys[i]].from
-          )
-        ) {
-          continue;
-        }
+        // if (
+        //   userData.contacts.some(
+        //     (contact: any) => contact.number === messages[keys[i]].from
+        //   )
+        // ) {
+        //   continue;
+        // }
         newContacts.push(messages[keys[i]].from);
       }
 
-      await Promise.all(
-        newContacts.map((contactId) =>
-          addContact({
-            id: "",
-            name: "",
-            number: contactId,
-          })
-        )
-      );
+      // await Promise.all(
+      //   newContacts.map((contactId) =>
+      //     addContact({
+      //       id: "",
+      //       name: "",
+      //       number: contactId,
+      //     })
+      //   )
+      // );
 
-      refreshUserData();
+      // refreshUserData();
     };
 
     processNewContacts();
-  }, [messages, refreshUserData]);
+  }, [messages]);
 
   return (
     <>

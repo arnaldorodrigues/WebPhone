@@ -16,3 +16,8 @@ export enum MessageStatus {
   READ = "read",
   UNREAD = "unread",
 }
+
+export type TDropdownOption = {
+  value: string;
+  label: string;
+}

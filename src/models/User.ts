@@ -6,6 +6,7 @@ export interface IUser extends Document {
   password: string;
   name: string;
   role: UserRole;
+  sipServerId?: Types.ObjectId;
   smsGatewayId?: Types.ObjectId;
   settingId?: Types.ObjectId;
   createdAt: Date;
@@ -33,6 +34,10 @@ const userSchema: Schema<IUser> = new Schema<IUser>(
       enum: Object.values(UserRole),
       default: UserRole.USER,
       required: true,
+    },
+    sipServerId: {
+      type: Schema.Types.ObjectId,
+      ref: "Server"
     },
     settingId: {
       type: Schema.Types.ObjectId,

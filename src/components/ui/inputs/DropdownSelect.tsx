@@ -2,17 +2,12 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ChevronDownIcon, CheckIcon } from "@heroicons/react/24/outline";
-
-interface DropdownOption {
-  value: string;
-  label: string;
-  disabled?: boolean;
-}
+import { TDropdownOption } from "@/types/common";
 
 interface DropdownSelectProps {
-  value: string;
-  onChange: (value: string) => void;
-  options: DropdownOption[];
+  value: TDropdownOption | undefined;
+  onChange: (value: TDropdownOption) => void;
+  options: TDropdownOption[];
   placeholder?: string;
   className?: string;
   disabled?: boolean;
@@ -47,10 +42,10 @@ export const DropdownSelect = ({
     };
   }, []);
 
-  const selectedOption = options.find((option) => option.value === value);
+  const selectedOption = options.find((option) => option.value === value?.value);
   const displayText = selectedOption ? selectedOption.label : placeholder;
 
-  const handleOptionClick = (optionValue: string) => {
+  const handleOptionClick = (optionValue: TDropdownOption) => {
     onChange(optionValue);
     setIsOpen(false);
   };
@@ -125,23 +120,17 @@ export const DropdownSelect = ({
             <button
               key={option.value + option.label}
               type="button"
-              onClick={() =>
-                !option.disabled && handleOptionClick(option.value)
-              }
-              disabled={option.disabled}
+              onClick={() => handleOptionClick(option)}
               className={`
                 w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors duration-200
                 flex items-center justify-between
-                ${option.disabled
-                  ? "text-gray-400 cursor-not-allowed"
-                  : "text-gray-900 cursor-pointer"
-                }
-                ${value === option.value ? "bg-indigo-50 text-indigo-700" : ""}
+                text-gray-900 cursor-pointer
+                ${value?.value === option.value ? "bg-indigo-50 text-indigo-700" : ""}
                 first:rounded-t-lg last:rounded-b-lg
               `}
             >
               <span>{option.label}</span>
-              {value === option.value && (
+              {value?.value === option.value && (
                 <CheckIcon className="w-4 h-4 text-indigo-500" />
               )}
             </button>

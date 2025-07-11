@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema, Types } from 'mongoose';
+import mongoose, { Document, model, models, Schema, Types } from 'mongoose';
 
 export interface ISetting extends Document {
   wsServer: string;
@@ -60,7 +60,6 @@ const settingSchema: Schema<ISetting> = new Schema<ISetting>(
 
 settingSchema.index({ sipUsername: 1, domain: 1 }, { unique: true });
 
-const SettingModel =
-  mongoose.models.Setting || mongoose.model<ISetting>("Setting", settingSchema);
+const SettingModel = models.Setting || model<ISetting>("Setting", settingSchema);
 
 export default SettingModel;

@@ -11,23 +11,23 @@ import {
   TrashIcon,
   ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
-import { User } from "@/types/user";
+import React from "react";
 
-interface UserDetailDialogProps {
+type Props = {
   isOpen: boolean;
   onClose: () => void;
-  user: User | null;
+  user: any | null;
   onEdit?: () => void;
   onDelete?: (userId: string) => void;
 }
 
-const UserDetailDialog = ({
+export const UserDetailDialog: React.FC<Props> = ({
   isOpen,
   onClose,
   user,
   onEdit,
   onDelete,
-}: UserDetailDialogProps) => {
+}) => {
   if (!user) return null;
 
   const handleEdit = () => {
@@ -154,14 +154,13 @@ const UserDetailDialog = ({
                       ? typeof user.did === "object" &&
                         user.did !== null &&
                         "type" in user.did
-                        ? `${(user.did as any).config.phoneNumber} - ${
-                            (user.did as any).type === "signalwire"
-                              ? "signalwire"
-                              : "vi"
-                          }`
+                        ? `${(user.did as any).config.phoneNumber} - ${(user.did as any).type === "signalwire"
+                          ? "signalwire"
+                          : "vi"
+                        }`
                         : typeof user.did === "string"
-                        ? `${user.did} - Unknown`
-                        : "Not configured"
+                          ? `${user.did} - Unknown`
+                          : "Not configured"
                       : "Not configured"}
                   </p>
                 </div>
@@ -230,5 +229,3 @@ const UserDetailDialog = ({
     </Dialog>
   );
 };
-
-export default UserDetailDialog;

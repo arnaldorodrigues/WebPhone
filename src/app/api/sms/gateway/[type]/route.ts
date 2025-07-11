@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import { SmsGateway } from '@/models/SmsGateway__';
+import SmsGatewayModel from '@/models/SmsGateway';
 
 type Context = {
   params: Promise<{ type: string }>;
@@ -22,7 +22,7 @@ export async function GET(
       );
     }
 
-    const gateway = await SmsGateway.findOne({ type });
+    const gateway = await SmsGatewayModel.findOne({ type });
     if (!gateway) {
       return NextResponse.json(
         { success: false, error: `No ${type} gateway configured` },

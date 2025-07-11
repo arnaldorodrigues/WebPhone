@@ -1,6 +1,6 @@
 import connectDB from "@/lib/mongodb";
 import { withRole } from "@/middleware/authMiddleware";
-import ServerModel from "@/models/Server";
+import SipServerModel from "@/models/SipServer";
 import { UserRole } from "@/types/common";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -13,9 +13,9 @@ export const GET = withRole(UserRole.ADMIN, async (req: NextRequest) => {
     const limit = parseInt(searchParams.get('limit') || '10');
     const skip = (page - 1) * limit;
 
-    const totalServers = await ServerModel.countDocuments();
+    const totalServers = await SipServerModel.countDocuments();
 
-    const sipservers = await ServerModel.find({})
+    const sipservers = await SipServerModel.find({})
       .skip(skip)
       .limit(limit)
       .lean();
@@ -57,7 +57,7 @@ export const POST = withRole(UserRole.ADMIN, async (req: NextRequest) => {
       );
     }
 
-    const duplicate = await ServerModel.findOne({
+    const duplicate = await SipServerModel.findOne({
       domain: body.domain
     });
 
@@ -71,7 +71,7 @@ export const POST = withRole(UserRole.ADMIN, async (req: NextRequest) => {
       );
     }
 
-    const createdServer = await ServerModel.create({
+    const createdServer = await SipServerModel.create({
       domain: body.domain,
       wsServer: body.wsServer,
       wsPort: body.wsPort,
@@ -110,7 +110,7 @@ export const PUT = withRole(UserRole.ADMIN, async (req: NextRequest) => {
       );
     }
 
-    const existing = await ServerModel.findById(body.id);
+    const existing = await SipServerModel.findById(body.id);
     if (!existing) {
       return NextResponse.json(
         {
@@ -121,7 +121,7 @@ export const PUT = withRole(UserRole.ADMIN, async (req: NextRequest) => {
       )
     }
 
-    const duplicate = await ServerModel.findOne({
+    const duplicate = await SipServerModel.findOne({
       domain: body.domain,
       _id: { $ne: body.id }
     });
@@ -135,7 +135,7 @@ export const PUT = withRole(UserRole.ADMIN, async (req: NextRequest) => {
       );
     }
 
-    const updatedServer = await ServerModel.findByIdAndUpdate(body.id,
+    const updatedServer = await SipServerModel.findByIdAndUpdate(body.id,
       {
         domain: body.domain,
         wsServer: body.wsServer,
@@ -179,7 +179,7 @@ export const DELETE = withRole(UserRole.ADMIN, async (req: NextRequest) => {
 
     await connectDB();
 
-    const deleted = await ServerModel.findByIdAndDelete(id);
+    const deleted = await SipServerModel.findByIdAndDelete(id);
 
     if (!deleted) {
       return NextResponse.json(

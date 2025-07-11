@@ -6,7 +6,7 @@ import { ICreateSmsGatewayRequest, ISmsGatewayItem, IUpdateSmsGatewayRequest } f
 import { createSmsGateway, updateSmsGateway } from "@/core/sms-gateways/request";
 import { ISignalWireConfig, IViConfig } from "@/models/SmsGateway";
 import { AppDispatch } from "@/store";
-import { SmsGatewayType } from "@/types/common";
+import { SmsGatewayType, TDropdownOption } from "@/types/common";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 
@@ -23,14 +23,14 @@ export const SmsGatewayEditDialog: React.FC<Props> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
 
-  const typeOptions = [
+  const typeOptions: TDropdownOption[] = [
     { value: 'signalwire', label: 'SiganlWire' },
     { value: 'vi', label: 'VI' },
   ]
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  
-  const [type, setType] = useState<string>(SmsGatewayType.SIGNALWIRE);
+
+  const [selectedType, setSelectedType] = useState<TDropdownOption>(typeOptions[0]);
   const [phoneNumber, setPhoneNumber] = useState<string>("");
 
   const [projectId, setProjectId] = useState<string>("");
@@ -40,19 +40,22 @@ export const SmsGatewayEditDialog: React.FC<Props> = ({
   const [apiSecret, setApiSecret] = useState<string>("");
 
   useEffect(() => {
-    setType(gateway?.type ?? SmsGatewayType.SIGNALWIRE);
-    setPhoneNumber(gateway?.didNumber ?? "");
+    setIsSubmitting(false);
 
+    setSelectedType({
+      value: gateway?.type ?? SmsGatewayType.SIGNALWIRE,
+      label: gateway?.type ?? SmsGatewayType.SIGNALWIRE
+    });
+    setPhoneNumber(gateway?.didNumber ?? "");
     setProjectId((gateway?.config as ISignalWireConfig)?.projectId ?? "");
     setSpaceUrl((gateway?.config as ISignalWireConfig)?.spaceUrl ?? "");
     setAuthToken((gateway?.config as ISignalWireConfig)?.authToken ?? "");
-
     setApiKey((gateway?.config as IViConfig)?.apiKey ?? "");
     setApiSecret((gateway?.config as IViConfig)?.apiSecret ?? "");
   }, [isOpen])
 
   const handleCreate = () => {
-    const config = type === SmsGatewayType.SIGNALWIRE
+    const config = selectedType.value === SmsGatewayType.SIGNALWIRE
       ? {
         projectId: projectId,
         spaceUrl: spaceUrl,
@@ -63,8 +66,8 @@ export const SmsGatewayEditDialog: React.FC<Props> = ({
         apiSecret: apiSecret
       } as IViConfig;
 
-    const payload: ICreateSmsGatewayRequest = {      
-      type: type,
+    const payload: ICreateSmsGatewayRequest = {
+      type: selectedType.value,
       didNumber: phoneNumber,
       config: config
     }
@@ -73,7 +76,7 @@ export const SmsGatewayEditDialog: React.FC<Props> = ({
   }
 
   const handleUpdate = () => {
-    const config = type === SmsGatewayType.SIGNALWIRE
+    const config = selectedType.value === SmsGatewayType.SIGNALWIRE
       ? {
         projectId: projectId,
         spaceUrl: spaceUrl,
@@ -85,8 +88,8 @@ export const SmsGatewayEditDialog: React.FC<Props> = ({
       } as IViConfig;
 
     const payload: IUpdateSmsGatewayRequest = {
-      id: gateway?._id!,      
-      type: type,
+      id: gateway?._id!,
+      type: selectedType.value,
       didNumber: phoneNumber,
       config: config
     }
@@ -119,8 +122,8 @@ export const SmsGatewayEditDialog: React.FC<Props> = ({
             Type *
           </label>
           <DropdownSelect
-            value={type}
-            onChange={(value: string) => setType(value)}
+            value={selectedType}
+            onChange={(value: TDropdownOption) => setSelectedType(value)}
             options={typeOptions}
           />
         </div>
@@ -139,7 +142,7 @@ export const SmsGatewayEditDialog: React.FC<Props> = ({
           />
         </div>
 
-        {type === SmsGatewayType.SIGNALWIRE ? (
+        {selectedType.value === SmsGatewayType.SIGNALWIRE ? (
           <>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

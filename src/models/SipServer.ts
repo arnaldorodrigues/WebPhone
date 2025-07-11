@@ -1,6 +1,6 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Document, model, models, Schema } from "mongoose";
 
-export interface IServer extends Document {
+export interface ISipServer extends Document {
   domain: string;
   wsServer: string;
   wsPort: string;
@@ -9,7 +9,7 @@ export interface IServer extends Document {
   updatedAt: Date;
 }
 
-const serverSchema: Schema<IServer> = new Schema<IServer>(
+const sipServerSchema: Schema<ISipServer> = new Schema<ISipServer>(
   {
     domain: {
       type: String,
@@ -40,9 +40,8 @@ const serverSchema: Schema<IServer> = new Schema<IServer>(
   }
 );
 
-serverSchema.index({ domain: 1 }, { unique: true });
+sipServerSchema.index({ domain: 1 }, { unique: true });
 
-const ServerModel =
-  mongoose.models.Server || mongoose.model<IServer>("Server", serverSchema);
+const SipServerModel = models.SipServer || model<ISipServer>("SipServer", sipServerSchema);
 
-export default ServerModel;
+export default SipServerModel;

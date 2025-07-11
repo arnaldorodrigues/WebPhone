@@ -1,8 +1,8 @@
 // @ts-ignore: SignalWire types export issue
 import { RestClient } from '@signalwire/compatibility-api';
 import connectDB from '@/lib/mongodb';
-import { SmsGateway, ISignalwireConfig } from '@/models/SmsGateway__';
 import { isValidObjectId } from 'mongoose';
+import SmsGatewayModel, { ISignalWireConfig } from '@/models/SmsGateway';
 
 export async function sendSignalWireSMS( fromId: string, to:string, messageBody:string ) {
 
@@ -13,7 +13,7 @@ export async function sendSignalWireSMS( fromId: string, to:string, messageBody:
       return {data: 'Invalid fromId provided', status: 400 };
     }
 
-    const gateway = await SmsGateway.findById(fromId);
+    const gateway = await SmsGatewayModel.findById(fromId);
     if (!gateway) {
       return { success: false, data: 'SMS gateway not found', status: 404 };
     }
@@ -22,7 +22,7 @@ export async function sendSignalWireSMS( fromId: string, to:string, messageBody:
       return { success: false, data: 'Invalid gateway type. Expected SignalWire gateway.', status: 400 };
     }
 
-    const config = gateway.config as ISignalwireConfig;
+    const config = gateway.config as ISignalWireConfig;
 
     const client = new RestClient(
       config.projectId,
@@ -31,7 +31,7 @@ export async function sendSignalWireSMS( fromId: string, to:string, messageBody:
     );
 
     const response = await client.messages.create({
-      from: '+1' + config.phoneNumber,
+      from: '+1' + gateway.phoneNumber,
       to: '+1' + to,
       body: messageBody,
     });

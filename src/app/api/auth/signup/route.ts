@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
-import { createUser } from '@/lib/users';
-import { generateToken } from '@/utils/jwt';
 import { SignUpRequest } from '@/types/auth';
+import UserModel from '@/models/User';
+import bcrypt from 'bcryptjs';
+import connectDB from '@/lib/mongodb';
+import { signToken } from '@/utils/auth';
 
 export async function POST(request: Request) {
   try {
@@ -15,31 +17,36 @@ export async function POST(request: Request) {
       );
     }
 
+    await connectDB();
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const checkEmailDuplication = await UserModel.findOne({ email: email.toLowerCase() });
+
+    if (checkEmailDuplication) {
       return NextResponse.json(
-        { error: 'Invalid email format' },
+        { error: "Email already exists" },
         { status: 400 }
       );
     }
 
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: 'Password must be at least 6 characters long' },
-        { status: 400 }
-      );
-    }
+    const createdUser = await UserModel.create({
+      email,
+      password: hashedPassword,
+      name
+    });
 
-    const user = await createUser(password, name.trim(), email.toLowerCase());
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Email already exists' },
-        { status: 400 }
-      );
-    }
+    const userObject = createdUser.toJSON();
+    const { password: _, ...userWithoutPassword } = userObject;
+    const user = userWithoutPassword;
 
-    const token = generateToken(user);
+    const token = signToken({
+      userId: user._id,
+      userName: user.name,
+      email: user.email,
+      role: user.role
+    });
+
     return NextResponse.json({ token, user });
   } catch (error) {
     console.error('Signup error:', error);

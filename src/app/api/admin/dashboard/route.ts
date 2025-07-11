@@ -11,7 +11,7 @@ export const GET = withRole(UserRole.ADMIN, async (req: NextRequest, user: any) 
 
     const users = await UserModel
       .find({
-        role: { $ne: 'admin' }
+        role: { $ne: UserRole.ADMIN }
       })
       .select('-password')
       .lean();
@@ -23,7 +23,7 @@ export const GET = withRole(UserRole.ADMIN, async (req: NextRequest, user: any) 
       data: {
         totalUsers: users.length,
         activeUsers: users.length,
-        adminUsers: users.filter(u => u.role === 'admin').length,
+        adminUsers: users.filter(u => u.role === UserRole.ADMIN).length,
         extensionNumbers: allSettings.length,
       }
     });

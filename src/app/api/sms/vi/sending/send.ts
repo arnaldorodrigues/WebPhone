@@ -1,9 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { Apidaze } from '@apidaze/node';
 import connectDB from '@/lib/mongodb';
-import Message from '@/models/Message';
-import { SmsGateway } from '@/models/SmsGateway__';
 import { isValidObjectId } from 'mongoose';
+import SmsGatewayModel from '@/models/SmsGateway';
 
 export async function sendViSMS( fromId:string, to:string, messageBody:string ) {
   try {
@@ -13,7 +11,7 @@ export async function sendViSMS( fromId:string, to:string, messageBody:string ) 
       return { success: false, data: 'Invalid fromId provided', status: 400 };
     }
 
-    const gateway = await SmsGateway.findById(fromId);
+    const gateway = await SmsGatewayModel.findById(fromId);
     if (!gateway) {
       return { success: false, data: 'SMS gateway not found', status: 404 };
     }

@@ -13,7 +13,7 @@ type Props = {
   required: boolean;
   className?: string;
   placeholder?: string;
-  value: string;
+  value: string | undefined;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   readOnly?: boolean;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -81,7 +81,7 @@ export const Input: React.FC<Props> = ({
         required={required}
         className={finalClassName}
         placeholder={placeholder}
-        value={value}
+        value={value ?? ""}
         onChange={onChange}
         readOnly={readOnly}
         onKeyDown={onKeyDown}

@@ -14,6 +14,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 const AdminSmsGateways = () => {
   const dispatch = useDispatch<AppDispatch>();
+  
   const { smsgateways, loading } = useSelector((state: RootState) => state.smsgateways);
 
   const [searchTerm, setSearchTerm] = useState<string>("");

@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
-import { findUserByEmail, validatePassword } from '@/lib/users';
 import { SignInRequest } from '@/types/auth';
 import { signToken } from '@/utils/auth';
+import connectDB from '@/lib/mongodb';
+import UserModel from '@/models/User';
+import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +17,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const user = await findUserByEmail(email.toLowerCase());
+    await connectDB();
+
+    const user = await UserModel.findOne({ email: email.toLowerCase() });
 
     if (!user) {
       return NextResponse.json(
@@ -24,7 +28,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const isValidPassword = await validatePassword(user, password);
+    const isValidPassword = bcrypt.compare(password, user.password);
+
     if (!isValidPassword) {
       return NextResponse.json(
         { error: 'Invalid credentials' },

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { getParsedToken } from "@/utils/auth";
 
 export type PhoneStateType =
   | "dialing"
@@ -30,10 +29,10 @@ export function PhoneStateProvider({
   const [extensionNumber, setExtensionNumber] = useState("");
 
   useEffect(() => {
-    const token = getParsedToken();
-    if (token?.extensionNumber) {
-      setExtensionNumber(token.extensionNumber);
-    }
+    // const token = getParsedToken();
+    // if (token?.extensionNumber) {
+    //   setExtensionNumber(token.extensionNumber);
+    // }
   }, []);
 
   const value = {

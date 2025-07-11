@@ -1,6 +1,16 @@
+'use client'
+
 import { Dialog } from "@/components/ui/dialogs"
 import { DropdownSelect, Input } from "@/components/ui/inputs";
-import { CogIcon, UserIcon } from "@heroicons/react/24/outline";
+import { getSipServers } from "@/core/sip-servers/request";
+import { getSmsGateways } from "@/core/sms-gateways/request";
+import { ICreateUserRequest, IUpdateUserRequest } from "@/core/users/model";
+import { createUser, updateUser } from "@/core/users/request";
+import { AppDispatch, RootState } from "@/store";
+import { TDropdownOption, UserRole } from "@/types/common";
+import { CheckIcon, CogIcon, UserIcon } from "@heroicons/react/24/outline";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 type Props = {
   isOpen: boolean;
@@ -13,8 +23,141 @@ export const UserEditDialog: React.FC<Props> = ({
   onClose,
   user,
 }) => {
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { sipservers } = useSelector((state: RootState) => state.sipservers);
+  const { smsgateways } = useSelector((state: RootState) => state.smsgateways);
+
   const isCreateMode = !user;
   const dialogTitle = isCreateMode ? "Create User" : "Edit User";
+
+  const [sipServerOptions, setSipServerOptions] = useState<TDropdownOption[]>([]);
+  const [smsGatewayOptions, setSmsGatewayOptions] = useState<TDropdownOption[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const [name, setName] = useState<string>();
+  const [email, setEmail] = useState<string>();
+  const [password, setPassword] = useState<string>();
+  const [sipUsername, setSipUsername] = useState<string>();
+  const [sipPassword, setSipPassword] = useState<string>();
+  const [selectedSipServer, setSelectedSipServer] = useState<TDropdownOption>();
+  const [selectedSmsGateway, setSelectedSmsGateway] = useState<TDropdownOption>();
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!name?.trim()) newErrors.name = "Full name is required.";
+    if (!email?.trim()) newErrors.email = "Email is required.";
+
+    if (!isCreateMode && password && password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters.";
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+
+    if (user) {
+      await handleUpdate();
+    } else {
+      await handleCreate();
+    }
+
+    setIsSubmitting(false);
+    onClose();
+  }
+
+  const handleUpdate = async () => {
+    if (!name || !email) return;
+
+    const payload: IUpdateUserRequest = {
+      id: user?._id!,
+      name: name,
+      email: email,
+      password: password,
+      role: UserRole.USER,
+      sipUsername: sipUsername,
+      sipPassword: sipPassword,
+      sipServerId: selectedSipServer?.value,
+      smsGatewayId: selectedSmsGateway?.value
+    }
+
+    dispatch(updateUser(payload));
+  }
+
+  const handleCreate = async () => {
+    if (!name || !email) return;
+
+    const payload: ICreateUserRequest = {
+      name: name,
+      email: email,
+      password: password,
+      role: UserRole.USER,
+      sipUsername: sipUsername,
+      sipPassword: sipPassword,
+      sipServerId: selectedSipServer?.value,
+      smsGatewayId: selectedSmsGateway?.value
+    }
+
+    dispatch(createUser(payload));
+  }
+
+  useEffect(() => {
+    setErrors({});
+    setIsSubmitting(false);
+
+    setName(user?.name);
+    setEmail(user?.email);
+    setPassword(user?.password);
+    setSipUsername(user?.setting?.sipUsername);
+    setSipPassword(user?.setting?.sipPassword);
+
+
+    const sipServerOption = sipServerOptions.find(s => s.value === user?.sipServerId);
+    setSelectedSipServer(sipServerOption);
+
+    const smsGatewayOption = smsGatewayOptions.find(s => s.value === user?.smsGatewayId);
+    setSelectedSmsGateway(smsGatewayOption);
+
+  }, [isOpen])
+
+  useEffect(() => {
+    dispatch(getSipServers());
+    dispatch(getSmsGateways());
+  }, [dispatch])
+
+  useEffect(() => {
+    const sipSrvOptions = sipservers.map((server) => {
+      return {
+        value: server._id,
+        label: server.domain,
+      };
+    });
+    setSipServerOptions(sipSrvOptions);
+
+    const sipServerOption = sipSrvOptions.find(s => s.value === user?.sipServerId);
+    setSelectedSipServer(sipServerOption);
+  }, [sipservers])
+
+  useEffect(() => {
+    const smsoptions = smsgateways.map((gateway) => {
+      return {
+        value: gateway._id,
+        label: `${gateway.type}-${gateway.didNumber}`,
+      }
+    })
+    setSmsGatewayOptions(smsoptions);
+
+    const smsGatewayOption = smsoptions.find(s => s.value === user?.sipServerId);
+    setSelectedSmsGateway(smsGatewayOption);
+  }, [smsgateways])
 
   return (
     <Dialog
@@ -60,9 +203,10 @@ export const UserEditDialog: React.FC<Props> = ({
                   type="text"
                   required={true}
                   placeholder="Enter full name"
-                  value={user?.name}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                 />
+                {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
               </div>
             </div>
 
@@ -76,9 +220,10 @@ export const UserEditDialog: React.FC<Props> = ({
                 type="email"
                 required={true}
                 placeholder="Enter email address"
-                value={user?.email}
-                onChange={(e) => handleInputChange("email", e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
+              {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email}</p>}
             </div>
 
             <div>
@@ -95,10 +240,8 @@ export const UserEditDialog: React.FC<Props> = ({
                     ? "Enter password"
                     : "Leave empty to keep current password"
                 }
-                value={user?.password}
-                onChange={(e) =>
-                  handleInputChange("password", e.target.value)
-                }
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
               {!isCreateMode && (
                 <p className="mt-1 text-xs text-gray-500">
@@ -106,6 +249,7 @@ export const UserEditDialog: React.FC<Props> = ({
                   characters if changed.
                 </p>
               )}
+              {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password}</p>}
             </div>
           </div>
 
@@ -126,10 +270,8 @@ export const UserEditDialog: React.FC<Props> = ({
                   type="text"
                   required={true}
                   placeholder="Enter SIP username"
-                  value={user?.settings?.sipUsername}
-                  onChange={(e) =>
-                    handleInputChange("settings.sipUsername", e.target.value)
-                  }
+                  value={sipUsername}
+                  onChange={(e) => setSipUsername(e.target.value)}
                   className={`font-mono`}
                 />
               </div>
@@ -144,42 +286,22 @@ export const UserEditDialog: React.FC<Props> = ({
                   type="password"
                   required={true}
                   placeholder="Enter SIP password"
-                  value={user?.settings.sipPassword}
-                  onChange={(e) =>
-                    handleInputChange("settings.sipPassword", e.target.value)
-                  }
+                  value={sipPassword}
+                  onChange={(e) => setSipPassword(e.target.value)}
                 />
               </div>
 
-              {/* <div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   SMS Service
                 </label>
                 <DropdownSelect
                   placeholder="Select SMS Service"
-                  value={formData.did}
-                  onChange={(value) => {
-                    handleInputChange("did", value);
-                  }}
-                  className={`font-mono ${errors.domain ? "border-red-300" : ""
-                    }`}
-                  options={
-                    smsServices
-                      ? smsServices.map((smsService) => {
-                        return {
-                          value: smsService._id || "",
-                          label:
-                            smsService.config.phoneNumber +
-                            " - " +
-                            smsService.type || "",
-                        };
-                      })
-                      : []
-                  }
+                  value={selectedSmsGateway}
+                  onChange={(value) => { setSelectedSmsGateway(value) }}
+                  className="font-mono"
+                  options={smsGatewayOptions}
                 />
-                {errors.did && (
-                  <p className="mt-1 text-sm text-red-600">{errors.did}</p>
-                )}
               </div>
 
               <div>
@@ -188,42 +310,43 @@ export const UserEditDialog: React.FC<Props> = ({
                 </label>
                 <DropdownSelect
                   placeholder="Select domain"
-                  value={formData.settings.domain}
-                  onChange={(value) => {
-                    handleInputChange("settings.domain", value);
-                    handleInputChange(
-                      "settings.wsServer",
-                      serverList.find((server) => server.domain === value)
-                        ?.wsServer || ""
-                    );
-                    handleInputChange(
-                      "settings.wsPort",
-                      serverList.find((server) => server.domain === value)
-                        ?.wsPort || ""
-                    );
-                    handleInputChange(
-                      "settings.wsPath",
-                      serverList.find((server) => server.domain === value)
-                        ?.wsPath || ""
-                    );
-                  }}
-                  className={`font-mono ${errors.domain ? "border-red-300" : ""
-                    }`}
-                  options={serverList.map((server) => {
-                    return {
-                      value: server.domain || "",
-                      label: server.domain || "",
-                    };
-                  })}
+                  value={selectedSipServer}
+                  onChange={(value) => { setSelectedSipServer(value) }}
+                  className="font-mono"
+                  options={sipServerOptions}
                 />
-                {errors.domain && (
-                  <p className="mt-1 text-sm text-red-600">{errors.domain}</p>
-                )}
-              </div> */}
+              </div>
             </div>
           </div>
         </div>
 
+        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+          <button
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-500 border border-transparent rounded-lg hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200 disabled:opacity-50"
+          >
+            {isSubmitting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                {isCreateMode ? "Creating..." : "Saving..."}
+              </>
+            ) : (
+              <>
+                <CheckIcon className="w-4 h-4 mr-2" />
+                {isCreateMode ? "Create User" : "Save Changes"}
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </Dialog>
   )

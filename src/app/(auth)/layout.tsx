@@ -4,6 +4,7 @@ import { AdminHeader, AdminSideBar } from "@/components/admin";
 import { SplashLoader } from "@/components/ui/splash";
 import { LayoutBackground } from "@/components/ui/svg";
 import { useAuth } from "@/contexts/AuthContext";
+import { UserRole } from "@/types/common";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -17,7 +18,7 @@ const AuthLayout = ({
 
   useEffect(() => {
     if (!loading) {
-      if (!user || user.role !== "admin") {
+      if (!user || user.role !== UserRole.ADMIN) {
         router.push('/signin');
       }
     }

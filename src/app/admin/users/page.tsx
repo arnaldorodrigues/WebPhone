@@ -52,8 +52,10 @@ const AdminUsers = () => {
   };
 
   useEffect(() => {
+    if (isEditDialogOpen) return;
+
     getData();
-  }, [])
+  }, [isEditDialogOpen])
 
   return (
     <>
