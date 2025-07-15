@@ -21,21 +21,13 @@ export const GET = withRole(UserRole.ADMIN, async (req: NextRequest) => {
       .find({ role: { $ne: UserRole.ADMIN } })
       .skip(skip)
       .limit(limit)
-      .populate('settingId')
+      .populate('setting')
       .select('-password')
       .lean();
 
-    const transformedUsers = users.map(user => {
-      const { settingId, ...rest } = user;
-      return {
-        ...rest,
-        setting: settingId,
-      }
-    })
-
     return NextResponse.json({
       success: true,
-      data: transformedUsers,
+      data: users,
       pagination: {
         totalUsers,
         page,
@@ -84,12 +76,12 @@ export const POST = withRole(UserRole.ADMIN, async (req: NextRequest) => {
       password: body.password,
       name: body.name,
       role: body.role,
-      sipServerId: body.sipServerId,
-      smsGatewayId: body.smsGatewayId,
+      sipServer: body.sipServer,
+      smsGateway: body.smsGateway,
     });
 
-    if (body.sipUsername && body.sipServerId) {
-      const sipServer = await SipServerModel.findById(body.sipServerId);
+    if (body.sipUsername && body.sipServer) {
+      const sipServer = await SipServerModel.findById(body.sipServer);
 
       const extensionDuplicate = await SettingModel.findOne({
         domain: sipServer.domain,
@@ -113,12 +105,12 @@ export const POST = withRole(UserRole.ADMIN, async (req: NextRequest) => {
         wsPath: sipServer.wsPath,
         sipUsername: body.sipUsername,
         sipPassword: body.sipPassword,
-        userId: createdUser._id
+        user: createdUser._id
       });
 
       await UserModel.findByIdAndUpdate(createdUser._id,
         {
-          settingId: createdSetting._id
+          setting: createdSetting._id
         }
       );
     }
@@ -185,13 +177,13 @@ export const PUT = withRole(UserRole.ADMIN, async (req: NextRequest) => {
         password: body.password,
         name: body.name,
         role: body.role,
-        sipServerId: body.sipServerId,
-        smsGatewayId: body.smsGatewayId,
+        sipServer: body.sipServer,
+        smsGateway: body.smsGateway,
       }
     );
 
-    if (body.sipUsername && body.sipServerId) {
-      const sipServer = await SipServerModel.findById(body.sipServerId);
+    if (body.sipUsername && body.sipServer) {
+      const sipServer = await SipServerModel.findById(body.sipServer);
 
       const extensionDuplicate = await SettingModel.findOne({
         domain: sipServer.domain,
@@ -208,10 +200,10 @@ export const PUT = withRole(UserRole.ADMIN, async (req: NextRequest) => {
         );
       }
 
-      if (updatedUser.settingId) {
-        const existingSetting = await SettingModel.findById(updatedUser.settingId);
+      if (updatedUser.setting) {
+        const existingSetting = await SettingModel.findById(updatedUser.setting);
 
-        await SettingModel.findByIdAndUpdate(updatedUser.settingId,
+        await SettingModel.findByIdAndUpdate(updatedUser.setting,
           {
             domain: sipServer.domain,
             wsServer: sipServer.wsServer,
@@ -234,7 +226,7 @@ export const PUT = withRole(UserRole.ADMIN, async (req: NextRequest) => {
 
         await UserModel.findByIdAndUpdate(updatedUser._id,
           {
-            settingId: createdSetting._id
+            setting: createdSetting._id
           }
         );
       }
@@ -253,5 +245,54 @@ export const PUT = withRole(UserRole.ADMIN, async (req: NextRequest) => {
       },
       { status: 500 }
     );
+  }
+})
+
+export const DELETE = withRole(UserRole.ADMIN, async (req: NextRequest) => {
+  try {
+    const { searchParams } = new URL(req.url);
+
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Missing server ID'
+        },
+        { status: 400 }
+      )
+    }
+
+    await connectDB();
+
+    const deleted = await UserModel.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'User not found'
+        },
+        { status: 404 }
+      );
+    }
+
+    await SettingModel.findOneAndDelete({ user: id });
+
+    return NextResponse.json({
+      success: true,
+      message: 'User deleted successfully',
+      data: deleted
+    });
+  } catch (error) {
+    console.error('Error deleting User: ', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to delete server'
+      },
+      { status: 500 }
+    )
   }
 })

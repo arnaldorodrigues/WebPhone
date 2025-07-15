@@ -3,9 +3,9 @@ import { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { NextRequest, NextResponse } from 'next/server';
 
 export function withAuth(
-  handler: (req: NextRequest, user: any) => Promise<NextResponse>
+  handler: (req: NextRequest, context: { params: any }, user: any) => Promise<NextResponse>
 ) {
-  return async (req: NextRequest) => {
+  return async (req: NextRequest, context: any) => {
     const authHeader = req.headers.get('authorization');
     const token = authHeader?.split(' ')[1];
 
@@ -18,7 +18,7 @@ export function withAuth(
 
     try {
       const user = verifyToken(token);
-      return handler(req, user);
+      return handler(req, context, user);
     } catch (err: any) {
       return NextResponse.json(
         { message: "Unauthorized: Invalid token" },
@@ -30,9 +30,9 @@ export function withAuth(
 
 export function withRole(
   role: string,
-  handler: (req: NextRequest, user: any) => Promise<NextResponse>
+  handler: (req: NextRequest, context: { params: any }, user: any) => Promise<NextResponse>
 ) {
-  return withAuth(async (req, user) => {
+  return withAuth(async (req, context, user) => {
     if (user.role !== role) {
       return NextResponse.json(
         { message: 'Forbidden' },
@@ -40,7 +40,7 @@ export function withRole(
       )
     }
 
-    return handler(req, user);
+    return handler(req, context, user);
   });
 }
 

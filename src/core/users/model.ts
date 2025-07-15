@@ -5,8 +5,8 @@ export interface ICreateUserRequest {
   role: string;
   sipUsername: string | undefined;
   sipPassword: string | undefined;
-  sipServerId: string | undefined;
-  smsGatewayId: string | undefined;
+  sipServer: string | undefined;
+  smsGateway: string | undefined;
 }
 
 export interface IUpdateUserRequest {
@@ -17,6 +17,20 @@ export interface IUpdateUserRequest {
   role: string;
   sipUsername: string | undefined;
   sipPassword: string | undefined;
-  sipServerId: string | undefined;
-  smsGatewayId: string | undefined;
+  sipServer: string | undefined;
+  smsGateway: string | undefined;
+}
+
+export interface IUserData {
+  id: string;
+  name: string;
+  email: string;
+  sipUsername: string;
+  sipPassword: string;
+  wsServer: string;
+  wsPort: string;
+  wsPath: string;
+  domain: string;
+  didNumber: string;
+  smsType: string;
 }

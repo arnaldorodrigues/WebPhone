@@ -1,14 +1,17 @@
 import { UserRole } from '@/types/common';
 import mongoose, { Document, Schema, Types } from 'mongoose';
+import "@/models/SipServer";
+import "@/models/Setting";
+import "@/models/SmsGateway";
 
 export interface IUser extends Document {
   email: string;
   password: string;
   name: string;
   role: UserRole;
-  sipServerId?: Types.ObjectId;
-  smsGatewayId?: Types.ObjectId;
-  settingId?: Types.ObjectId;
+  sipServer?: Types.ObjectId;
+  smsGateway?: Types.ObjectId;
+  setting?: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,15 +38,15 @@ const userSchema: Schema<IUser> = new Schema<IUser>(
       default: UserRole.USER,
       required: true,
     },
-    sipServerId: {
+    sipServer: {
       type: Schema.Types.ObjectId,
-      ref: "Server"
+      ref: "SipServer"
     },
-    settingId: {
+    setting: {
       type: Schema.Types.ObjectId,
       ref: "Setting",
     },
-    smsGatewayId: {
+    smsGateway: {
       type: Schema.Types.ObjectId,
       ref: "SmsGateway",
       required: false,

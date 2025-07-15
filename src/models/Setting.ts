@@ -9,7 +9,7 @@ export interface ISetting extends Document {
   sipPassword: string;
   createdAt: Date;
   updatedAt: Date;
-  userId: Types.ObjectId;
+  user: Types.ObjectId;
 }
 
 const settingSchema: Schema<ISetting> = new Schema<ISetting>(
@@ -47,7 +47,7 @@ const settingSchema: Schema<ISetting> = new Schema<ISetting>(
       required: true,
       trim: true,
     },
-    userId: {
+    user: {
       type: Schema.Types.ObjectId,
       required: true,
       ref: "User"

@@ -85,8 +85,8 @@ export const UserEditDialog: React.FC<Props> = ({
       role: UserRole.USER,
       sipUsername: sipUsername,
       sipPassword: sipPassword,
-      sipServerId: selectedSipServer?.value,
-      smsGatewayId: selectedSmsGateway?.value
+      sipServer: selectedSipServer?.value,
+      smsGateway: selectedSmsGateway?.value
     }
 
     dispatch(updateUser(payload));
@@ -102,8 +102,8 @@ export const UserEditDialog: React.FC<Props> = ({
       role: UserRole.USER,
       sipUsername: sipUsername,
       sipPassword: sipPassword,
-      sipServerId: selectedSipServer?.value,
-      smsGatewayId: selectedSmsGateway?.value
+      sipServer: selectedSipServer?.value,
+      smsGateway: selectedSmsGateway?.value
     }
 
     dispatch(createUser(payload));
@@ -120,10 +120,10 @@ export const UserEditDialog: React.FC<Props> = ({
     setSipPassword(user?.setting?.sipPassword);
 
 
-    const sipServerOption = sipServerOptions.find(s => s.value === user?.sipServerId);
+    const sipServerOption = sipServerOptions.find(s => s.value === user?.sipServer);
     setSelectedSipServer(sipServerOption);
 
-    const smsGatewayOption = smsGatewayOptions.find(s => s.value === user?.smsGatewayId);
+    const smsGatewayOption = smsGatewayOptions.find(s => s.value === user?.smsGateway);
     setSelectedSmsGateway(smsGatewayOption);
 
   }, [isOpen])
@@ -142,7 +142,7 @@ export const UserEditDialog: React.FC<Props> = ({
     });
     setSipServerOptions(sipSrvOptions);
 
-    const sipServerOption = sipSrvOptions.find(s => s.value === user?.sipServerId);
+    const sipServerOption = sipSrvOptions.find(s => s.value === user?.sipServer);
     setSelectedSipServer(sipServerOption);
   }, [sipservers])
 
@@ -155,7 +155,7 @@ export const UserEditDialog: React.FC<Props> = ({
     })
     setSmsGatewayOptions(smsoptions);
 
-    const smsGatewayOption = smsoptions.find(s => s.value === user?.sipServerId);
+    const smsGatewayOption = smsoptions.find(s => s.value === user?.sipServer);
     setSelectedSmsGateway(smsGatewayOption);
   }, [smsgateways])
 

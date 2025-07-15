@@ -1,0 +1,77 @@
+'use client'
+
+import { PlusIcon } from "@heroicons/react/24/outline"
+import { SearchInput } from "../../ui/inputs"
+import { useEffect, useState } from "react"
+import { IContactItem } from "@/core/contacts/model";
+import ContactCard from "./ContactCard";
+import AddContactDialog from "./AddContactDialog";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store";
+import { getContacts } from "@/core/contacts/request";
+import { setSelectedContact } from "@/store/slices/contactsSlice";
+import { getMessages } from "@/core/messages/request";
+
+export const ContactsList: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { contacts, selectedContact } = useSelector((state: RootState) => state.contactsdata);
+
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState<boolean>(false);
+
+  const handleSelectContact = (item: IContactItem) => {
+    dispatch(setSelectedContact(item));
+  }
+
+  useEffect(() => {
+    dispatch(getContacts());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (!selectedContact) return;
+
+    dispatch(getMessages({
+      contactId: selectedContact.id,
+      contactType: selectedContact.contactType
+    }));
+  }, [selectedContact])
+
+  return (
+    <>
+      <div className="px-4 py-3 border-b border-gray-200">
+        <div className="flex items-center gap-2">
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search contacts..."
+            className="flex-1"
+          />
+          <button
+            className="p-2 rounded-full hover:bg-gradient-to-r bg-indigo-400 text-white hover:bg-indigo-500 transition-all shadow-sm border border-gray-200 hover:border-transparent hover:shadow-md"
+            title="Add Contact"
+            onClick={() => setIsAddDialogOpen(true)}
+          >
+            <PlusIcon className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+      <div className="flex-1 p-2 space-y-1 overflow-y-auto min-h-0">
+        {contacts?.map((contact: IContactItem, index: number) => (
+          <div key={index}>
+            <ContactCard
+              contact={contact}
+              isSelected={contact.id === selectedContact?.id}
+              onSelect={(item: IContactItem) => handleSelectContact(item)}
+            />
+          </div>
+        ))}
+      </div>
+
+      <AddContactDialog
+        isOpen={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
+      />
+    </>
+  )
+}

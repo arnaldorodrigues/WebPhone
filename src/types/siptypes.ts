@@ -19,6 +19,18 @@ export enum RegisterStatus {
   REGISTERED = "REGISTERED",
 }
 
+export enum SipStatus {
+  CONNECTED = "CONNECTED",
+  DISCONNECTED = "DISCONNECTED",
+  REGISTERED = "REGISTERED",
+  UNREGISTERED = "UNREGISTERED"
+}
+
+export enum SessionDirection {
+  INCOMING = "INCOMING",
+  OUTGOING = "OUTGOING",
+}
+
 export interface SipConfig {
   wsServer: string;
   wsPort: string;
@@ -29,22 +41,25 @@ export interface SipConfig {
   displayName?: string;
 }
 
-export interface IProviderContext {
+export type TSipContextType = {
   sessionManager: SessionManager | null;
   connectAndRegister: (sipConfig: SipConfig) => void;
   disconnect: () => Promise<void>;
-  connectStatus: CONNECT_STATUS;
-  registerStatus: RegisterStatus;
+  sipStatus: SipStatus;
   sessions: Record<string, Session>;
-  sessionTimer: SessionTimer;
-  messages: Record<string, SipMessage>;
-  clearMessages: () => void;
 }
 
-export enum SessionDirection {
-  INCOMING = "INCOMING",
-  OUTGOING = "OUTGOING",
-}
+// export interface IProviderContext {
+//   sessionManager: SessionManager | null;
+//   connectAndRegister: (sipConfig: SipConfig) => void;
+//   disconnect: () => Promise<void>;
+//   connectStatus: CONNECT_STATUS;
+//   registerStatus: RegisterStatus;
+//   sessions: Record<string, Session>;
+//   sessionTimer: SessionTimer;
+//   messages: Record<string, SipMessage>;
+//   clearMessages: () => void;
+// }
 
 export type Timer = {
   createdAt: Date;

@@ -1,4 +1,4 @@
-interface Props {
+type Props = {
   id: string;
   name: string;
   required?: boolean;
@@ -10,7 +10,7 @@ interface Props {
   onEnter: () => void;
 }
 
-const PlainText = ({
+export const PlainText: React.FC<Props> = ({
   id,
   name,
   required = false,
@@ -20,7 +20,7 @@ const PlainText = ({
   maxRows = 3,
   onChange,
   onEnter,
-}: Props) => {
+}) => {
   return (
     <textarea
       id={id}
@@ -47,5 +47,3 @@ const PlainText = ({
     />
   );
 };
-
-export default PlainText;

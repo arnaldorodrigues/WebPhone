@@ -4,11 +4,13 @@ import React from "react"
 type Props = {
   users: any[];
   handleEdit: (user: any) => void;
+  handleDelete: (user: any) => void;
 }
 
 export const UsersTable: React.FC<Props> = ({
   users,
-  handleEdit
+  handleEdit,
+  handleDelete
 }) => {
   return (
     <table className="min-w-full divide-y divide-gray-100">
@@ -77,7 +79,7 @@ export const UsersTable: React.FC<Props> = ({
                     <PencilIcon className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => { }}
+                    onClick={() => {handleDelete(user)}}
                     className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors duration-200"
                     title="Delete User"
                   >

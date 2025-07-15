@@ -45,8 +45,6 @@ export const POST = withRole(UserRole.ADMIN, async (req: NextRequest) => {
   try {
     const body = await req.json();
 
-    console.log("+++++++++++++++++", body);
-
     await connectDB();
 
     if (!body.type || !body.didNumber || !body.config) {

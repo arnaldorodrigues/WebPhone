@@ -4,7 +4,7 @@ import { SplashLoader } from "@/components/ui/splash";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types/common";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function HomePage() {
@@ -15,11 +15,13 @@ export default function HomePage() {
     if (loading || user === null) return;
 
     if (user.role === UserRole.ADMIN) {
+      console.log("Redirecting to /admin");
       router.push('/admin');
     } else {
+      console.log("Redirecting to /phone");
       router.push('/phone');
     }
-  })
+  }, [loading, user])
 
   return (
     <>

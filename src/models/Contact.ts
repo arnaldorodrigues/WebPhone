@@ -1,8 +1,12 @@
+import { ContactType, ContactTypeValues } from "@/types/common";
 import mongoose, { Document, Schema, Types } from "mongoose";
 
 export interface IContact extends Document {
-  userId: Types.ObjectId;
-  contactId: Types.ObjectId;
+  user: Types.ObjectId;
+  name: string;
+  sipNumber: string;
+  phoneNumber: string;
+  contactType: ContactType;
   isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -10,15 +14,27 @@ export interface IContact extends Document {
 
 const contactSchema: Schema<IContact> = new Schema<IContact>(
   {
-    userId: {
+    user: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    contactId: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
+    name: {
+      type: String,
       required: true,
+    },
+    sipNumber: {
+      type: String,
+      required: false,
+    },
+    phoneNumber: {
+      type: String,
+      required: false,
+    },
+    contactType: {
+      type: String,
+      required: true,
+      enum: ContactTypeValues
     },
     isDeleted: {
       type: Schema.Types.Boolean,
@@ -31,7 +47,7 @@ const contactSchema: Schema<IContact> = new Schema<IContact>(
   }
 );
 
-const ContactModel = 
+const ContactModel =
   mongoose.models.Contact || mongoose.model<IContact>("Contact", contactSchema);
 
 export default ContactModel;

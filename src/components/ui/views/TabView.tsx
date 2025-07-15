@@ -9,19 +9,19 @@ interface Tab {
   icon?: ReactNode;
 }
 
-interface TabViewProps {
+type Props = {
   tabs: Tab[];
   defaultTab?: string;
   onChange?: (tabId: string) => void;
   className?: string;
 }
 
-export function TabView({
+export const TabView: React.FC<Props> = ({
   tabs,
   defaultTab,
   onChange,
   className = "",
-}: TabViewProps) {
+}) => {
   const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.id);
 
   const handleTabChange = (tabId: string) => {
@@ -39,10 +39,9 @@ export function TabView({
             className={`
               flex items-center gap-2 px-6 py-3 text-sm font-medium
               transition-all duration-200 ease-in-out
-              ${
-                activeTab === tab.id
-                  ? "text-indigo-600 bg-white border-b-2 border-indigo-600 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+              ${activeTab === tab.id
+                ? "text-indigo-600 bg-white border-b-2 border-indigo-600 shadow-sm"
+                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
               }
             `}
           >

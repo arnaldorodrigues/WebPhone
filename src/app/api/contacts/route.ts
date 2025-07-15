@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import UserModel from "@/models/User";
 import connectDB from "@/lib/mongodb";
 import ContactModel from "@/models/Contact";
+import { withAuth } from "@/middleware/authMiddleware";
+import mongoose from "mongoose";
+import { IContactItem } from "@/core/contacts/model";
+import { ContactType } from "@/types/common";
 
 // export async function GET(request: NextRequest) {
 //   try {
@@ -116,3 +120,113 @@ import ContactModel from "@/models/Contact";
 //     )
 //   }
 // }
+
+export const GET = withAuth(async (req: NextRequest, context: { params: any }, user: any) => {
+  try {
+    const currentUserId = new mongoose.Types.ObjectId(user.userId);
+
+    const contacts = await ContactModel
+      .find({ user: currentUserId });
+
+    const contactsData: IContactItem[] = contacts.map((item) => ({
+      id: item._id,
+      name: item.name,
+      number: item.sipNumber || item.didNumber,
+      contactType: item.contactType
+    }));
+
+    return NextResponse.json({
+      success: true,
+      data: contactsData
+    });
+
+  } catch (error) {
+    console.error('Error fetching contacts: ', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to fetch contacts'
+      },
+      { status: 500 }
+    );
+  }
+})
+
+export const POST = withAuth(async (req: NextRequest, context: { params: any }, user: any) => {
+  try {
+    const body = await req.json();
+
+    await connectDB();
+
+    const currentUserId = new mongoose.Types.ObjectId(user.userId);
+
+    const duplicate = body.contactType === ContactType.WEBRTC
+      ? await ContactModel.findOne({ user: currentUserId, sipNumber: body.number })
+      : await ContactModel.findOne({ user: currentUserId, phoneNumber: body.number })
+
+    if (duplicate) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Contact already exists'
+        },
+        { status: 400 }
+      );
+    }
+
+    if (body.contactType === ContactType.WEBRTC) {
+      const contactUserId = new mongoose.Types.ObjectId(body.contactUserId);
+
+      const contactUser = await UserModel
+        .findById(contactUserId)
+        .populate("setting");
+
+      console.log("+++++++++++++++++++", contactUser);
+
+      if (!contactUser) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Contact user not found'
+          },
+          { status: 404 }
+        );
+      }
+
+      const createdContact = await ContactModel.create({
+        user: currentUserId,
+        name: contactUser.name,
+        sipNumber: contactUser.setting.sipUsername,
+        contactType: ContactType.WEBRTC
+      });
+
+      return NextResponse.json({
+        success: true,
+        data: createdContact
+      });
+    } else {
+      const phoneNumber = body.phoneNumber;
+
+      const createdContact = await ContactModel.create({
+        user: currentUserId,
+        name: phoneNumber,
+        phoneNumber: phoneNumber,
+        contactType: ContactType.SMS
+      });
+
+      return NextResponse.json({
+        success: true,
+        data: createdContact
+      });
+    }
+  } catch (error) {
+    console.error('Error saving contact: ', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to create contact'
+      },
+      { status: 500 }
+    );
+  }
+})
