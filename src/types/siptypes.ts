@@ -8,18 +8,8 @@ export interface SipMessage {
   timestamp: Date;
 }
 
-export enum CONNECT_STATUS {
-  WAIT_REQUEST_CONNECT = "WAIT_REQUEST_CONNECT",
-  CONNECTED = "CONNECTED",
-  DISCONNECTED = "DISCONNECTED",
-}
-
-export enum RegisterStatus {
-  UNREGISTERED = "UNREGISTERED",
-  REGISTERED = "REGISTERED",
-}
-
 export enum SipStatus {
+  WAIT_REQUEST_CONNECT = "WAIT_REQUEST_CONNECT",
   CONNECTED = "CONNECTED",
   DISCONNECTED = "DISCONNECTED",
   REGISTERED = "REGISTERED",
@@ -41,25 +31,25 @@ export interface SipConfig {
   displayName?: string;
 }
 
-export type TSipContextType = {
+export type PhoneStateType =
+  | "dialing"
+  | "sending"
+  | "receiving"
+  | "calling"
+  | "ended"
+  | null;
+
+export type SipContextType = {
   sessionManager: SessionManager | null;
   connectAndRegister: (sipConfig: SipConfig) => void;
   disconnect: () => Promise<void>;
   sipStatus: SipStatus;
   sessions: Record<string, Session>;
+  phoneState: PhoneStateType,
+  setPhoneState: (state: PhoneStateType) => void;
+  extensionNumber: string;
+  sessionTimer: SessionTimer
 }
-
-// export interface IProviderContext {
-//   sessionManager: SessionManager | null;
-//   connectAndRegister: (sipConfig: SipConfig) => void;
-//   disconnect: () => Promise<void>;
-//   connectStatus: CONNECT_STATUS;
-//   registerStatus: RegisterStatus;
-//   sessions: Record<string, Session>;
-//   sessionTimer: SessionTimer;
-//   messages: Record<string, SipMessage>;
-//   clearMessages: () => void;
-// }
 
 export type Timer = {
   createdAt: Date;
@@ -70,10 +60,9 @@ export type Timer = {
 
 export type SessionTimer = Record<string, Timer>;
 
-export enum ErrorMessageLevel1 {
-  SIP_PROVIDER = "sip-provider",
-}
-
-export enum ErrorMessageLevel2 {
-  FAILED_CONNECT_SIP_USER = `Can't connect with SIP Server`,
+export interface SipMessage {
+  id: string;
+  body: string;
+  from: string;
+  timestamp: Date;
 }

@@ -2,13 +2,9 @@
 
 import { ChatBoard, ContactsList, PhoneControl } from "@/components/phone";
 import { RootState } from "@/store";
-import { useEffect } from "react";
 import { useSelector } from "react-redux";
 
 const PhoneHome = () => {
-  useEffect(() => {
-  }, [])
-
   const { selectedContact } = useSelector((state: RootState) => state.contactsdata);
 
   return (

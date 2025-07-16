@@ -6,9 +6,10 @@ import { getUserData } from "@/core/users/request";
 import { AppDispatch, RootState } from "@/store";
 import { SipStatus } from "@/types/siptypes";
 import { ArrowPathIcon, ArrowRightOnRectangleIcon, Cog8ToothIcon, PhoneIcon } from "@heroicons/react/24/outline";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import SettingDialog from "./SettingDialog";
+import PhoneCallDialog from "./PhoneCallDialog";
 
 export const PhoneControl: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -16,8 +17,13 @@ export const PhoneControl: React.FC = () => {
   const { user, logout } = useAuth();
   const {
     connectAndRegister,
-    sipStatus
+    disconnect,
+    sipStatus,
+    setPhoneState,
+    phoneState,
   } = useSip();
+
+  const hasAttemptedConnect = useRef(false);
 
   const { userData, loading, loaded } = useSelector((state: RootState) => state.userdata);
 
@@ -27,6 +33,54 @@ export const PhoneControl: React.FC = () => {
   const displayName = userData?.name || "User";
   const sipname = userData?.sipUsername || "";
   const userDisplayText = sipname ? `${displayName}` : "Not Configured";
+
+  const handleRegisterToggle = async () => {
+    try {
+      if (sipStatus === SipStatus.REGISTERED) {
+        await disconnect();
+      } else {
+        if (userData && !loading) {
+          await connectAndRegister({
+            wsServer: userData.wsServer,
+            wsPort: userData.wsPort,
+            wsPath: userData.wsPath,
+            server: userData.domain,
+            username: userData.sipUsername,
+            password: userData.sipPassword,
+            displayName: userData.name,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Failed to toggle registration:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (hasAttemptedConnect.current || !userData) return;
+
+    if (userData &&
+      userData.sipUsername &&
+      userData.sipPassword &&
+      userData.wsServer &&
+      sipStatus !== SipStatus.REGISTERED
+    ) {
+      try {
+        hasAttemptedConnect.current = true;
+        connectAndRegister({
+          wsServer: userData.wsServer,
+          wsPort: userData.wsPort,
+          wsPath: userData.wsPath,
+          server: userData.domain,
+          username: userData.sipUsername,
+          password: userData.sipPassword,
+          displayName: userData.name,
+        });
+      } catch (error) {
+        console.error("Failed to connect and register", error);
+      }
+    }
+  }, [userData])
 
   useEffect(() => {
     if (!user || !user?.userId) return;
@@ -43,9 +97,9 @@ export const PhoneControl: React.FC = () => {
               {user?.userName.charAt(0).toUpperCase()}
             </span>
           </div>
-          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white shadow-sm} ${sipStatus === SipStatus.CONNECTED ? "bg-green-500" : "bg-gray-400"
-            }`}>
-          </div>
+          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white shadow-sm}
+            ${(sipStatus === SipStatus.CONNECTED || sipStatus === SipStatus.REGISTERED) ? "bg-green-500" : "bg-gray-400"}`}
+          />
         </div>
         <div className="min-w-0 flex-1 ml-3">
           <div className="flex gap-2 items-center">
@@ -77,8 +131,8 @@ export const PhoneControl: React.FC = () => {
         </div>
         <div className="flex gap-1">
           <button
-            onClick={() => { }}
-            // disabled={!sipConfig || isLoading}
+            onClick={handleRegisterToggle}
+            disabled={!userData || loading}
             className={`p-2 rounded-lg transition-colors duration-200 
               ${sipStatus === SipStatus.REGISTERED
                 ? "text-green-600 hover:text-green-700 hover:bg-green-50"
@@ -114,13 +168,20 @@ export const PhoneControl: React.FC = () => {
 
       <div className="flex items-center gap-2 px-1">
         <button
-          // onClick={() => setPhoneState("dialing")}
+          onClick={() => setPhoneState("dialing")}
           className="w-full p-2.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2"
         >
           <PhoneIcon className="w-5 h-5" />
           <span className="text-sm font-medium">Call</span>
         </button>
       </div>
+
+      {!!phoneState && (
+        <PhoneCallDialog
+          isOpen={!!phoneState}
+          onClose={() => setPhoneState(null)}
+        />
+      )}
 
       <SettingDialog
         userData={userData}
