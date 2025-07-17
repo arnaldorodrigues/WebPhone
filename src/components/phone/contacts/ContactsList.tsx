@@ -8,17 +8,22 @@ import ContactCard from "./ContactCard";
 import AddContactDialog from "./AddContactDialog";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
-import { getContacts } from "@/core/contacts/request";
+import { createContact, getCandidates, getContacts } from "@/core/contacts/request";
 import { setSelectedContact } from "@/store/slices/contactsSlice";
 import { getMessages } from "@/core/messages/request";
+import { useSip } from "@/contexts/SipContext";
+import { ContactType } from "@/types/common";
 
 export const ContactsList: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
 
-  const { contacts, selectedContact } = useSelector((state: RootState) => state.contactsdata);
+  const { sipMessages } = useSip();
+
+  const { contacts, candidates, selectedContact } = useSelector((state: RootState) => state.contactsdata);
 
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState<boolean>(false);
+  const [sortedContact, setSortedContact] = useState<IContactItem[]>([]);
 
   const handleSelectContact = (item: IContactItem) => {
     dispatch(setSelectedContact(item));
@@ -26,16 +31,33 @@ export const ContactsList: React.FC = () => {
 
   useEffect(() => {
     dispatch(getContacts());
+    dispatch(getCandidates());
   }, [dispatch]);
 
   useEffect(() => {
     if (!selectedContact) return;
 
-    dispatch(getMessages({
-      contactId: selectedContact.id,
-      contactType: selectedContact.contactType
-    }));
-  }, [selectedContact])
+    dispatch(getMessages(selectedContact.id));
+  }, [selectedContact, sipMessages])
+
+  useEffect(() => {
+    if (!sipMessages || Object.keys(sipMessages).length < 1)
+      return;
+
+    const keys = Object.keys(sipMessages);
+    const lastKey = keys[keys.length - 1];
+
+    const contact = contacts.find(c => c.number === sipMessages[lastKey].from);
+
+    if (!contact) {
+      dispatch(createContact({
+        contactType: ContactType.WEBRTC,
+        sipNumber: sipMessages[lastKey].from
+      }));
+    } else {
+      dispatch(getContacts());
+    }
+  }, [sipMessages])
 
   return (
     <>

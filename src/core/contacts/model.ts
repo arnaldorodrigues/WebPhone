@@ -12,11 +12,12 @@ export interface IContactItem {
   name: string;
   number: string;
   unreadCount?: number;
-  contactType: ContactType
+  contactType: ContactType;
+  lastMessageTimeStamp: Date;
 }
 
 export interface ICreateContactRequest {
-  contactUserId: string;
+  contactUserId?: string;
   contactType: ContactType,
   sipNumber?: string;
   phoneNumber?: string;

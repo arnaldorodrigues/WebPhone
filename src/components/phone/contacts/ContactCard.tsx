@@ -46,7 +46,7 @@ const ContactCard: React.FC<Props> = ({
           >
             {contact.name || contact.number}
           </p>
-          {contact.unreadCount && contact.unreadCount > 0 && (
+          {contact.unreadCount !== undefined && contact.unreadCount > 0 && (
             <div className="ml-auto flex-shrink-0">
               <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-medium text-white bg-indigo-500 rounded-full">
                 {contact.unreadCount}

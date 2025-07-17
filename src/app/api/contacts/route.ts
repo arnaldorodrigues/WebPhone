@@ -5,121 +5,8 @@ import ContactModel from "@/models/Contact";
 import { withAuth } from "@/middleware/authMiddleware";
 import mongoose from "mongoose";
 import { IContactItem } from "@/core/contacts/model";
-import { ContactType } from "@/types/common";
-
-// export async function GET(request: NextRequest) {
-//   try {
-//     const t = request.headers.get('cookies');
-
-//     if (!t) {
-//       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-//     }
-
-//     const token = _parse_token(t);
-//     await connectDB();
-
-//     const user = await UserModel.findById(token._id);
-
-//     if (!user) {
-//       return NextResponse.json({ error: 'User not found' }, { status: 404 });
-//     }
-
-//     const contacts = await Contact.find({ userId: user._id }).populate('users');
-
-//     return NextResponse.json({ success: true, contacts });
-
-//   } catch (error) {
-//     console.error('Error in GET request:', error);
-//     return NextResponse.json(
-//       { success: false, error: 'Failed to process request' },
-//       { status: 500 }
-//     );
-//   }
-// }
-
-// export async function POST(request: NextRequest) {
-//   try {
-
-//     const t = request.headers.get('cookies');
-
-//     if (!t) {
-//       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-//     }
-
-//     const token = _parse_token(t);
-//     await connectDB();
-
-//     const user = await UserModel.findById(token._id);
-
-//     if (!user) {
-//       return NextResponse.json({ error: 'User not found' }, { status: 404 });
-//     }
-
-//     const { contactId } = await request.json()
-
-//     const isDuplicated = await ContactModel.findOne({
-//       userId: token._id,
-//       contactId
-//     });
-
-//     if (isDuplicated) {
-//       return NextResponse.json({ success: true, contact: isDuplicated });
-//     }
-
-//     const newContact = new ContactModel({
-//       userId: token._id,
-//       contactId
-//     });
-
-//     const res = await newContact.save();
-
-//     return NextResponse.json({ success: true, contact: res });
-//   } catch (error) {
-//     console.error('Error in POST request:', error);
-//     return NextResponse.json(
-//       { success: false, error: 'Failed to process request' },
-//       { status: 500 }
-//     );
-//   }
-// }
-
-// export async function DELETE(request: NextRequest) {
-//   try {
-//     const t = request.headers.get('cookies');
-
-//     if (!t) {
-//       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-//     }
-
-//     const token = _parse_token(t);
-//     await connectDB();
-
-//     const user = await UserModel.findById(token._id);
-
-//     if (!user) {
-//       return NextResponse.json({ error: 'User not found' }, { status: 404 });
-//     }
-
-//     const { contactId } = await request.json();
-
-//     const isOk = await ContactModel.findOneAndDelete({
-//       userId: user._id,
-//       contactId
-//     });
-
-//     if (!isOk) {
-//       return NextResponse.json({ error: 'Contact not found' }, { status: 404 });
-//     }
-
-//     return NextResponse.json({ success: true, message: 'Contact deleted successfully' });
-//   } catch (error) {
-//     console.error('Error in DELETE request:', error);
-//     return NextResponse.json(
-//       { success: false, error: 'Failed to process request' },
-//       { status: 500 }
-//     )
-//   }
-// }
+import { ContactType, UserRole } from "@/types/common";
+import MessageModel from "@/models/Message";
 
 export const GET = withAuth(async (req: NextRequest, context: { params: any }, user: any) => {
   try {
@@ -128,12 +15,35 @@ export const GET = withAuth(async (req: NextRequest, context: { params: any }, u
     const contacts = await ContactModel
       .find({ user: currentUserId });
 
-    const contactsData: IContactItem[] = contacts.map((item) => ({
-      id: item._id,
-      name: item.name,
-      number: item.sipNumber || item.didNumber,
-      contactType: item.contactType
-    }));
+    const contactsData = await Promise.all(
+      contacts.map(async (item) => {
+        const isWebRTC = item.contactType === ContactType.WEBRTC;
+        const targetId = isWebRTC ? item.contactUser : item.phoneNumber;
+
+
+        const messages = await MessageModel
+            .find({
+              $or: [
+                { from: currentUserId, to: targetId },
+                { from: targetId, to: currentUserId }
+              ]
+            })
+            .sort({ timestamp: 1 });
+
+        const unreadCount = await MessageModel
+            .find({ from: targetId, to: currentUserId, status: "unread" })
+            .countDocuments();
+
+        return {
+          id: item._id,
+          name: item.name,
+          number: item.sipNumber || item.didNumber,
+          unreadCount: unreadCount,
+          lastMessageTimeStamp: messages.at(-1)?.timestamp ?? null,
+          contactType: item.contactType
+        } as IContactItem;
+      })
+    );
 
     return NextResponse.json({
       success: true,
@@ -174,14 +84,23 @@ export const POST = withAuth(async (req: NextRequest, context: { params: any }, 
       );
     }
 
+    const userData = await UserModel
+      .findById(currentUserId)
+      .populate('setting');
+
+    const users = await UserModel
+      .find({ role: UserRole.USER })
+      .populate("setting")
+
     if (body.contactType === ContactType.WEBRTC) {
-      const contactUserId = new mongoose.Types.ObjectId(body.contactUserId);
+      const contactUser = body.contactUserId
+        ? await UserModel
+          .findById(new mongoose.Types.ObjectId(body.contactUserId))
+          .populate("setting")
+        : users
+          .find((user) => user.setting?.sipUsername === body.sipNumber);
 
-      const contactUser = await UserModel
-        .findById(contactUserId)
-        .populate("setting");
-
-      if (!contactUser) {
+      if (!contactUser || contactUser.setting.domain !== userData.setting.domain) {
         return NextResponse.json(
           {
             success: false,
@@ -195,12 +114,18 @@ export const POST = withAuth(async (req: NextRequest, context: { params: any }, 
         user: currentUserId,
         name: contactUser.name,
         sipNumber: contactUser.setting.sipUsername,
+        contactUser: contactUser._id,
         contactType: ContactType.WEBRTC
       });
 
       return NextResponse.json({
         success: true,
-        data: createdContact
+        data: {
+          id: createdContact._id,
+          name: createdContact.name,
+          number: createdContact.sipNumber,
+          contactType: createdContact.contactType
+        }
       });
     } else {
       const phoneNumber = body.phoneNumber;

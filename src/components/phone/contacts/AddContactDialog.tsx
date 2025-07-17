@@ -1,12 +1,12 @@
 import { Dialog } from "@/components/ui/dialogs";
 import { SearchInput } from "@/components/ui/inputs";
 import { ICandidateItem } from "@/core/contacts/model";
-import { createContact, getCandidates } from "@/core/contacts/request";
-import { AppDispatch } from "@/store";
+import { createContact } from "@/core/contacts/request";
+import { AppDispatch, RootState } from "@/store";
 import { ContactType } from "@/types/common";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 type Props = {
   isOpen: boolean;
@@ -19,8 +19,10 @@ const AddContactDialog: React.FC<Props> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>()
 
+  const { candidates } = useSelector((state: RootState) => state.contactsdata);
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [candidates, setCandidates] = useState<ICandidateItem[]>([]);
+  const [filteredCandidates, setFilteredCandidates] = useState<ICandidateItem[]>([]);
   const [selectedCandidate, setSelectedCandidate] = useState<ICandidateItem>();
 
   const handleSelectCandidate = (candidate: ICandidateItem) => {
@@ -39,21 +41,21 @@ const AddContactDialog: React.FC<Props> = ({
     onClose();
   }
 
-  const getCandidatesData = async (search: string) => {
-    const { payload } = await dispatch(getCandidates(search));
-    setCandidates(payload);
-  }
-
   useEffect(() => {
     if (!searchQuery || searchQuery.length < 1)
       return;
 
-    getCandidatesData(searchQuery);
+    if (!candidates || candidates.length < 1) {
+      setFilteredCandidates([]);
+    }
+
+    const filter = candidates.filter(c => c.sipUsername.includes(searchQuery));
+    setFilteredCandidates(filter);
   }, [searchQuery])
 
   useEffect(() => {
     setSearchQuery("");
-    setCandidates([])
+    setFilteredCandidates([])
   }, [isOpen])
 
   return (
@@ -68,11 +70,11 @@ const AddContactDialog: React.FC<Props> = ({
           />
         </div>
 
-        {candidates.length > 0 && (
+        {filteredCandidates.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-gray-700">Candidates</h3>
             <div className="space-y-1">
-              {candidates.map((contact) => (
+              {filteredCandidates.map((contact) => (
                 <button
                   key={contact.id}
                   onClick={() => handleSelectCandidate(contact)}

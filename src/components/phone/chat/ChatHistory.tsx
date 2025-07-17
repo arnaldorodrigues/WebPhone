@@ -27,7 +27,6 @@ export const ChatHistory: React.FC<Props> = ({
       date: string, messages: IMessageItem[]
     }[]>((groups, message) => {
       const messageDate = format(new Date(message.timestamp), "yyyy-MM-dd");
-      console.log(messageDate);
       const existingGroup = groups.find((group) => group.date === messageDate);
 
       if (existingGroup) {
@@ -40,8 +39,11 @@ export const ChatHistory: React.FC<Props> = ({
     }, []);
 
     setMessageGroups(messageGroups);
-    scrollToBottom();
   }, [messages])
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messageGroups])
 
   return (
     <div className="flex-1 overflow-y-auto px-20 space-y-4">
@@ -54,10 +56,10 @@ export const ChatHistory: React.FC<Props> = ({
           </div>
           <div className="space-y-4">
             {group.messages.map(
-              (message: IMessageItem) =>
+              (message: IMessageItem, idx: number) =>
                 message.body &&
                 message.body.length > 0 && (
-                  <div className={`w-full flex ${message.from === user?.userId ? "justify-end" : "justify-start"}`}>
+                  <div key={idx} className={`w-full flex ${message.from === user?.userId ? "justify-end" : "justify-start"}`}>
                     <div
                       className={`max-w-xl p-4 rounded-2xl break-words shadow-sm
                         ${message.from === user?.userId

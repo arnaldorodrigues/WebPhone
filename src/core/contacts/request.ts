@@ -9,9 +9,9 @@ const CONTACTS_POST_CREATE = "/contacts";
 
 export const getCandidates = createAsyncThunk(
   "contacts/candidates",
-  async (searchQuery: string) => {
+  async (searchQuery?: string) => {
     try {
-      const response = await apiGet(`${CONTACTS_GET_CANDIDATES_LIST}?search=${encodeURIComponent(searchQuery)}`);
+      const response = await apiGet(`${CONTACTS_GET_CANDIDATES_LIST}${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ""}`);
 
       if (response.success) {
         return response.data;
@@ -21,18 +21,12 @@ export const getCandidates = createAsyncThunk(
       throw new Error(error.message);
     }
   }
-)
+);
 
-export const getContacts = createAsyncThunk<
-  IContactItem[],
-  void,
-  { state: RootState }
->(
+export const getContacts = createAsyncThunk(
   "contacts/list",
-  async (_, thunkAPI) => {
+  async () => {
     try {
-      const state = thunkAPI.getState();
-
       const response = await apiGet(CONTACTS_GET_LIST);
 
       if (response.success && response.data) {
@@ -42,11 +36,6 @@ export const getContacts = createAsyncThunk<
       console.error(error);
       throw new Error(error.message);
     }
-  },
-  {
-    condition: (_, { getState }) => {
-      return !getState().contactsdata.loaded
-    },
   }
 );
 

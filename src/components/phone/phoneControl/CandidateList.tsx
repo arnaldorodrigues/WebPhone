@@ -1,5 +1,3 @@
-import { NextPage } from "next";
-
 interface Candidate {
   number: string;
   name?: string;

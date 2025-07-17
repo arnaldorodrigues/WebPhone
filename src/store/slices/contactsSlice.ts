@@ -1,12 +1,13 @@
-import { IContactItem } from "@/core/contacts/model"
-import { createContact, getContacts } from "@/core/contacts/request";
+import { ICandidateItem, IContactItem } from "@/core/contacts/model"
+import { createContact, getCandidates, getContacts } from "@/core/contacts/request";
 import { IMessageItem } from "@/core/messages/model";
-import { getMessages } from "@/core/messages/request";
+import { getMessages, sendMessage } from "@/core/messages/request";
 import { createSlice } from "@reduxjs/toolkit";
 
 type ContactsState = {
   contacts: IContactItem[];
   messages: IMessageItem[];
+  candidates: ICandidateItem[];
   selectedContact: IContactItem | undefined;
   loading: boolean;
   loadingMessages: boolean;
@@ -16,6 +17,7 @@ type ContactsState = {
 const initialState: ContactsState = {
   contacts: [],
   messages: [],
+  candidates: [],
   selectedContact: undefined,
   loading: false,
   loadingMessages: false,
@@ -35,6 +37,15 @@ const contactsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(getCandidates.pending, (state) => {
+        state.candidates = [];
+      })
+      .addCase(getCandidates.fulfilled, (state, action) => {
+        state.candidates = action.payload;
+      })
+      .addCase(getCandidates.rejected, (state) => {
+        state.messages = [];
+      })
       .addCase(getMessages.pending, (state) => {
         state.loadingMessages = true;
       })
@@ -45,6 +56,16 @@ const contactsSlice = createSlice({
       .addCase(getMessages.rejected, (state) => {
         state.loadingMessages = false;
         state.messages = [];
+      })
+      .addCase(sendMessage.pending, (state) => {
+        state.loadingMessages = true;
+      })
+      .addCase(sendMessage.fulfilled, (state, action) => {
+        state.loadingMessages = false;
+        state.messages = [...state.messages, action.payload];
+      })
+      .addCase(sendMessage.rejected, (state) => {
+        state.loadingMessages = false;
       })
       .addCase(getContacts.pending, (state) => {
         state.loading = true;

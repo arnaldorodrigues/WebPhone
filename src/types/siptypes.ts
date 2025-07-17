@@ -1,7 +1,7 @@
 import { Session } from "sip.js";
 import { SessionManager } from "sip.js/lib/platform/web";
 
-export interface SipMessage {
+export interface ISipMessage {
   id: string;
   body: string;
   from: string;
@@ -21,7 +21,7 @@ export enum SessionDirection {
   OUTGOING = "OUTGOING",
 }
 
-export interface SipConfig {
+export interface ISipConfig {
   wsServer: string;
   wsPort: string;
   wsPath: string;
@@ -41,14 +41,15 @@ export type PhoneStateType =
 
 export type SipContextType = {
   sessionManager: SessionManager | null;
-  connectAndRegister: (sipConfig: SipConfig) => void;
+  connectAndRegister: (sipConfig: ISipConfig) => void;
   disconnect: () => Promise<void>;
   sipStatus: SipStatus;
   sessions: Record<string, Session>;
   phoneState: PhoneStateType,
   setPhoneState: (state: PhoneStateType) => void;
   extensionNumber: string;
-  sessionTimer: SessionTimer
+  sessionTimer: SessionTimer,
+  sipMessages: Record<string, ISipMessage>,
 }
 
 export type Timer = {
@@ -60,7 +61,7 @@ export type Timer = {
 
 export type SessionTimer = Record<string, Timer>;
 
-export interface SipMessage {
+export interface ISipMessage {
   id: string;
   body: string;
   from: string;

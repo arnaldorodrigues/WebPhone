@@ -16,14 +16,7 @@ export const GET = withAuth(async (req: NextRequest, context: { params: any }, u
       return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     };
 
-    if (!searchQuery) {
-      return NextResponse.json({
-        success: true,
-        data: [],
-      })
-    }
-
-    const escapedSearchQuery = escapeRegex(searchQuery);
+    const escapedSearchQuery = searchQuery ?  escapeRegex(searchQuery) : "";
     const currentUserId = new mongoose.Types.ObjectId(user.userId);
 
     const users = await UserModel.aggregate([

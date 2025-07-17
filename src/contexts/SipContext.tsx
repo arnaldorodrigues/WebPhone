@@ -1,4 +1,4 @@
-import { SessionTimer, SipConfig, SipMessage, SipStatus, SipContextType, PhoneStateType, SessionDirection, Timer } from "@/types/siptypes";
+import { SessionTimer, ISipConfig, ISipMessage, SipStatus, SipContextType, PhoneStateType, SessionDirection, Timer } from "@/types/siptypes";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Inviter, Session } from "sip.js";
 import { SessionManager, SessionManagerOptions } from "sip.js/lib/platform/web";
@@ -21,23 +21,23 @@ export const SipProvider = ({
   const [sipStatus, setSipStatus] = useState<SipStatus>(SipStatus.UNREGISTERED);
   const [sessions, setSessions] = useState<Record<string, Session>>({});
   const [sessionTimer, setSessionTimer] = useState<SessionTimer>({});
-  const [messages, setMessages] = useState<Record<string, SipMessage>>({});
+  const [sipMessages, setSipMessages] = useState<Record<string, ISipMessage>>({});
   const [phoneState, setPhoneState] = useState<PhoneStateType>(null);
   const [extensionNumber, setExtensionNumber] = useState<string>("");
 
-  const addMessage = useCallback(
-    (message: SipMessage) => {
-      setMessages((messages) => ({
+  const addSipMessage = useCallback(
+    (message: ISipMessage) => {
+      setSipMessages((messages) => ({
         ...messages,
         [message.id]: message,
       }));
     },
-    [setMessages]
+    [setSipMessages]
   );
 
-  const clearMessages = useCallback(() => {
-    setMessages({});
-  }, [setMessages]);
+  const clearSipMessages = useCallback(() => {
+    setSipMessages({});
+  }, [setSipMessages]);
 
   const updateSession = useCallback(    
     (session: Session) => {
@@ -49,7 +49,7 @@ export const SipProvider = ({
     [setSessions]
   );
 
-  const connectAndRegister = (sipConfig: SipConfig) => {
+  const connectAndRegister = (sipConfig: ISipConfig) => {
     const sessionManager = new SessionManager(
       `${sipConfig?.wsServer || ""}:${sipConfig?.wsPort || ""}${sipConfig?.wsPath || ""
       }`,
@@ -152,13 +152,13 @@ export const SipProvider = ({
             );
           },
           onMessageReceived: (message) => {
-            const newMessage: SipMessage = {
+            const newMessage: ISipMessage = {
               id: Date.now().toString(),
               body: message.request.body || "",
               from: message.request.from?.uri?.user || "unknown",
               timestamp: new Date(),
             };
-            addMessage(newMessage);
+            addSipMessage(newMessage);
             showNotification(
               "New Message",
               `Message received from ${newMessage.from}`,
@@ -187,7 +187,7 @@ export const SipProvider = ({
 
         setSessions({});
         setSessionTimer({});
-        clearMessages();
+        clearSipMessages();
 
         setSipStatus(SipStatus.WAIT_REQUEST_CONNECT);
         setSipStatus(SipStatus.UNREGISTERED);
@@ -196,12 +196,12 @@ export const SipProvider = ({
         setSessionManager(null);
         setSessions({});
         setSessionTimer({});
-        clearMessages();
+        clearSipMessages();
         setSipStatus(SipStatus.DISCONNECTED);
         setSipStatus(SipStatus.UNREGISTERED);
       }
     }
-  }, [sessionManager, sipStatus, clearMessages]);
+  }, [sessionManager, sipStatus, clearSipMessages]);
 
   return (
     <SipContext.Provider
@@ -212,6 +212,7 @@ export const SipProvider = ({
         sipStatus,
         sessions,
         phoneState,
+        sipMessages,
         setPhoneState,
         extensionNumber,
         sessionTimer

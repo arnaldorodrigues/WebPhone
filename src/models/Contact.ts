@@ -7,7 +7,7 @@ export interface IContact extends Document {
   sipNumber: string;
   phoneNumber: string;
   contactType: ContactType;
-  isDeleted: boolean;
+  contactUser?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,10 +36,9 @@ const contactSchema: Schema<IContact> = new Schema<IContact>(
       required: true,
       enum: ContactTypeValues
     },
-    isDeleted: {
-      type: Schema.Types.Boolean,
-      required: true,
-      default: false
+    contactUser: {
+      type: String,
+      ref: "User"
     },
   },
   {
