@@ -1,4 +1,4 @@
-import { verifyToken } from '@/utils/auth';
+import { verifyToken } from '@/lib/auth';
 import { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { NextRequest, NextResponse } from 'next/server';
 

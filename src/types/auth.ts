@@ -7,19 +7,14 @@ export interface IJwtPayload {
   role: string;
 }
 
-export interface SignUpRequest {
+export interface ISignUpRequest {
   extensionNumber: string;
   password: string;
   name: string;
   email: string;
 }
 
-export interface SignInRequest {
+export interface ISignInRequest {
   email: string;
   password: string;
-}
-
-export interface AuthResponse {
-  token: string;
-  user: Omit<IUser, "password">;
 }

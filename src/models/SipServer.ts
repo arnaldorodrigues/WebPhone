@@ -40,8 +40,6 @@ const sipServerSchema: Schema<ISipServer> = new Schema<ISipServer>(
   }
 );
 
-sipServerSchema.index({ domain: 1 }, { unique: true });
-
 const SipServerModel = models.SipServer || model<ISipServer>("SipServer", sipServerSchema);
 
 export default SipServerModel;

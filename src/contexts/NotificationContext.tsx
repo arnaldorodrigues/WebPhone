@@ -1,9 +1,7 @@
 "use client";
 
+import { Notification, NotificationType } from "@/components/ui/notification";
 import React, { createContext, useContext, useState, useCallback } from "react";
-import Notification, {
-  NotificationType,
-} from "../components/ui/notification/notification";
 
 interface NotificationContextType {
   showNotification: (

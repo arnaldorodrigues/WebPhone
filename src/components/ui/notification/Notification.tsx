@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 
 export type NotificationType = "success" | "error" | "info" | "warning";
 
-export interface NotificationProps {
+export type Props = {
   title: string;
   message: string;
   type?: NotificationType;
@@ -11,7 +11,7 @@ export interface NotificationProps {
   onClose?: () => void;
 }
 
-const Notification: React.FC<NotificationProps> = ({
+export const Notification: React.FC<Props> = ({
   title,
   message,
   type = "info",
@@ -138,5 +138,3 @@ const Notification: React.FC<NotificationProps> = ({
     document.body
   );
 };
-
-export default Notification;

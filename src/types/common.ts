@@ -8,7 +8,6 @@ export enum SmsGatewayType {
   VI = "vi",
 }
 export const SmsGatewayTypeValues = ['signalwire', 'vi'] as const;
-// export type SmsGatewayType = typeof SmsGatewayTypeValues[number];
 
 export enum MessageStatus {
   DELIVERED = 'delivered',

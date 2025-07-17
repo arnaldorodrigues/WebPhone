@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
-import { SignInRequest } from '@/types/auth';
-import { signToken } from '@/utils/auth';
+import { ISignInRequest } from '@/types/auth';
+import { signToken } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import UserModel from '@/models/User';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
   try {
-    const body: SignInRequest = await request.json();
+    const body: ISignInRequest = await request.json();
     const { email, password } = body;
 
     if (!email || !password) {
