@@ -4,10 +4,8 @@ import { Dialog } from "@/components/ui/dialogs";
 import { useSip } from "@/contexts/SipContext";
 import { useState, useEffect, useRef } from "react";
 import { SessionState } from "sip.js";
-import CandidateList from "./CandidateList";
 import DialPad from "./DialPad";
 import { CallSessionItem } from "./CallSessionItem";
-import { useAuth } from "@/contexts/AuthContext";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 
@@ -30,10 +28,29 @@ const PhoneCallDialog: React.FC<Props> = ({
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (Object.keys(sessions).length === 0 && phoneState !== "dialing") {
+    if (sessions && Object.keys(sessions).length > 0) {
+      const sessionIds = Object.keys(sessions);
+      let flag = false;
+      for (let i = 0; i < sessionIds.length; i++) {
+        const sessionId = sessionIds[i];
+        const session = sessions[sessionId];
+        if (
+          session?.state !== SessionState.Terminated &&
+          session?.state !== SessionState.Terminating
+        ) {
+          flag = true;
+          break;
+        }
+      }
+      if (flag) {
+        setPhoneState("calling");
+      } else {
+        setPhoneState(null);
+      }
+    } else {
       setPhoneState(null);
     }
-  }, [sessions]);
+  }, [sessions, setPhoneState]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -126,16 +143,12 @@ const PhoneCallDialog: React.FC<Props> = ({
           </div>
         </div>
       ) : (sessions &&
-        Object.keys(sessions).map((sessionId, index) => {
+        Object.keys(sessions).map((sessionId) => {
           const session = sessions[sessionId];
-          if (
-            ![SessionState.Terminating, SessionState.Terminated].includes(
-              session?.state
-            )
-          )
-            return <></>
-            // return <CallSessionItem key={sessionId} sessionId={sessionId} />;
-          return null;
+          if (![SessionState.Terminating, SessionState.Terminated].includes(session?.state))
+            return <CallSessionItem key={sessionId} sessionId={sessionId} />;
+          else
+            return null;
         }))
       }
     </Dialog>

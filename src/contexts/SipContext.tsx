@@ -39,10 +39,10 @@ export const SipProvider = ({
     setMessages({});
   }, [setMessages]);
 
-  const updateSession = useCallback(
+  const updateSession = useCallback(    
     (session: Session) => {
-      setSessions((session: any) => ({
-        ...sessions,
+      setSessions((prev) => ({
+        ...prev,
         [session.id]: session,
       }));
     },

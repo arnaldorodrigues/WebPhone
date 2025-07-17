@@ -176,12 +176,10 @@ export const PhoneControl: React.FC = () => {
         </button>
       </div>
 
-      {!!phoneState && (
-        <PhoneCallDialog
-          isOpen={!!phoneState}
-          onClose={() => setPhoneState(null)}
-        />
-      )}
+      <PhoneCallDialog
+        isOpen={!!phoneState}
+        onClose={() => setPhoneState(null)}
+      />
 
       <SettingDialog
         userData={userData}

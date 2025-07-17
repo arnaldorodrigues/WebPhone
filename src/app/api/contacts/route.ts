@@ -181,8 +181,6 @@ export const POST = withAuth(async (req: NextRequest, context: { params: any }, 
         .findById(contactUserId)
         .populate("setting");
 
-      console.log("+++++++++++++++++++", contactUser);
-
       if (!contactUser) {
         return NextResponse.json(
           {

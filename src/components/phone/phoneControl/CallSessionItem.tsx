@@ -17,7 +17,7 @@ import { PhoneStateType, SessionDirection } from "@/types/siptypes";
 
 export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
   const sessionCall = useSessionCall(sessionId);
-  const { phoneState, setPhoneState } = useSip();
+  const { setPhoneState } = useSip();
 
   const {
     answer,
@@ -378,10 +378,8 @@ export const CallSessionItem = ({ sessionId }: { sessionId: string }) => {
         </div>
       )}
 
-      {session?.state &&
-        [SessionState.Terminating, SessionState.Terminated].includes(
-          session?.state
-        ) && (
+      {(session?.state === SessionState.Terminating ||
+        session?.state === SessionState.Terminated) && (
           <CallEnded
             session={session}
             setPhoneState={(state) => setPhoneState(state as any)}
