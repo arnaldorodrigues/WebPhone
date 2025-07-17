@@ -39,6 +39,14 @@ export type PhoneStateType =
   | "ended"
   | null;
 
+export type NotificationType = "success" | "error" | "info" | "warning";
+
+export interface INotification {
+  title: string,
+  message: string,
+  type?: NotificationType
+}
+
 export type SipContextType = {
   sessionManager: SessionManager | null;
   connectAndRegister: (sipConfig: ISipConfig) => void;
@@ -50,6 +58,7 @@ export type SipContextType = {
   extensionNumber: string;
   sessionTimer: SessionTimer,
   sipMessages: Record<string, ISipMessage>,
+  showNotification: (notificaiont: INotification) => void;
 }
 
 export type Timer = {

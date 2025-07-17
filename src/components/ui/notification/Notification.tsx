@@ -1,7 +1,6 @@
+import { NotificationType } from "@/types/siptypes";
 import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
-
-export type NotificationType = "success" | "error" | "info" | "warning";
 
 export type Props = {
   title: string;

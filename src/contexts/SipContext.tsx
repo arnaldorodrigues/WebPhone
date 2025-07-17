@@ -1,8 +1,8 @@
-import { SessionTimer, ISipConfig, ISipMessage, SipStatus, SipContextType, PhoneStateType, SessionDirection, Timer } from "@/types/siptypes";
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { SessionTimer, ISipConfig, ISipMessage, SipStatus, SipContextType, PhoneStateType, SessionDirection, Timer, NotificationType, INotification } from "@/types/siptypes";
+import { createContext, useCallback, useContext, useRef, useState } from "react";
 import { Inviter, Session } from "sip.js";
 import { SessionManager, SessionManagerOptions } from "sip.js/lib/platform/web";
-import { useNotification } from "./NotificationContext";
+import { Notification } from "@/components/ui/notification";
 
 export const SipContext = createContext<SipContextType | undefined>(undefined);
 
@@ -15,8 +15,6 @@ export const SipProvider = ({
 }) => {
   const refAudioRemote = useRef<HTMLAudioElement>(null);
 
-  const { showNotification } = useNotification();
-
   const [sessionManager, setSessionManager] = useState<SessionManager | null>(null);
   const [sipStatus, setSipStatus] = useState<SipStatus>(SipStatus.UNREGISTERED);
   const [sessions, setSessions] = useState<Record<string, Session>>({});
@@ -24,6 +22,19 @@ export const SipProvider = ({
   const [sipMessages, setSipMessages] = useState<Record<string, ISipMessage>>({});
   const [phoneState, setPhoneState] = useState<PhoneStateType>(null);
   const [extensionNumber, setExtensionNumber] = useState<string>("");
+  const [notification, setNotification] = useState<INotification | null>(null);
+
+  const showNotification = useCallback(
+    (notification: INotification) => {
+      setNotification(notification);
+
+      const audio = new Audio("/sounds/notification.mp3");
+      audio.play().catch((err: any) => {
+        console.warn("Unable to play notification sound", err);
+      })
+    },
+    []
+  );
 
   const addSipMessage = useCallback(
     (message: ISipMessage) => {
@@ -39,7 +50,7 @@ export const SipProvider = ({
     setSipMessages({});
   }, [setSipMessages]);
 
-  const updateSession = useCallback(    
+  const updateSession = useCallback(
     (session: Session) => {
       setSessions((prev) => ({
         ...prev,
@@ -94,11 +105,11 @@ export const SipProvider = ({
                 answeredAt: new Date(),
               },
             }));
-            showNotification(
-              "Call Status",
-              "Call connected successfully",
-              "success"
-            );
+            showNotification({
+              title: "Call Status",
+              message: "Call connected successfully",
+              type: "success"
+            });
           },
           onCallHangup: (session) => {
             updateSession(session);
@@ -109,7 +120,11 @@ export const SipProvider = ({
                 hangupAt: new Date(),
               },
             }));
-            showNotification("Call Status", "Call has ended", "info");
+            showNotification({
+              title: "Call Status",
+              message: "Call has ended",
+              type: "info"
+            });
           },
           onCallReceived: (session) => {
             updateSession(session);
@@ -121,23 +136,27 @@ export const SipProvider = ({
               },
             }));
             const caller = session.remoteIdentity.uri.user;
-            showNotification("Incoming Call", `Call from ${caller}`, "info");
+            showNotification({
+              title: "Incoming Call",
+              message: `Call from ${caller}`,
+              type: "info"
+            });
           },
           onRegistered: () => {
             setSipStatus(SipStatus.REGISTERED);
-            showNotification(
-              "Connection Status",
-              "Successfully connected to SIP server",
-              "success"
-            );
+            showNotification({
+              title: "Connection Status",
+              message: "Successfully connected to SIP server",
+              type: "success"
+            });
           },
           onUnregistered: () => {
             setSipStatus(SipStatus.UNREGISTERED);
-            showNotification(
-              "Connection Status",
-              "Disconnected from SIP server",
-              "warning"
-            );
+            showNotification({
+              title: "Connection Status",
+              message: "Disconnected from SIP server",
+              type: "warning"
+            });
           },
           onServerConnect() {
             setSipStatus(SipStatus.CONNECTED);
@@ -145,11 +164,11 @@ export const SipProvider = ({
           },
           onServerDisconnect() {
             setSipStatus(SipStatus.DISCONNECTED);
-            showNotification(
-              "Disconnected",
-              "Disconnected from SIP server",
-              "warning"
-            );
+            showNotification({
+              title: "Disconnected",
+              message: "Disconnected from SIP server",
+              type: "warning"
+            });
           },
           onMessageReceived: (message) => {
             const newMessage: ISipMessage = {
@@ -159,11 +178,11 @@ export const SipProvider = ({
               timestamp: new Date(),
             };
             addSipMessage(newMessage);
-            showNotification(
-              "New Message",
-              `Message received from ${newMessage.from}`,
-              "info"
-            );
+            showNotification({
+              title: "New Message",
+              message: `Message received from ${newMessage.from}`,
+              type: "info"
+            });
           },
         },
         ...mergedSessionManagerOptions,
@@ -203,6 +222,10 @@ export const SipProvider = ({
     }
   }, [sessionManager, sipStatus, clearSipMessages]);
 
+  const handleClose = useCallback(() => {
+    setNotification(null);
+  }, []);
+
   return (
     <SipContext.Provider
       value={{
@@ -215,10 +238,19 @@ export const SipProvider = ({
         sipMessages,
         setPhoneState,
         extensionNumber,
-        sessionTimer
+        sessionTimer,
+        showNotification
       }}
     >
       {children}
+      {notification && (
+        <Notification
+          title={notification.title}
+          message={notification.message}
+          type={notification.type}
+          onClose={handleClose}
+        />
+      )}
     </SipContext.Provider>
   )
 }
