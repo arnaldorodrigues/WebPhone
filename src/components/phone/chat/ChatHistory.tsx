@@ -46,7 +46,7 @@ export const ChatHistory: React.FC<Props> = ({
   }, [messageGroups])
 
   return (
-    <div className="flex-1 overflow-y-auto px-20 space-y-4">
+    <div className="flex-1 overflow-y-auto px-2 space-y-4">
       {messageGroups?.map((group) => (
         <div key={group.date}>
           <div className="flex items-center justify-center my-6">

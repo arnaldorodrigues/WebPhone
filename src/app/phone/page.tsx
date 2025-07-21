@@ -4,6 +4,7 @@ import { ChatBoard, ContactsList, PhoneControl } from "@/components/phone";
 import { useSip } from "@/contexts/SipContext";
 import { useSmsSocket } from "@/contexts/SmsContext";
 import { RootState } from "@/store";
+import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
 
@@ -12,6 +13,9 @@ const PhoneHome = () => {
 
   const { subscribe } = useSmsSocket();
   const { showNotification } = useSip();
+
+  const pathname = usePathname();
+  const sidebarVisible = selectedContact !== undefined;
 
   useEffect(() => {
     const unsubscribe = subscribe((wsMessage: any) => {
@@ -37,13 +41,13 @@ const PhoneHome = () => {
 
   return (
     <div className="w-full h-full flex-1 flex flex-row ">
-      <div className="w-full h-[calc(100vh-4rem)] pb-5 sm:block sm:w-80 bg-white border-r border-gray-100 shadow-sm">
+      <div className={`w-full h-[calc(100vh-4rem)] pb-5 sm:block sm:w-80 bg-white border-r border-gray-100 shadow-sm ${sidebarVisible && "hidden"}`}>
         <div className="h-full flex flex-col">
           <PhoneControl />
           <ContactsList />
         </div>
       </div>
-      <div className="flex-1">
+      <div className="w-full h-[calc(100vh-4rem)] flex flex-col justify-between bg-blue-50">
         {selectedContact && <ChatBoard />}
       </div>
     </div>
