@@ -34,8 +34,6 @@ export const GET = withAuth(async (req: NextRequest, context: { params: any }, u
         const targetId = isWebRTC ? item.contactUser : item.phoneNumber;
         const srcId = isWebRTC ? currentUserId : userData.smsGateway;
 
-          console.log("+++++++++++++++++++++ targetId", targetId);
-
         const messages = await MessageModel
           .find({
             $or: [
