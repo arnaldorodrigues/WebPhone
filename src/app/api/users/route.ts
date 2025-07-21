@@ -1,599 +1,298 @@
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import UserModel from '@/models/User';
-import { Settings } from '@/models/Settings';
-import { _parse_token } from '@/utils/auth';
-import bcrypt from 'bcryptjs';
-import mongoose, { Document, isValidObjectId, Types } from 'mongoose';
-import MessageModel from '@/models/Message';
-import '@/models/SmsGateway';
+import connectDB from "@/lib/mongodb";
+import { withRole } from "@/middleware/authMiddleware";
+import SettingModel from "@/models/Setting";
+import SipServerModel from "@/models/SipServer";
+import UserModel from "@/models/User";
+import { UserRole } from "@/types/common";
+import { NextRequest, NextResponse } from "next/server";
 
-interface Contact {
-  id?: string;
-  name?: string;
-  number?: string;
-}
-
-interface UserDocument extends Document {
-  _id: any;
-  name: string;
-  email: string;
-  role: string;
-  password: string;
-  newPassword: string;
-  contacts?: Contact[];
-  settings?: {
-    wsServer: string;
-    wsPort: string;
-    wsPath: string;
-    domain: string;
-    sipUsername: string;
-    sipPassword: string;
-    updatedAt: Date;
-  };
-  createdAt: Date;
-  did?: {
-    _id: string;
-    type: 'signalwire' | 'vi';
-    config: {
-      phoneNumber: string;
-      projectId?: string;
-      authToken?: string;
-      spaceUrl?: string;
-      apiKey?: string;
-      apiSecret?: string;
-    };
-  };
-}
-
-export async function GET(request: NextRequest) {
+export const GET = withRole(UserRole.ADMIN, async (req: NextRequest) => {
   try {
-    const t = request.headers.get('cookies');
-
-    if (!t) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = _parse_token(t);
     await connectDB();
 
-    const searchParams = request.nextUrl.searchParams;
-    const searchQuery = searchParams.get('query');
-    const count = searchParams.get('count');
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const skip = (page - 1) * limit;
 
-    if (searchQuery && count) {
-      const limit = parseInt(count);
+    const totalUsers = await UserModel.countDocuments();
 
-      const escapeRegex = (string: string) => {
-        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      };
-      
-      const escapedSearchQuery = escapeRegex(searchQuery);
-      
-      const users = await UserModel.aggregate([
-        {
-          $match: { role: "user", _id: { $ne: new mongoose.Types.ObjectId(token._id) } }
-        },
-        {
-          $lookup: {
-            from: "settings",
-            localField: "settings",
-            foreignField: "_id",
-            as: "settings"
-          }
-        },
-        {
-          $unwind: {
-            path: "$settings",
-            preserveNullAndEmptyArrays: true
-          }
-        },
-        {
-          $match: {
-            $or: [
-              { name: { $regex: escapedSearchQuery, $options: "i" } },
-              { "settings.sipUsername": { $regex: escapedSearchQuery, $options: "i" } }
-            ]
-          }
-        },
-        {
-          $limit: parseInt(count)
-        }
-      ]);
-      
-      const candidates = users.map((user: any) => ({
-        id: user._id.toString(),
-        name: user.name,
-        number: user.settings?.sipUsername || ''
-      }));
-
-      return NextResponse.json({
-        success: true,
-        data: candidates
-      });
-    }
-
-    const user = await UserModel.findById(token._id)
-      .populate('settings')
-      .populate('did')
-      .select('-password')
-      .lean();
-      
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'User not found' },
-        { status: 404 }
-      );
-    }
-      
-    const typedUser = user as unknown as UserDocument;
-
-    const formattedUser: {
-      id: string;
-      name: string;
-      email: string;
-      role: string;
-      status: string;
-      createdAt: Date;
-      contacts: Contact[];
-      did?: {
-        _id: string;
-        type: string;
-        config: {
-          phoneNumber: string;
-        };
-      } | null;
-      settings: {
-        wsServer: string;
-        wsPort: string;
-        wsPath: string;
-        domain: string;
-        sipUsername: string;
-        sipPassword: string;
-        updatedAt: Date;
-      } | null;
-    } = {
-      id: typedUser._id.toString(),
-      name: typedUser.name,
-      email: typedUser.email,
-      role: typedUser.role,
-      status: typedUser.settings ? 'active' : 'inactive',
-      createdAt: typedUser.createdAt,
-      contacts: [],
-      did: typedUser.did || null,
-      settings: typedUser.settings ? {
-        wsServer: typedUser.settings.wsServer,
-        wsPort: typedUser.settings.wsPort,
-        wsPath: typedUser.settings.wsPath,
-        domain: typedUser.settings.domain,
-        sipUsername: typedUser.settings.sipUsername,
-        sipPassword: typedUser.settings.sipPassword,
-        updatedAt: typedUser.settings.updatedAt,
-      } : null,
-    };
-
-    for (let i = 0; i < (typedUser.contacts?.length || 0); i++) {
-      if (isValidObjectId(typedUser?.contacts?.[i] as string)) {
-        const contact = await UserModel.findOne({ _id: typedUser?.contacts?.[i] })
-          .populate('settings')
-          .select('name settings')
-          .lean() as unknown as {
-            _id: Types.ObjectId;
-            name: string;
-            settings?: {
-              sipUsername: string;
-            };
-          };
-
-        if (contact) {
-          const newContact: Contact = {
-            id: contact._id.toString(),
-            name: contact.name || '',
-            number: contact.settings?.sipUsername || '',
-          };
-          formattedUser.contacts.push(newContact);
-        }
-      } else {
-        formattedUser.contacts.push({
-          id: '',
-          name: '',
-          number: typedUser?.contacts?.[i] as string,
-        });
-      }
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: formattedUser
-    });
-
-  } catch (error) {
-    console.error('Error in GET request:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to process request' },
-      { status: 500 }
-    );
-  }
-}
-
-// Create or Update User
-export async function POST(request: NextRequest) {
-  try {
-    const t = request.headers.get('cookies');
-
-    if (!t) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = _parse_token(t);
-
-    const userData = await request.json();
-    await connectDB();
-
-    if (!userData.email || !userData.name) {
-      return NextResponse.json(
-        { success: false, error: 'Email and name are required' },
-        { status: 400 }
-      );
-    }
-
-    const existingUser = await UserModel.findById(token._id);
-
-    if (!existingUser) {
-      return NextResponse.json(
-        { success: false, error: 'User not found' },
-        { status: 404 }
-      );
-    }
-
-    if (userData.password) {
-      const isPasswordValid = await bcrypt.compare(userData.password, existingUser.password);
-      if (!isPasswordValid) {
-        return NextResponse.json(
-          { success: false, error: 'Invalid password' },
-          { status: 400 }
-        );
-      }
-    }
-
-    const updateData: any = {
-      name: userData.name,
-      email: userData.email,
-      role: userData.role || existingUser.role,
-      password: userData.newPassword ? await bcrypt.hash(userData.newPassword, 10) : undefined,
-    };
-
-    if (userData.did !== undefined) {
-      updateData.did = userData.did;
-    }
-    
-    const updatedUser = await UserModel.findByIdAndUpdate(
-      existingUser._id,
-      updateData,
-      { new: true, runValidators: true }
-    );
-
-    if (userData.settings) {
-      if (userData.settings.sipUsername) {
-        const existingSipUser = await Settings.findOne({
-          sipUsername: userData.settings.sipUsername,
-          email: { $ne: token.email.toLowerCase() }
-        });
-
-        if (existingSipUser) {
-          return NextResponse.json(
-            { success: false, error: 'SIP Username already exists' },
-            { status: 400 }
-          );
-        }
-      }
-
-      const settingsData = {
-        email: token.email.toLowerCase(),
-        wsServer: userData.settings.wsServer,
-        wsPort: userData.settings.wsPort,
-        wsPath: userData.settings.wsPath || '/',
-        domain: userData.settings.domain,
-        sipUsername: userData.settings.sipUsername,
-        sipPassword: userData.settings.sipPassword,
-      };
-
-      const existingSettings = await Settings.findOne({ 
-        email: token.email.toLowerCase() 
-      });
-
-      let savedSettings;
-      
-      if (existingSettings) {
-        savedSettings = await Settings.findByIdAndUpdate(
-          existingSettings._id,
-          settingsData,
-          { new: true, runValidators: true }
-        );
-      } else {
-        savedSettings = await Settings.create(settingsData);
-      }
-
-      await UserModel.findByIdAndUpdate(updatedUser._id, {
-        settings: savedSettings._id
-      });
-    }
-
-    const responseUser = await UserModel.findById(updatedUser._id)
-      .populate('settings')
-      .populate('did')
+    const users = await UserModel
+      .find({ role: { $ne: UserRole.ADMIN } })
+      .skip(skip)
+      .limit(limit)
+      .populate('setting')
       .select('-password')
       .lean();
 
-    if (!responseUser) {
-      return NextResponse.json(
-        { success: false, error: 'Failed to retrieve updated user' },
-        { status: 500 }
-      );
-    }
-
-    const typedResponseUser = responseUser as unknown as UserDocument;
-
-    const formattedUser: {
-      id: string;
-      name: string;
-      email: string;
-      role: string;
-      status: string;
-      createdAt: Date;
-      contacts: Contact[];
-      did?: {
-        _id: string;
-        type: string;
-        config: {
-          phoneNumber: string;
-        };
-      } | null;
-      settings: {
-        wsServer: string;
-        wsPort: string;
-        wsPath: string;
-        domain: string;
-        sipUsername: string;
-        sipPassword: string;
-        updatedAt: Date;
-      } | null;
-    } = {
-      id: typedResponseUser._id.toString(),
-      name: typedResponseUser.name,
-      email: typedResponseUser.email,
-      role: typedResponseUser.role,
-      status: typedResponseUser.settings ? 'active' : 'inactive',
-      createdAt: typedResponseUser.createdAt,
-      contacts: typedResponseUser.contacts || [],
-      did: typedResponseUser.did || null,
-      settings: typedResponseUser.settings ? {
-        wsServer: typedResponseUser.settings.wsServer,
-        wsPort: typedResponseUser.settings.wsPort,
-        wsPath: typedResponseUser.settings.wsPath,
-        domain: typedResponseUser.settings.domain,
-        sipUsername: typedResponseUser.settings.sipUsername,
-        sipPassword: typedResponseUser.settings.sipPassword,
-        updatedAt: typedResponseUser.settings.updatedAt,
-      } : null,
-    };
-
     return NextResponse.json({
       success: true,
-      message: 'User updated successfully',
-      data: formattedUser
+      data: users,
+      pagination: {
+        totalUsers,
+        page,
+        limit,
+        totalPages: Math.ceil(totalUsers / limit),
+      }
     });
-
   } catch (error: any) {
-    console.error('Error updating user:', error);
-    
-    if (error.code === 11000) {
-      if (error.message.includes('sipUsername')) {
-        return NextResponse.json(
-          { success: false, error: 'SIP Username already exists' },
-          { status: 400 }
-        );
-      } else if (error.message.includes('email')) {
-        return NextResponse.json(
-          { success: false, error: 'Email already exists' },
-          { status: 400 }
-        );
-      }
-    }
-    
-    return NextResponse.json(
-      { success: false, error: 'Failed to update user' },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: false,
+      error: error.message,
+    }, { status: 500 });
   }
-}
+});
 
-// Contact Add or Remove
-export async function PUT(request: NextRequest) {
+export const POST = withRole(UserRole.ADMIN, async (req: NextRequest) => {
   try {
+    const body = await req.json();
 
-    const t = request.headers.get('cookies');
-    
-    if (!t) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    
-    const token = _parse_token(t);
-    const { action, contact } = await request.json();
-
-    await connectDB();
-
-    if (!action || !contact) {
+    if (!body.name || !body.email) {
       return NextResponse.json(
-        { success: false, error: 'Action and contact data are required' },
+        {
+          success: false,
+          error: 'Name and Email are required'
+        },
         { status: 400 }
       );
     }
 
-    const user = await UserModel.findById(token._id);
-    if (!user) {
+    const duplicate = await UserModel.findOne({
+      email: body.email,
+    });
+
+    if (duplicate) {
       return NextResponse.json(
-        { success: false, error: 'User not found' },
+        {
+          success: false,
+          error: 'Email already exists'
+        },
+        { status: 400 }
+      );
+    }
+
+    const createdUser = await UserModel.create({
+      email: body.email,
+      password: body.password,
+      name: body.name,
+      role: body.role,
+      sipServer: body.sipServer,
+      smsGateway: body.smsGateway,
+    });
+
+    if (body.sipUsername && body.sipServer) {
+      const sipServer = await SipServerModel.findById(body.sipServer);
+
+      const extensionDuplicate = await SettingModel.findOne({
+        domain: sipServer.domain,
+        sipUsername: body.sipUsername
+      });
+
+      if (extensionDuplicate) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Extension Number is already used'
+          },
+          { status: 400 }
+        );
+      }
+
+      const createdSetting = await SettingModel.create({
+        domain: sipServer.domain,
+        wsServer: sipServer.wsServer,
+        wsPort: sipServer.wsPort,
+        wsPath: sipServer.wsPath,
+        sipUsername: body.sipUsername,
+        sipPassword: body.sipPassword,
+        user: createdUser._id
+      });
+
+      await UserModel.findByIdAndUpdate(createdUser._id,
+        {
+          setting: createdSetting._id
+        }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: createdUser
+    });
+  } catch (error) {
+    console.error('Error saving user: ', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to save user'
+      },
+      { status: 500 }
+    );
+  }
+})
+
+export const PUT = withRole(UserRole.ADMIN, async (req: NextRequest) => {
+  try {
+    const body = await req.json();
+
+    if (!body.name || !body.email) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Id, Name and Email are required'
+        },
+        { status: 400 }
+      );
+    }
+
+    const existing = await UserModel.findById(body.id);
+    if (!existing) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'User not found'
+        },
+        { status: 404 }
+      )
+    }
+
+    const duplicate = await UserModel.findOne({
+      email: body.email,
+      _id: { $ne: body.id }
+    });
+
+    if (duplicate) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Email already exists'
+        },
+        { status: 400 }
+      );
+    }
+
+    const updatedUser = await UserModel.findByIdAndUpdate(body.id,
+      {
+        email: body.email,
+        password: body.password,
+        name: body.name,
+        role: body.role,
+        sipServer: body.sipServer,
+        smsGateway: body.smsGateway,
+      }
+    );
+
+    if (body.sipUsername && body.sipServer) {
+      const sipServer = await SipServerModel.findById(body.sipServer);
+
+      const extensionDuplicate = await SettingModel.findOne({
+        domain: sipServer.domain,
+        sipUsername: body.sipUsername
+      });
+
+      if (extensionDuplicate) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Extension Number is already used'
+          },
+          { status: 400 }
+        );
+      }
+
+      if (updatedUser.setting) {
+        const existingSetting = await SettingModel.findById(updatedUser.setting);
+
+        await SettingModel.findByIdAndUpdate(updatedUser.setting,
+          {
+            domain: sipServer.domain,
+            wsServer: sipServer.wsServer,
+            wsPort: sipServer.wsPort,
+            wsPath: sipServer.wsPath,
+            sipUsername: body.sipUsername ?? existingSetting.sipUsername,
+            sipPassword: body.sipPassword ?? existingSetting.sipPassword,
+          }
+        );
+      } else {
+        const createdSetting = await SettingModel.create({
+          domain: sipServer.domain,
+          wsServer: sipServer.wsServer,
+          wsPort: sipServer.wsPort,
+          wsPath: sipServer.wsPath,
+          sipUsername: body.sipUsername,
+          sipPassword: body.sipPassword,
+          userId: updatedUser._id
+        });
+
+        await UserModel.findByIdAndUpdate(updatedUser._id,
+          {
+            setting: createdSetting._id
+          }
+        );
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: updatedUser
+    });
+  } catch (error) {
+    console.error('Error saving user: ', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to save user'
+      },
+      { status: 500 }
+    );
+  }
+})
+
+export const DELETE = withRole(UserRole.ADMIN, async (req: NextRequest) => {
+  try {
+    const { searchParams } = new URL(req.url);
+
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Missing server ID'
+        },
+        { status: 400 }
+      )
+    }
+
+    await connectDB();
+
+    const deleted = await UserModel.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'User not found'
+        },
         { status: 404 }
       );
     }
 
-
-    const contactData = (await UserModel.aggregate([
-      {
-        $lookup: {
-          from: "settings", 
-          localField: "settings",
-          foreignField: "_id",
-          as: "settings"
-        }
-      },
-      { $unwind: "$settings" },
-      { $match: { "settings.sipUsername": contact } }
-    ]))[0] as unknown as {
-      _id: Types.ObjectId;
-      name: string;
-      settings: {
-        sipUsername: string;
-      };
-    };
-
-    if (action === 'add') {
-      let isExist = false;
-      
-      if(contactData) {
-        isExist = user.contacts.some(
-          (c: string) => c === contactData._id.toString()
-        );
-      } else if ( !isValidObjectId(contact as string)) {
-        isExist = user.contacts.some(
-          (c: string) => c === contact
-        );
-      }
-      
-      if (isExist) {
-        return NextResponse.json(
-          { success: false, error: 'Contact already exists' },
-          { status: 400 }
-        );
-      }
-      
-      if(contactData && contactData._id) {
-        user.contacts.push(contactData._id);
-      } else if ( !isValidObjectId(contact as string)) {
-        user.contacts.push(contact as string);
-      }
-    } else if (action === 'remove') {
-      if(contactData && contactData._id) {
-        user.contacts = user.contacts.filter(
-          (c: string) => c !== contactData._id.toString()
-        );
-      } else if ( !isValidObjectId(contact as string)) {
-        user.contacts = user.contacts.filter(
-          (c: string) => c !== contact
-        );
-      }
-    } else {
-      return NextResponse.json(
-        { success: false, error: 'Invalid action' },
-        { status: 400 }
-      );
-    }
-
-    await user.save();
-
-    const updatedUser = await UserModel.findById(user._id)
-      .populate('settings')
-      .populate('did')
-      .select('-password')
-      .lean();
-
-    if (action === 'add') {
-      let message : any | null = null;
-      if (contactData && contactData._id) {
-         message = new MessageModel({
-          from: user._id,
-          to: contactData._id,
-          body: "",
-          timestamp: new Date(),
-        });
-      } else if ( !isValidObjectId(contact as string)) {
-        message = new MessageModel({
-          from: user.did,
-          to: contact,
-          body: "",
-          timestamp: new Date(),
-        });
-      }
-
-
-      await message.save();
-    }
-
-    if (!updatedUser) {
-      return NextResponse.json(
-        { success: false, error: 'Failed to retrieve updated user' },
-        { status: 500 }
-      );
-    }
-
-    const typedUser = updatedUser as unknown as UserDocument;
-
-    const formattedUser: {
-      id: string;
-      name: string;
-      email: string;
-      role: string;
-      status: string;
-      createdAt: Date;
-      contacts: Contact[];
-      did?: {
-        _id: string;
-        type: string;
-        config: {
-          phoneNumber: string;
-        };
-      } | null;
-      settings: {
-        wsServer: string;
-        wsPort: string;
-        wsPath: string;
-        domain: string;
-        sipUsername: string;
-        sipPassword: string;
-        updatedAt: Date;
-      } | null;
-    } = {
-      id: typedUser._id.toString(),
-      name: typedUser.name,
-      email: typedUser.email,
-      role: typedUser.role,
-      status: typedUser.settings ? 'active' : 'inactive',
-      createdAt: typedUser.createdAt,
-      contacts: typedUser.contacts || [],
-      did: typedUser.did || null,
-      settings: typedUser.settings ? {
-        wsServer: typedUser.settings.wsServer,
-        wsPort: typedUser.settings.wsPort,
-        wsPath: typedUser.settings.wsPath,
-        domain: typedUser.settings.domain,
-        sipUsername: typedUser.settings.sipUsername,
-        sipPassword: typedUser.settings.sipPassword,
-        updatedAt: typedUser.settings.updatedAt,
-      } : null,
-    };
+    await SettingModel.findOneAndDelete({ user: id });
 
     return NextResponse.json({
       success: true,
-      message: `Contact ${action}ed successfully`,
-      data: formattedUser
+      message: 'User deleted successfully',
+      data: deleted
     });
-
   } catch (error) {
-    console.error('Error in PUT request:', error);
+    console.error('Error deleting User: ', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to process request' },
+      {
+        success: false,
+        error: 'Failed to delete server'
+      },
       { status: 500 }
-    );
+    )
   }
-} 
+})

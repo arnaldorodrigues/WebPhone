@@ -1,160 +1,172 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import Message from '@/models/Message';
-import { _parse_token } from '@/utils/auth';
+import mongoose, { isValidObjectId } from 'mongoose';
+import SmsGatewayModel, { ISignalWireConfig, IViConfig } from '@/models/SmsGateway';
+import { withAuth } from '@/middleware/authMiddleware';
+import MessageModel from '@/models/Message';
+import { ContactType, SmsGatewayType } from '@/types/common';
+import ContactModel from '@/models/Contact';
+import { sendSignalWireSMS, sendViSMS } from '@/lib/sendSms';
 import UserModel from '@/models/User';
-import { isValidObjectId } from 'mongoose';
-import { SmsGateway } from '@/models/SmsGateway';
 
-async function getGatewayPhoneNumber() {
-  const gateway = await SmsGateway.findOne({ type: 'signalwire' });
-  if (!gateway) {
-    throw new Error('No SMS gateway configured');
-  }
-  return gateway?.config?.phoneNumber;
-}
-
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (req: NextRequest, context: { params: any }, user: any) => {
   try {
     await connectDB();
-    const t = request.headers.get('cookies');
 
-    if (!t) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const searchParams = req.nextUrl.searchParams;
+    const contactId = searchParams.get('contact');
 
-    const user = await UserModel.findById(_parse_token(t)._id);
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-    
-    const token = _parse_token(t);
-    const url = new URL(request.url);
-    const contact = url.searchParams.get('contact')?.trim();
-    
-    if (!contact) {
+    if (!contactId) {
       return NextResponse.json(
-        { success: false, error: 'Contact parameter is required' },
-        { status: 400 }
+        {
+          success: false,
+          error: 'Contact is missing'
+        },
+        {
+          status: 400
+        }
       );
     }
 
-    
-    const smsGateway = user.did ? await SmsGateway.findById(user.did) : null;
-    const userId = !isValidObjectId(contact) ? smsGateway?._id : token._id;
-    const recon = !isValidObjectId(contact) ? `${contact}` : contact;
+    const contact = await ContactModel.findById(new mongoose.Types.ObjectId(contactId));
+    if (!contact) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Contact not found'
+        },
+        {
+          status: 404
+        }
+      );
+    }
 
-    const messages = await Message.find({
-      $or: [
-        { from: userId, to: recon },
-        { from: recon, to: userId }
-      ]
-    })
-    .sort({timestamp : 1})
-    .limit(100);
+    let messages: any[] = [];
+    let unreadMessages: any[] = [];
+
+    if (contact.contactType === ContactType.WEBRTC) {
+      messages = await MessageModel
+        .find({
+          $or: [
+            { from: user.userId, to: contact.contactUser },
+            { from: contact.contactUser, to: user.userId }
+          ]
+        })
+        .sort({ timestamp: 1 })
+        .limit(100);
+
+      unreadMessages = messages.filter(m => m.from === contact.contactUser && m.status === "unread");
+    } else {
+      const smsGateway = user.smsGateway
+        ? await SmsGatewayModel.findById(user.smsGateway)
+        : null;
+
+      const senderId = !isValidObjectId(contactId)
+        ? smsGateway?._id
+        : user.userId;
+
+      messages = await MessageModel
+        .find({
+          $or: [
+            { from: senderId, to: contact.phoneNumber },
+            { from: contact.phoneNumber, to: senderId }
+          ]
+        })
+        .sort({ timestamp: 1 })
+        .limit(100);
+
+      unreadMessages = messages.filter(m => m.from === contact.phoneNumber && m.status === "unread");
+    }
+
+    if (unreadMessages.length > 0) {
+      await MessageModel.updateMany(
+        { _id: { $in: unreadMessages.map(m => m._id) } },
+        { $set: { status: "read" } }
+      );
+    }
 
     return NextResponse.json({
       success: true,
       data: messages
     });
-
   } catch (error) {
-    console.error('Error fetching messages:', error);
+    console.error('Error fetching messages: ', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch messages' },
+      {
+        success: false,
+        error: 'Failed to fetch message'
+      },
       { status: 500 }
     );
   }
-}
+})
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (req: NextRequest, context: { params: any }, user: any) => {
   try {
-    await connectDB();
-    const t = request.headers.get('cookies');
+    const { to, message } = await req.json();
 
-    if (!t) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    
-    const token = _parse_token(t);
-    const body = await request.json();
-    const { to, messageBody } = body;
+    const contact = await ContactModel.findById(to);
 
-    if (!to || !messageBody) {
+    if (!contact) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
-        { status: 400 }
+        {
+          scuccess: false,
+          error: "Contact not found",
+        },
+        { status: 404 }
       );
     }
 
-    const user = await UserModel.findById(token._id);
+    const userData = await UserModel.findById(user.userId);
 
-    if (!user) {
+    if (!contact) {
       return NextResponse.json(
-        {success:false, error: "User not Found"},
-        {status: 404}
-      )
+        {
+          scuccess: false,
+          error: "User not found",
+        },
+        { status: 404 }
+      );
     }
 
-    const smsGatewayId = user.did;
-    const from = !isValidObjectId(to) ? smsGatewayId : token._id;
-
-    if (!from) {
-      return NextResponse.json(
-        {success:false, error:"You have no DID number"},
-        {status: 404}
-      )
-    }
-
-    const message = await Message.create({
-      from,
-      to,
-      body: messageBody,
-      timestamp: new Date(),
+    const createdMessage = await MessageModel.create({
+      from: user.userId,
+      to: contact.contactType === ContactType.WEBRTC ? contact.contactUser : contact.phoneNumber,
+      body: message,
+      timestamp: new Date()
     });
+
+    if (contact.contactType === ContactType.SMS) {
+      const smsGateway = await SmsGatewayModel.findById(userData.smsGateway);
+
+      if (!smsGateway) {
+        return NextResponse.json(
+          {
+            scuccess: false,
+            error: "SmsGateway not found",
+          },
+          { status: 404 }
+        );
+      }
+
+      smsGateway.type === SmsGatewayType.SIGNALWIRE
+        ? await sendSignalWireSMS(smsGateway.didNumber, to, message, smsGateway.config as ISignalWireConfig)
+        : await sendViSMS(smsGateway.didNumber, to, message, smsGateway.config as IViConfig);
+    }
 
     return NextResponse.json({
       success: true,
-      data: message
+      data: createdMessage
     });
 
   } catch (error) {
-    console.error('Error saving message:', error);
+    console.error('Error saving message: ', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to save message' },
+      {
+        success: false,
+        error: 'Failed to save message'
+      },
       { status: 500 }
     );
   }
-}
-
-export async function PUT(request: NextRequest) {
-  try {
-    await connectDB();
-    const t = request.headers.get('cookies');
-
-    if (!t) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = _parse_token(t);
-    const user = await UserModel.findById(token._id);
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-    
-    const body = await request.json();
-    const { messageId, status } = body;
-
-    const message = await Message.findByIdAndUpdate(messageId, { status }, { new: true });
-
-    return NextResponse.json({ success: true, message });
-
-  } catch (error) {
-    console.error('Error updating message:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to update message' },
-      { status: 500 }
-    );
-  }
-}
+})

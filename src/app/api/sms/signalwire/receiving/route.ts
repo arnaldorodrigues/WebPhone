@@ -1,10 +1,10 @@
 export const runtime = 'nodejs';
 
-import { SmsGateway } from "@/models/SmsGateway";
 import Message from "@/models/Message";
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import UserModel from "@/models/User";
+import SmsGatewayModel from "@/models/SmsGateway";
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     await connectDB();
 
-    const gateway = await SmsGateway.findOne({
+    const gateway = await SmsGatewayModel.findOne({
       type: 'signalwire',
       "config.phoneNumber": `${to?.replace('+1', '')}`
     });

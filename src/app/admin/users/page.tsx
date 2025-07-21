@@ -1,165 +1,136 @@
-"use client";
+'use client'
 
-import React, { useState, useEffect } from "react";
+import { UserEditDialog, UsersTable } from "@/components/admin";
+import { ConfirmDialog } from "@/components/ui/dialogs";
+import { SearchInput } from "@/components/ui/inputs";
+import { Pagination } from "@/components/ui/pagination";
+import { ListSkeleton } from "@/components/ui/skeleton";
+import { deleteUser, getUsersList } from "@/core/users/request";
+import { AppDispatch } from "@/store";
 import { PlusIcon } from "@heroicons/react/24/outline";
+import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 
-import SearchInput from "@/components/ui/inputs/search-input";
-import DropdownSelect from "@/components/ui/inputs/dropdown-select";
-import UserTable from "@/components/feature/admin/users/user-table";
-import { fetchWithAuth } from "@/utils/api";
-import UsersPageSkeleton from "@/components/feature/admin/users/users-page-skeleton";
-import { User } from "@/types/user";
-import UserEditDialog from "@/components/feature/admin/users/user-edit-dialog";
+const AdminUsers = () => {
+  const dispatch = useDispatch<AppDispatch>();
 
-interface ApiResponse {
-  success: boolean;
-  data: {
-    users: User[];
-    stats: {
-      totalUsers: number;
-      activeUsers: number;
-      adminUsers: number;
-      extensionNumbers: number;
-    };
-  };
-}
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [users, setUsers] = useState<any[]>([]);
 
-const UsersPage = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [loading, setLoading] = useState(true);
-  const [isOpenCreateUser, setIsOpenCreateUser] = useState(false);
-  const [error, setError] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [pageSize, setPageSize] = useState<number>(10);
 
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    activeUsers: 0,
-    adminUsers: 0,
-    extensionNumbers: 0,
-  });
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const response = await fetchWithAuth("/api/admin/users");
-      const result: ApiResponse = await response.json();
-
-      if (result.success) {
-        setUsers(result.data.users);
-        setFilteredUsers(result.data.users);
-        setStats(result.data.stats);
-      } else {
-        setError("Failed to fetch users data");
-      }
-    } catch (err) {
-      console.error("Error fetching users:", err);
-      setError("Network error while fetching users");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    let filtered = users;
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (user) =>
-          user?.name?.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
-          user?.email?.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
-          user?.settings?.sipUsername
-            ?.toLowerCase()
-            ?.includes(searchTerm?.toLowerCase())
-      );
-    }
-
-    if (roleFilter !== "all") {
-      filtered = filtered.filter((user) => user.role === roleFilter);
-    }
-
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((user) => user.status === statusFilter);
-    }
-
-    setFilteredUsers(filtered);
-  }, [users, searchTerm, roleFilter, statusFilter]);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
+  const [isOpenConfirmDialog, setIsOpenConfirmDialog] = useState<boolean>(false);
+  const [selectedUser, setSelectedUser] = useState<any>();
 
   const handleAddUser = () => {
-    setIsOpenCreateUser(true);
+    setSelectedUser(null);
+    setIsEditDialogOpen(true);
+  }
+
+  const handleEditUser = (user: any) => {
+    setSelectedUser(user);
+    setIsEditDialogOpen(true);
+  }
+
+  const handleDeleteUser = (user: any) => {
+    setSelectedUser(user);
+    setIsOpenConfirmDialog(true);
+  }
+
+  const confirmDeleteUser = async () => {
+    if (!selectedUser) return;
+    await dispatch(deleteUser(selectedUser?._id));
+    await getData();
+  }
+
+  const getData = async () => {
+    try {
+      setIsLoading(true);
+      const res: any = await getUsersList();
+
+      setUsers(res.data);
+      setCurrentPage(res.pagination.page);
+      setTotalPages(res.pagination.totalPages);
+      setPageSize(res.pagination.limit);
+
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  if (loading) {
-    return <UsersPageSkeleton />;
-  }
+  useEffect(() => {
+    if (isEditDialogOpen) return;
 
-  if (error) {
-    return (
-      <div className="p-6">
-        <div className="bg-red-50 border border-red-100 rounded-xl p-4">
-          <div className="text-red-800">
-            <h3 className="text-lg font-medium mb-2">Error Loading Users</h3>
-            <p>{error}</p>
-            <button
-              onClick={fetchUsers}
-              className="mt-3 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200"
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    getData();
+  }, [isEditDialogOpen])
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <SearchInput
-          value={searchTerm}
-          onChange={setSearchTerm}
-          placeholder="Search by name, email, or extension number..."
-          className="flex-1"
-        />
-        <button
-          onClick={handleAddUser}
-          className="flex items-center px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors duration-200 shadow-sm"
-        >
-          <PlusIcon className="h-4 w-4 mr-2" />
-          Add User
-        </button>
-      </div>
+    <>
+      {isLoading ? (
+        <ListSkeleton />
+      ) : (
+        <div className="p-6 max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <SearchInput
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Search by name, email, or extension number..."
+              className="flex-1"
+            />
+            <button
+              onClick={handleAddUser}
+              className="flex items-center px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors duration-200 shadow-sm"
+            >
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Add User
+            </button>
+          </div>
 
-      <div className="mt-4 bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <UserTable users={filteredUsers} onRefresh={fetchUsers} />
-        </div>
-
-        {filteredUsers.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <div className="text-gray-500">
-              No users found matching your criteria
+          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <UsersTable
+                users={users}
+                handleEdit={handleEditUser}
+                handleDelete={handleDeleteUser}
+              />
+            </div>
+            <div className="px-6 py-2">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalItems={users.length}
+                pageSize={pageSize}
+              />
             </div>
           </div>
-        )}
-      </div>
 
-      <UserEditDialog
-        isOpen={isOpenCreateUser}
-        onClose={() => setIsOpenCreateUser(false)}
-        user={null}
-        onSuccess={fetchUsers}
-      />
-    </div>
-  );
-};
+          <UserEditDialog
+            isOpen={isEditDialogOpen}
+            onClose={() => setIsEditDialogOpen(false)}
+            user={selectedUser}
+          />
 
-export default UsersPage;
+          <ConfirmDialog
+            isOpen={isOpenConfirmDialog}
+            onClose={() => setIsOpenConfirmDialog(false)}
+            onConfirm={confirmDeleteUser}
+            title="Delete Server"
+            message={`Are you sure you want to delete ${selectedUser?.name}? This action cannot be undone.`}
+            confirmText="Delete"
+            cancelText="Cancel"
+            type="danger"
+          />
+        </div>
+      )}
+    </>
+  )
+}
+
+export default AdminUsers;
