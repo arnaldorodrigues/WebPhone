@@ -1,4 +1,4 @@
-import { SessionTimer, ISipConfig, ISipMessage, SipStatus, SipContextType, PhoneStateType, SessionDirection, Timer, NotificationType, INotification } from "@/types/siptypes";
+import { SessionTimer, ISipConfig, ISipMessage, SipStatus, SipContextType, PhoneStateType, SessionDirection, Timer, INotification } from "@/types/siptypes";
 import { createContext, useCallback, useContext, useRef, useState } from "react";
 import { Inviter, Session } from "sip.js";
 import { SessionManager, SessionManagerOptions } from "sip.js/lib/platform/web";

@@ -1,9 +1,10 @@
 import { IContactItem } from "@/core/contacts/model";
 import { deleteContact } from "@/core/contacts/request";
+import { checkExtensionNumberIsRegister } from "@/lib/extension";
 import { AppDispatch } from "@/store";
 import { ContactType } from "@/types/common";
 import { TrashIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 
 type Props = {
@@ -25,6 +26,19 @@ const ContactCard: React.FC<Props> = ({
     if (!contact) return;
     dispatch(deleteContact(contact.id));
   }
+
+  useEffect(() => {
+    if (!contact || contact.contactType === ContactType.SMS)
+      return;
+
+    const interval = setInterval(async () => {
+      const isRegistered = await checkExtensionNumberIsRegister(contact.number);
+      setIsOnline(isRegistered || false);
+    }, 10000);
+
+    return () => clearInterval(interval);
+    
+  }, [])
 
   return (
     <div className={`w-full p-3 flex rounded-lg gap-3 border-l-4 border-transparent hover:bg-gray-100 transition-all duration-200 ease-in-out group ${isSelected ? "border-indigo-500! bg-blue-50" : ""}`}>
