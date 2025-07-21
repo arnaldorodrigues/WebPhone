@@ -251,6 +251,7 @@ export const SipProvider = ({
           onClose={handleClose}
         />
       )}
+      <audio ref={refAudioRemote} />
     </SipContext.Provider>
   )
 }
