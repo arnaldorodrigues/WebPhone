@@ -6,7 +6,7 @@ dotenv.config();
 
 const { Schema } = mongoose;
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/browser_phone';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/3cns';
 
 const args = process.argv.slice(2);
 const email = args[0];

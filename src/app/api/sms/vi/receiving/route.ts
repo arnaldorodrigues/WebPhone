@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
 import connectDB from '@/lib/mongodb';
-import { SmsGateway, IViConfig } from '@/models/SmsGateway';
 import Message from '@/models/Message';
 import UserModel from "@/models/User";
+import SmsGatewayModel from '@/models/SmsGateway';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +11,7 @@ export async function POST(request: NextRequest) {
     let body: any;
 
     if (contentType.includes('application/json')) {
-      body = await request.json(); // JSON POST
+      body = await request.json();
     } else if (contentType.includes('application/x-www-form-urlencoded')) {
       const formData = await request.formData();
       body = Object.fromEntries(formData.entries()); // Convert FormData to object
@@ -34,7 +33,7 @@ export async function POST(request: NextRequest) {
     const fromNumber = "+" + from;
     const toNumber = "+" + to;
 
-    const gateway = await SmsGateway.findOne({
+    const gateway = await SmsGatewayModel.findOne({
       type: 'vi',
       "config.phoneNumber": `${toNumber.replace('+1', '')}`
     });

@@ -1,54 +1,49 @@
-import mongoose from 'mongoose';
+import { SmsGatewayType, SmsGatewayTypeValues } from "@/types/common";
+import mongoose, { Document, Schema } from "mongoose";
 
-export interface ISignalwireConfig {
+export interface ISignalWireConfig {
   projectId: string;
   authToken: string;
   spaceUrl: string;
-  phoneNumber: string;
 }
 
 export interface IViConfig {
   apiKey: string;
   apiSecret: string;
-  phoneNumber: string;
 }
 
-export interface ISmsGateway {
-  _id?: string;
-  type: 'signalwire' | 'vi';
-  config: ISignalwireConfig | IViConfig;
+export interface ISmsGateway extends Document {
+  type: SmsGatewayType;
+  didNumber: string;
+  config: ISignalWireConfig | IViConfig;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const signalwireConfigSchema = new mongoose.Schema({
-  phoneNumber: { type: String, required: true },
-  projectId: { type: String, required: true },
-  authToken: { type: String, required: true },
-  spaceUrl: { type: String, required: true },
-}, { _id: false });
-
-const viConfigSchema = new mongoose.Schema({
-  phoneNumber: { type: String, required: true },
-  apiKey: { type: String, required: true },
-  apiSecret: { type: String, required: true },
-}, { _id: false });
-
-const smsGatewaySchema = new mongoose.Schema<ISmsGateway>(
+const smsGatewaySchema: Schema<ISmsGateway> = new Schema<ISmsGateway>(
   {
-    type: { 
-      type: String, 
+    type: {
+      type: String,
       required: true,
-      enum: ['signalwire', 'vi']
+      enum: SmsGatewayTypeValues,
+    },
+    didNumber: {
+      type: String,
+      required: true,
+      trim: true,
+      match: /^\d+$/,
     },
     config: {
-      type: mongoose.Schema.Types.Mixed,
-      required: true,
-    }
+      type: Schema.Types.Mixed,
+      required: true
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
-);
+)
 
-export const SmsGateway = mongoose.models.SmsGateway || mongoose.model<ISmsGateway>('SmsGateway', smsGatewaySchema); 
+const SmsGatewayModel =
+  mongoose.models.SmsGateway || mongoose.model<ISmsGateway>("SmsGateway", smsGatewaySchema);
+
+export default SmsGatewayModel;

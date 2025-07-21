@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
-import { findUserByEmail, validatePassword } from '@/lib/users';
-import { generateToken } from '@/utils/jwt';
-import { SignInRequest } from '@/types/auth';
+import { ISignInRequest } from '@/types/auth';
+import { signToken } from '@/lib/auth';
+import connectDB from '@/lib/mongodb';
+import UserModel from '@/models/User';
+import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
   try {
-    const body: SignInRequest = await request.json();
+    const body: ISignInRequest = await request.json();
     const { email, password } = body;
 
     if (!email || !password) {
@@ -15,16 +17,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
-    }
+    await connectDB();
 
-    const user = await findUserByEmail(email.toLowerCase());
-    
+    const user = await UserModel.findOne({ email: email.toLowerCase() });
+
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
@@ -32,7 +28,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const isValidPassword = await validatePassword(user, password);
+    const isValidPassword = bcrypt.compare(password, user.password);
+
     if (!isValidPassword) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
@@ -40,10 +37,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const { password: _, ...userWithoutPassword } = user;
-    const token = generateToken(userWithoutPassword);
-    
-    return NextResponse.json({ token, user: userWithoutPassword });
+    const token = signToken({
+      userId: user._id,
+      userName: user.name,
+      email: user.email,
+      role: user.role
+    });
+
+    return NextResponse.json({ token });
   } catch (error) {
     console.error('Signin error:', error);
     return NextResponse.json(
