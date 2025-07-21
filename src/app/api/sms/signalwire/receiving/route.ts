@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import UserModel from "@/models/User";
 import SmsGatewayModel from "@/models/SmsGateway";
+import MessageModel from "@/models/Message";
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     const gateway = await SmsGatewayModel.findOne({
       type: 'signalwire',
-      "config.phoneNumber": `${to?.replace('+1', '')}`
+      "didNumber": `${to?.replace('+1', '')}`
     });
     if (!gateway) {
       return NextResponse.json(
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const message = new Message({
+    const message = new MessageModel({
       from: from.replace('+1', ''),
       to: gateway._id,
       body,
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
     await message.save();
 
     const targetUsers = await UserModel.find({
-      "did": gateway._id
+      "smsGateway": gateway._id
     });
 
     if (!targetUsers || targetUsers.length < 1) {

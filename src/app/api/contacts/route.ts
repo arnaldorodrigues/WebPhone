@@ -7,10 +7,23 @@ import mongoose from "mongoose";
 import { IContactItem } from "@/core/contacts/model";
 import { ContactType, UserRole } from "@/types/common";
 import MessageModel from "@/models/Message";
+import { current } from "@reduxjs/toolkit";
 
 export const GET = withAuth(async (req: NextRequest, context: { params: any }, user: any) => {
   try {
     const currentUserId = new mongoose.Types.ObjectId(user.userId);
+
+    const userData = await UserModel.findById(currentUserId);
+
+    if (!userData) {
+      return NextResponse.json(
+        {
+          scuccess: false,
+          error: "User not found",
+        },
+        { status: 404 }
+      );
+    }
 
     const contacts = await ContactModel
       .find({ user: currentUserId });
@@ -19,25 +32,25 @@ export const GET = withAuth(async (req: NextRequest, context: { params: any }, u
       contacts.map(async (item) => {
         const isWebRTC = item.contactType === ContactType.WEBRTC;
         const targetId = isWebRTC ? item.contactUser : item.phoneNumber;
-
+        const srcId = isWebRTC ? currentUserId : userData.smsGateway;
 
         const messages = await MessageModel
-            .find({
-              $or: [
-                { from: currentUserId, to: targetId },
-                { from: targetId, to: currentUserId }
-              ]
-            })
-            .sort({ timestamp: 1 });
+          .find({
+            $or: [
+              { from: srcId, to: targetId },
+              { from: targetId, to: srcId }
+            ]
+          })
+          .sort({ timestamp: 1 });
 
         const unreadCount = await MessageModel
-            .find({ from: targetId, to: currentUserId, status: "unread" })
-            .countDocuments();
+          .find({ from: targetId, to: srcId, status: "unread" })
+          .countDocuments();
 
         return {
           id: item._id,
           name: item.name,
-          number: item.sipNumber || item.didNumber,
+          number: item.sipNumber || item.phoneNumber,
           unreadCount: unreadCount,
           lastMessageTimeStamp: messages.at(-1)?.timestamp ?? null,
           contactType: item.contactType

@@ -41,6 +41,17 @@ export const GET = withAuth(async (req: NextRequest, context: { params: any }, u
       );
     }
 
+    const userData = await UserModel.findById(user.userId);
+    if (!userData) {
+      return NextResponse.json(
+        {
+          scuccess: false,
+          error: "User not found",
+        },
+        { status: 404 }
+      );
+    }
+
     let messages: any[] = [];
     let unreadMessages: any[] = [];
 
@@ -57,13 +68,11 @@ export const GET = withAuth(async (req: NextRequest, context: { params: any }, u
 
       unreadMessages = messages.filter(m => m.from === contact.contactUser && m.status === "unread");
     } else {
-      const smsGateway = user.smsGateway
-        ? await SmsGatewayModel.findById(user.smsGateway)
+      const smsGateway = userData.smsGateway
+        ? await SmsGatewayModel.findById(userData.smsGateway)
         : null;
 
-      const senderId = !isValidObjectId(contactId)
-        ? smsGateway?._id
-        : user.userId;
+      const senderId = smsGateway?._id ?? user.userId;
 
       messages = await MessageModel
         .find({
@@ -118,8 +127,7 @@ export const POST = withAuth(async (req: NextRequest, context: { params: any }, 
     }
 
     const userData = await UserModel.findById(user.userId);
-
-    if (!contact) {
+    if (!userData) {
       return NextResponse.json(
         {
           scuccess: false,

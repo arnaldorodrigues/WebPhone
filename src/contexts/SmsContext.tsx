@@ -3,21 +3,36 @@
 import { ISmsMessage } from "@/core/messages/model";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
+import { Callback } from "mongoose";
 
 
 interface SmsContextType {
   isConnected: boolean;
   subscribe: (callback: (message: ISmsMessage) => void) => () => void;
+  smsMessages: Record<string, ISmsMessage>,
+  addSmsMessage: (message: ISmsMessage) => void;
 }
 
 const SmsContext = createContext<SmsContextType | undefined>(undefined);
 
 export const SmsProvider = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
+
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [subscribers] = useState<Set<(message: ISmsMessage) => void>>(
     new Set()
+  );
+  const [smsMessages, setSmsMessages] = useState<Record<string, ISmsMessage>>({});
+
+  const addSmsMessage = useCallback(
+    (message: ISmsMessage) => {
+      setSmsMessages((messages) => ({
+        ...messages,
+        [message.messageId!]: message
+      }));
+    },
+    [setSmsMessages]
   );
 
   const connectWebSocket = useCallback(() => {
@@ -95,7 +110,13 @@ export const SmsProvider = ({ children }: { children: React.ReactNode }) => {
   );
 
   return (
-    <SmsContext.Provider value={{ isConnected, subscribe }}>
+    <SmsContext.Provider value={{
+      isConnected,
+      subscribe,
+      smsMessages,
+      addSmsMessage
+    }}
+    >
       {children}
     </SmsContext.Provider>
   );

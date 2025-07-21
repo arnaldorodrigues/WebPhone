@@ -1,12 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-// import { SIPProvider } from "@/hooks/sip-provider/sip-provider";
-// import { PhoneStateProvider } from "@/hooks/use-phonestate-context";
-// import { UserDataProvider } from "@/hooks/use-userdata";
-// import { NotificationProvider } from "@/contexts/notification-context";
-// import { SmsProvider } from "@/contexts/sms-context";
-// import { LayoutBackground } from "@/components/ui/svg";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 const inter = Inter({ subsets: ["latin"] });
