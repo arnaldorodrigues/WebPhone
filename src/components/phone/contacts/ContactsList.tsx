@@ -30,6 +30,11 @@ export const ContactsList: React.FC = () => {
   }
 
   useEffect(() => {
+    if (isAddDialogOpen) return;
+    dispatch(getContacts());
+  }, [isAddDialogOpen])
+
+  useEffect(() => {
     dispatch(getContacts());
     dispatch(getCandidates());
   }, [dispatch]);

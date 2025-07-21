@@ -6,6 +6,7 @@ import { RootState } from "@/store";
 const CONTACTS_GET_CANDIDATES_LIST = "/contacts/candidates";
 const CONTACTS_GET_LIST = "/contacts";
 const CONTACTS_POST_CREATE = "/contacts";
+const CONTACTS_DELETE = "/contacts";
 
 export const getCandidates = createAsyncThunk(
   "contacts/candidates",
@@ -44,6 +45,22 @@ export const createContact = createAsyncThunk(
   async (req: ICreateContactRequest) => {
     try {
       const response = await apiPost(CONTACTS_POST_CREATE, req);
+
+      if (response.success) {
+        return response.data;
+      }
+    } catch (error: any) {
+      console.error(error);
+      throw new Error(error.message);
+    }
+  }
+)
+
+export const deleteContact = createAsyncThunk(
+  "contacts/delete",
+  async (id: string) => {
+    try {
+      const response = await apiDelete(CONTACTS_DELETE, { id: id });
 
       if (response.success) {
         return response.data;

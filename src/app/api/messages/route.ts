@@ -7,6 +7,7 @@ import MessageModel from '@/models/Message';
 import { ContactType, SmsGatewayType } from '@/types/common';
 import ContactModel from '@/models/Contact';
 import { sendSignalWireSMS, sendViSMS } from '@/lib/sendSms';
+import UserModel from '@/models/User';
 
 export const GET = withAuth(async (req: NextRequest, context: { params: any }, user: any) => {
   try {
@@ -28,9 +29,23 @@ export const GET = withAuth(async (req: NextRequest, context: { params: any }, u
     }
 
     const contact = await ContactModel.findById(new mongoose.Types.ObjectId(contactId));
+    if (!contact) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Contact not found'
+        },
+        {
+          status: 404
+        }
+      );
+    }
+
+    let messages: any[] = [];
+    let unreadMessages: any[] = [];
 
     if (contact.contactType === ContactType.WEBRTC) {
-      const messages = await MessageModel
+      messages = await MessageModel
         .find({
           $or: [
             { from: user.userId, to: contact.contactUser },
@@ -40,34 +55,40 @@ export const GET = withAuth(async (req: NextRequest, context: { params: any }, u
         .sort({ timestamp: 1 })
         .limit(100);
 
-      return NextResponse.json({
-        success: true,
-        data: messages
-      });
+      unreadMessages = messages.filter(m => m.from === contact.contactUser && m.status === "unread");
     } else {
       const smsGateway = user.smsGateway
         ? await SmsGatewayModel.findById(user.smsGateway)
         : null;
 
-      const userId = !isValidObjectId(contactId)
+      const senderId = !isValidObjectId(contactId)
         ? smsGateway?._id
         : user.userId;
 
-      const messages = await MessageModel
+      messages = await MessageModel
         .find({
           $or: [
-            { from: userId, to: contact.phoneNumber },
-            { from: contact.phoneNumber, to: userId }
+            { from: senderId, to: contact.phoneNumber },
+            { from: contact.phoneNumber, to: senderId }
           ]
         })
         .sort({ timestamp: 1 })
         .limit(100);
 
-      return NextResponse.json({
-        success: true,
-        data: messages
-      });
+      unreadMessages = messages.filter(m => m.from === contact.phoneNumber && m.status === "unread");
     }
+
+    if (unreadMessages.length > 0) {
+      await MessageModel.updateMany(
+        { _id: { $in: unreadMessages.map(m => m._id) } },
+        { $set: { status: "read" } }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: messages
+    });
   } catch (error) {
     console.error('Error fetching messages: ', error);
     return NextResponse.json(
@@ -96,6 +117,18 @@ export const POST = withAuth(async (req: NextRequest, context: { params: any }, 
       );
     }
 
+    const userData = await UserModel.findById(user.userId);
+
+    if (!contact) {
+      return NextResponse.json(
+        {
+          scuccess: false,
+          error: "User not found",
+        },
+        { status: 404 }
+      );
+    }
+
     const createdMessage = await MessageModel.create({
       from: user.userId,
       to: contact.contactType === ContactType.WEBRTC ? contact.contactUser : contact.phoneNumber,
@@ -104,7 +137,7 @@ export const POST = withAuth(async (req: NextRequest, context: { params: any }, 
     });
 
     if (contact.contactType === ContactType.SMS) {
-      const smsGateway = await SmsGatewayModel.findById(user.smsGateway);
+      const smsGateway = await SmsGatewayModel.findById(userData.smsGateway);
 
       if (!smsGateway) {
         return NextResponse.json(

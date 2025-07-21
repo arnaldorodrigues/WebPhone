@@ -3,6 +3,7 @@
 import { SplashLoader } from "@/components/ui/splash";
 import { useAuth } from "@/contexts/AuthContext"
 import { SipProvider } from "@/contexts/SipContext";
+import { SmsProvider } from "@/contexts/SmsContext";
 import { store } from "@/store";
 import { UserRole } from "@/types/common";
 import { useRouter } from "next/navigation";
@@ -32,11 +33,13 @@ const PhoneLayout = ({
       ) : (
         <Provider store={store}>
           <SipProvider>
-            <div className="flex">
-              <div className="flex-1 min-w-0 w-full">
-                {children}
+            <SmsProvider>
+              <div className="flex">
+                <div className="flex-1 min-w-0 w-full">
+                  {children}
+                </div>
               </div>
-            </div>
+            </SmsProvider>
           </SipProvider>
         </Provider>
       )}

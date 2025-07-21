@@ -1,7 +1,10 @@
 import { IContactItem } from "@/core/contacts/model";
+import { deleteContact } from "@/core/contacts/request";
+import { AppDispatch } from "@/store";
 import { ContactType } from "@/types/common";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
+import { useDispatch } from "react-redux";
 
 type Props = {
   contact: IContactItem;
@@ -14,14 +17,18 @@ const ContactCard: React.FC<Props> = ({
   isSelected,
   onSelect
 }) => {
+  const dispatch = useDispatch<AppDispatch>();
+
   const [isOnline, setIsOnline] = useState<boolean>(false);
 
+  const handleDelete = () => {
+    if (!contact) return;
+    dispatch(deleteContact(contact.id));
+  }
+
   return (
-    <div
-      className={`w-full p-3 flex rounded-lg gap-3 border-l-4 border-transparent hover:bg-gray-100 transition-all duration-200 ease-in-out group ${isSelected ? "border-indigo-500! bg-blue-50" : ""}`}
-      onClick={() => onSelect(contact)}
-    >
-      <div className="relative">
+    <div className={`w-full p-3 flex rounded-lg gap-3 border-l-4 border-transparent hover:bg-gray-100 transition-all duration-200 ease-in-out group ${isSelected ? "border-indigo-500! bg-blue-50" : ""}`}>
+      <div className="relative" onClick={() => onSelect(contact)}>
         <div className="rounded-full w-12 h-12 bg-gradient-to-br from-indigo-400 to-indigo-500 shadow-sm flex-shrink-0 flex items-center justify-center">
           <span className="text-lg font-semibold text-white">
             {contact.name?.charAt(0).toUpperCase()}
@@ -38,7 +45,7 @@ const ContactCard: React.FC<Props> = ({
           </div>
         )}
       </div>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1" onClick={() => onSelect(contact)}>
         <div className="flex gap-2 items-center">
           <p
             className={`truncate font-medium text-gray-900 group-hover:text-indigo-600 transition-colors duration-200 ${isSelected ? "text-indigo-600" : ""
@@ -61,7 +68,7 @@ const ContactCard: React.FC<Props> = ({
         </div>
       </div>
       <button
-        onClick={() => { }}
+        onClick={handleDelete}
         className="p-2 rounded-full hover:bg-red-100 text-gray-400 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
         title="Delete Contact"
       >

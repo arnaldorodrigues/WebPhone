@@ -1,5 +1,5 @@
 import { ICandidateItem, IContactItem } from "@/core/contacts/model"
-import { createContact, getCandidates, getContacts } from "@/core/contacts/request";
+import { createContact, deleteContact, getCandidates, getContacts } from "@/core/contacts/request";
 import { IMessageItem } from "@/core/messages/model";
 import { getMessages, sendMessage } from "@/core/messages/request";
 import { createSlice } from "@reduxjs/toolkit";
@@ -85,10 +85,20 @@ const contactsSlice = createSlice({
         state.loaded = false;
       })
       .addCase(createContact.fulfilled, (state, action) => {
-        state.loaded = true;
-        state.contacts = [...state.contacts, action.payload];
+        state.loaded = false;
       })
       .addCase(createContact.rejected, (state) => {
+        state.loaded = false;
+      })
+      .addCase(deleteContact.pending, (state) => {
+        state.loaded = false;
+      })
+      .addCase(deleteContact.fulfilled, (state, action) => {
+        state.loaded = true;
+        const deletedContact = action.payload;
+        state.contacts = state.contacts.filter(s => s.id !== deletedContact._id);
+      })
+      .addCase(deleteContact.rejected, (state) => {
         state.loaded = false;
       })
   }

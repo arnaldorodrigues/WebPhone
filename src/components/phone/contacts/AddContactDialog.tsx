@@ -30,13 +30,20 @@ const AddContactDialog: React.FC<Props> = ({
   }
 
   const handleAddContact = () => {
-    if (!selectedCandidate) return;
+    if (selectedCandidate) {
+      dispatch(createContact({
+        contactUserId: selectedCandidate?.id,
+        contactType: ContactType.WEBRTC,
+        sipNumber: selectedCandidate?.sipUsername
+      }));
 
-    dispatch(createContact({
-      contactUserId: selectedCandidate?.id,
-      contactType: ContactType.WEBRTC,
-      sipNumber: selectedCandidate?.sipUsername
-    }))
+    } else {
+      dispatch(createContact({
+        contactUserId: "",
+        contactType: ContactType.SMS,
+        phoneNumber: searchQuery
+      }));
+    }
 
     onClose();
   }

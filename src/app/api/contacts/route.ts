@@ -71,8 +71,8 @@ export const POST = withAuth(async (req: NextRequest, context: { params: any }, 
     const currentUserId = new mongoose.Types.ObjectId(user.userId);
 
     const duplicate = body.contactType === ContactType.WEBRTC
-      ? await ContactModel.findOne({ user: currentUserId, sipNumber: body.number })
-      : await ContactModel.findOne({ user: currentUserId, phoneNumber: body.number })
+      ? await ContactModel.findOne({ user: currentUserId, sipNumber: body.sipNumber })
+      : await ContactModel.findOne({ user: currentUserId, phoneNumber: body.phoneNumber })
 
     if (duplicate) {
       return NextResponse.json(
@@ -151,5 +151,52 @@ export const POST = withAuth(async (req: NextRequest, context: { params: any }, 
       },
       { status: 500 }
     );
+  }
+})
+
+export const DELETE = withAuth(async (req: NextRequest, context: { params: any }, user: any) => {
+  try {
+    const { searchParams } = new URL(req.url);
+
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Missing contact id'
+        },
+        { status: 400 }
+      )
+    }
+
+    await connectDB();
+
+    const deleted = await ContactModel.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Contact not found'
+        },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Contact deleted successfully',
+      data: deleted
+    });
+  } catch (error) {
+    console.error('Error deleting User: ', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to delete server'
+      },
+      { status: 500 }
+    )
   }
 })
