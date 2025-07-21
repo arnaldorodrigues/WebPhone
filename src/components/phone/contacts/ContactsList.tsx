@@ -13,11 +13,13 @@ import { setSelectedContact } from "@/store/slices/contactsSlice";
 import { getMessages } from "@/core/messages/request";
 import { useSip } from "@/contexts/SipContext";
 import { ContactType } from "@/types/common";
+import { useSmsSocket } from "@/contexts/SmsContext";
 
 export const ContactsList: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { sipMessages } = useSip();
+  const { smsMessages } = useSmsSocket();
 
   const { contacts, candidates, selectedContact } = useSelector((state: RootState) => state.contactsdata);
 
@@ -43,7 +45,7 @@ export const ContactsList: React.FC = () => {
     if (!selectedContact) return;
 
     dispatch(getMessages(selectedContact.id));
-  }, [selectedContact, sipMessages])
+  }, [selectedContact, sipMessages, smsMessages])
 
   useEffect(() => {
     if (!sipMessages || Object.keys(sipMessages).length < 1)
@@ -63,6 +65,26 @@ export const ContactsList: React.FC = () => {
       dispatch(getContacts());
     }
   }, [sipMessages])
+
+
+  useEffect(() => {
+    if (!smsMessages || Object.keys(smsMessages).length < 1)
+      return;
+
+    const keys = Object.keys(smsMessages);
+    const lastKey = keys[keys.length - 1];
+
+    const contact = contacts.find(c => c.number === smsMessages[lastKey].from);
+
+    if (!contact) {
+      dispatch(createContact({
+        contactType: ContactType.SMS,
+        phoneNumber: smsMessages[lastKey].from
+      }));
+    } else {
+      dispatch(getContacts());
+    }
+  }, [smsMessages])
 
   return (
     <>
