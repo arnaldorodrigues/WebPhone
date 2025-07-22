@@ -1,15 +1,20 @@
 import { Dialog } from "@/components/ui/dialogs"
 import { Input } from "@/components/ui/inputs";
 import { TabView } from "@/components/ui/views";
+import { IUpdateSettingRequest } from "@/core/settings/model";
+import { updateSetting } from "@/core/settings/request";
 import { IUserData } from "@/core/users/model";
+import { AppDispatch } from "@/store";
 import { TValidationErrors } from "@/types/common";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 
 type Props = {
   userData: IUserData | undefined;
   isOpen: boolean;
   onClose: () => void;
+  onUpdate: (updated: boolean) => void;
 }
 
 interface ISettingFormData {
@@ -77,7 +82,10 @@ const SettingDialog: React.FC<Props> = ({
   userData,
   isOpen,
   onClose,
+  onUpdate,
 }) => {
+  const dispatch = useDispatch<AppDispatch>();
+
   const [isDirty, setIsDirty] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
@@ -108,15 +116,41 @@ const SettingDialog: React.FC<Props> = ({
   };
 
   const handleCancel = () => {
+    onUpdate(false);
     onClose();
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!userData || !formData || !userData.settingId)
+      return;
 
+    if (!validateForm())
+      return;
+    
+    setIsSaving(true);
+    
+    const payload: IUpdateSettingRequest = {
+      userId: userData.id,
+      settingId: userData.settingId,
+      name: formData.name,
+      email: formData.email,
+      domain: formData.domain,
+      password: formData.password,
+      newPassword: formData.newPassword,
+      sipUsername: formData.sipUsername,
+      sipPassword: formData.sipPassword      
+    };
+
+    await dispatch(updateSetting(payload));
+
+    setIsSaving(false);
+
+    onUpdate(true);
+    onClose();
   }
 
   const validateForm = (): boolean => {
-    if (!formData) return true;
+    if (!formData) return false;
 
     const errors: TValidationErrors = {};
 

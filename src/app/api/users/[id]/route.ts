@@ -34,6 +34,7 @@ export const GET = withAuth(async (req: NextRequest, context: { params: { id: st
 
     const userData: IUserData = {
       id: user._id,
+      settingId: user.setting?.id,
       name: user.name,
       email: user.email,
       sipUsername: user.setting?.sipUsername ?? "",

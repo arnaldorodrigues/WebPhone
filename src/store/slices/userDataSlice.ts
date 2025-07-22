@@ -1,3 +1,4 @@
+import { updateSetting } from "@/core/settings/request";
 import { IUserData } from "@/core/users/model"
 import { getUserData } from "@/core/users/request";
 import { createSlice } from "@reduxjs/toolkit";
@@ -33,6 +34,19 @@ const userDataSlice = createSlice({
         state.loading = false;
         state.loaded = false;
         state.userData = undefined;
+      })
+      .addCase(updateSetting.pending, (state) => {
+        state.loading = true;
+        state.loaded = false;
+      })
+      .addCase(updateSetting.fulfilled, (state, action) => {
+        state.loading = false;
+        state.loaded = true;
+        state.userData = action.payload;
+      })
+      .addCase(updateSetting.rejected, (state) => {
+        state.loading = false;
+        state.loaded = false;
       })
   }
 });

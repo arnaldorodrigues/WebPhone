@@ -23,6 +23,7 @@ export interface IUpdateUserRequest {
 
 export interface IUserData {
   id: string;
+  settingId?: string;
   name: string;
   email: string;
   sipUsername: string;
