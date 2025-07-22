@@ -29,28 +29,31 @@ export const PhoneControl: React.FC = () => {
 
   const [refreshKey, setRefreshKey] = useState(0);
   const [isShowSettingDialog, setIsShowSettingDialog] = useState<boolean>(false);
+  const [isUpdated, setIsUpdated] = useState<boolean>(false);
 
   const displayName = userData?.name || "User";
   const sipname = userData?.sipUsername || "";
   const userDisplayText = sipname ? `${displayName}` : "Not Configured";
 
   const handleRegisterToggle = async () => {
+    if (!userData || loading) return;
+
     try {
       if (sipStatus === SipStatus.REGISTERED) {
         await disconnect();
-      } else {
-        if (userData && !loading) {
-          await connectAndRegister({
-            wsServer: userData.wsServer,
-            wsPort: userData.wsPort,
-            wsPath: userData.wsPath,
-            server: userData.domain,
-            username: userData.sipUsername,
-            password: userData.sipPassword,
-            displayName: userData.name,
-          });
-        }
       }
+
+      await connectAndRegister({
+        wsServer: userData.wsServer,
+        wsPort: userData.wsPort,
+        wsPath: userData.wsPath,
+        server: userData.domain,
+        username: userData.sipUsername,
+        password: userData.sipPassword,
+        displayName: userData.name,
+      });
+
+      setIsUpdated(false);
     } catch (error) {
       console.error("Failed to toggle registration:", error);
     }
@@ -87,6 +90,13 @@ export const PhoneControl: React.FC = () => {
 
     dispatch(getUserData(user.userId));
   }, [dispatch, user]);
+
+  useEffect(() => {
+    if (!isUpdated)
+      return;
+
+    handleRegisterToggle();
+  }, [isUpdated])
 
   return (
     <div className="w-full p-5 flex flex-col gap-10 bg-white border-b border-gray-100">
@@ -185,6 +195,7 @@ export const PhoneControl: React.FC = () => {
         userData={userData}
         isOpen={isShowSettingDialog}
         onClose={() => setIsShowSettingDialog(false)}
+        onUpdate={(updated) => setIsUpdated(updated)}
       />
     </div>
   )

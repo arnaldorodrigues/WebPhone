@@ -2,15 +2,11 @@ export const checkExtensionNumberIsRegister = async (extensionNumber: string) =>
   try {
     const apiBaseUrl = process.env.NEXT_PUBLIC_PBX_BACKEND_URL;
 
-    console.log("++++++++++++++++++++=", apiBaseUrl);
-
     if (!apiBaseUrl) return false;
 
     const response = await fetch(`${apiBaseUrl}/en/registered/${extensionNumber}`, {
       method: 'GET',
     });
-
-    console.log("++++++++++++++++++++=", response);
 
     if (!response.ok) {
       throw new Error('Failed to check online status of extension number');

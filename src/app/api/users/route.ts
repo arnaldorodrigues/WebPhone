@@ -4,6 +4,7 @@ import SettingModel from "@/models/Setting";
 import SipServerModel from "@/models/SipServer";
 import UserModel from "@/models/User";
 import { UserRole } from "@/types/common";
+import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = withRole(UserRole.ADMIN, async (req: NextRequest) => {
@@ -71,9 +72,11 @@ export const POST = withRole(UserRole.ADMIN, async (req: NextRequest) => {
       );
     }
 
+    const hashedPwd = bcrypt.hash(body.password, 10);
+
     const createdUser = await UserModel.create({
       email: body.email,
-      password: body.password,
+      password: hashedPwd,
       name: body.name,
       role: body.role,
       sipServer: body.sipServer,
@@ -171,10 +174,11 @@ export const PUT = withRole(UserRole.ADMIN, async (req: NextRequest) => {
       );
     }
 
+    const hashedPassword = await bcrypt.hash(body.password, 10);
     const updatedUser = await UserModel.findByIdAndUpdate(body.id,
       {
         email: body.email,
-        password: body.password,
+        password: hashedPassword,
         name: body.name,
         role: body.role,
         sipServer: body.sipServer,
