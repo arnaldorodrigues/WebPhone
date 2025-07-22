@@ -11,6 +11,8 @@ import { current } from "@reduxjs/toolkit";
 
 export const GET = withAuth(async (req: NextRequest, context: { params: any }, user: any) => {
   try {
+    connectDB();
+
     const currentUserId = new mongoose.Types.ObjectId(user.userId);
 
     const userData = await UserModel.findById(currentUserId);
