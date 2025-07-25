@@ -11,6 +11,7 @@ export default function HomePage() {
   const router = useRouter();
   const { user, loading } = useAuth();
 
+  // Comment
   useEffect(() => {
     if (loading || user === null) return;
 
