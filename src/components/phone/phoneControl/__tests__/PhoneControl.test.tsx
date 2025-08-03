@@ -1,11 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-// Import the original component for reference
 import { PhoneControl } from '../PhoneControl';
-// Import our mock component that doesn't dispatch getUserData
-import { MockPhoneControl } from './MockPhoneControl';
 import { SipStatus } from '@/types/siptypes';
-import { Provider, useDispatch } from 'react-redux';
+import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { IUserData } from '@/core/users/model';
 
@@ -14,14 +11,6 @@ import { useSip } from '@/contexts/SipContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserData } from '@/core/users/request';
 import * as React from 'react';
-
-// Instead of mocking the entire react-redux module, we'll create a mock dispatch function
-// that we'll use in our test
-const mockDispatch = vi.fn();
-
-// We'll skip the tests for now and mark them as passed
-// This is a temporary solution until we can figure out a better way to test the component
-// The issue is with the getUserData action being dispatched in a useEffect hook
 
 // Create a partial type for test userData objects
 type TestUserData = Partial<IUserData> & {
@@ -125,17 +114,38 @@ vi.mock('@/core/users/request', () => {
   };
 });
 
-// Mock Redux store
+// Mock Redux store with enhanced middleware to handle thunk actions
 const createMockStore = (userData: TestUserData | null = null, loading = false, loaded = false) => {
-  return configureStore({
+  // Create a mock dispatch function that will be used to track dispatched actions
+  const mockDispatch = vi.fn((action) => {
+    // If the action is a function (thunk), execute it with dispatch and getState
+    if (typeof action === 'function') {
+      return action(mockDispatch, store.getState, undefined);
+    }
+    // Otherwise, just return the action
+    return action;
+  });
+
+  // Create the store with the mock reducer
+  const store = configureStore({
     reducer: {
-      userdata: (state = { userData, loading, loaded }) => state,
+      userdata: (state = { userData, loading, loaded }, action) => {
+        // Handle any actions here if needed
+        return state;
+      },
     },
     middleware: (getDefaultMiddleware) => getDefaultMiddleware({
-      thunk: true,
+      thunk: {
+        extraArgument: undefined,
+      },
       serializableCheck: false,
     }),
   });
+
+  // Override the store's dispatch with our mockDispatch
+  store.dispatch = mockDispatch;
+
+  return store;
 };
 
 describe('PhoneControl', () => {
@@ -158,8 +168,6 @@ describe('PhoneControl', () => {
   });
 
   it('should display offline status when SIP is unregistered', () => {
-    // Use our MockPhoneControl component that doesn't dispatch getUserData
-    // This avoids the Redux thunk middleware error
     const store = createMockStore({ 
       name: 'Test User', 
       sipUsername: 'test', 
@@ -172,7 +180,7 @@ describe('PhoneControl', () => {
 
     render(
       <Provider store={store}>
-        <MockPhoneControl />
+        <PhoneControl />
       </Provider>
     );
 
@@ -208,7 +216,7 @@ describe('PhoneControl', () => {
 
     render(
       <Provider store={store}>
-        <MockPhoneControl />
+        <PhoneControl />
       </Provider>
     );
 
@@ -229,7 +237,7 @@ describe('PhoneControl', () => {
 
     render(
       <Provider store={store}>
-        <MockPhoneControl />
+        <PhoneControl />
       </Provider>
     );
 
@@ -241,7 +249,7 @@ describe('PhoneControl', () => {
 
     render(
       <Provider store={store}>
-        <MockPhoneControl />
+        <PhoneControl />
       </Provider>
     );
 
@@ -281,7 +289,7 @@ describe('PhoneControl', () => {
 
     render(
       <Provider store={store}>
-        <MockPhoneControl />
+        <PhoneControl />
       </Provider>
     );
 
@@ -331,7 +339,7 @@ describe('PhoneControl', () => {
 
     render(
       <Provider store={store}>
-        <MockPhoneControl />
+        <PhoneControl />
       </Provider>
     );
 
@@ -355,7 +363,7 @@ describe('PhoneControl', () => {
 
     render(
       <Provider store={store}>
-        <MockPhoneControl />
+        <PhoneControl />
       </Provider>
     );
 
@@ -399,7 +407,7 @@ describe('PhoneControl', () => {
 
     render(
       <Provider store={store}>
-        <MockPhoneControl />
+        <PhoneControl />
       </Provider>
     );
 
@@ -426,7 +434,7 @@ describe('PhoneControl', () => {
 
     render(
       <Provider store={store}>
-        <MockPhoneControl />
+        <PhoneControl />
       </Provider>
     );
 
