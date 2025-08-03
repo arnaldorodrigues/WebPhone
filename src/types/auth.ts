@@ -1,4 +1,4 @@
-import { IUser } from "@/models/User";
+import { _IUser } from "@/models/User";
 
 export interface IJwtPayload {
   userId: string;

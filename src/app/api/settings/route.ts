@@ -7,7 +7,7 @@ import bcrypt from 'bcryptjs';
 import { IUserData } from '@/core/users/model';
 import { withAuth } from '@/middleware/authMiddleware';
 
-export const PUT = withAuth(async (req: NextRequest, context: { params: { id: string } }, user: any) => {
+export const PUT = withAuth(async (req: NextRequest, _context: { params: { id: string } }, _user: any) => {
   try {
     await connectDB();
 

@@ -21,11 +21,10 @@ export const ContactsList: React.FC = () => {
   const { sipMessages } = useSip();
   const { smsMessages } = useSmsSocket();
 
-  const { contacts, candidates, selectedContact } = useSelector((state: RootState) => state.contactsdata);
+  const { contacts, selectedContact } = useSelector((state: RootState) => state.contactsdata);
 
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState<boolean>(false);
-  const [sortedContact, setSortedContact] = useState<IContactItem[]>([]);
 
   const handleSelectContact = (item: IContactItem) => {
     dispatch(setSelectedContact(item));

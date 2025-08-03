@@ -23,7 +23,7 @@ const PhoneCallDialog: React.FC<Props> = ({
   const { userData } = useSelector((state: RootState) => state.userdata);
 
   const [number, setNumber] = useState("");
-  const [lastRemoteNumber, setLastRemoteNumber] = useState("");
+  const [, setLastRemoteNumber] = useState("");
 
   const dialogRef = useRef<HTMLDivElement>(null);
 

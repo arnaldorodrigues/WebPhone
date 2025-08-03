@@ -1,4 +1,4 @@
-// @ts-ignore: SignalWire types export issue
+// @ts-expect-error: SignalWire types export issue
 import { RestClient } from '@signalwire/compatibility-api';
 import { ISignalWireConfig, IViConfig } from '@/models/SmsGateway';
 import { Apidaze } from '@apidaze/node';

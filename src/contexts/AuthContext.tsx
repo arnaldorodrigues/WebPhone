@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return null;
       }
       return decoded;
-    } catch (err) {
+    } catch {
       localStorage.removeItem('token');
       return null;
     }

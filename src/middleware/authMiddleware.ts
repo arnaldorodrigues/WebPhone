@@ -1,5 +1,4 @@
 import { verifyToken } from '@/lib/auth';
-import { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { NextRequest, NextResponse } from 'next/server';
 
 export function withAuth(
@@ -20,6 +19,7 @@ export function withAuth(
       const user = verifyToken(token);
       return handler(req, context, user);
     } catch (err: any) {
+      console.error(err);
       return NextResponse.json(
         { message: "Unauthorized: Invalid token" },
         { status: 401 }

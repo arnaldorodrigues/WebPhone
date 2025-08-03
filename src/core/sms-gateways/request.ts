@@ -17,7 +17,7 @@ export const getSmsGateways = createAsyncThunk<
   "sms-gateways/list",
   async (req, thnukAPI) => {
     try {
-      const state = thnukAPI.getState();
+      const _state = thnukAPI.getState();
 
       const response = await apiGet(SMS_GATEWAYS_GET_LIST, req);
 

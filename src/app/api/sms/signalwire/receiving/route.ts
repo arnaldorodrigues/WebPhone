@@ -1,6 +1,6 @@
 export const runtime = 'nodejs';
 
-import Message from "@/models/Message";
+import _Message from "@/models/Message";
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import UserModel from "@/models/User";

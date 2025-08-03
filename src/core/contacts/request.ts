@@ -1,7 +1,7 @@
-import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/apiClient";
+import { apiDelete, apiGet, apiPost, _apiPut } from "@/lib/apiClient";
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { IContactItem, ICreateContactRequest } from "./model";
-import { RootState } from "@/store";
+import { _IContactItem, ICreateContactRequest } from "./model";
+import { _RootState } from "@/store";
 
 const CONTACTS_GET_CANDIDATES_LIST = "/contacts/candidates";
 const CONTACTS_GET_LIST = "/contacts";

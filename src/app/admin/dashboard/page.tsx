@@ -35,7 +35,7 @@ const AdminDashboard = () => {
           Welcome back, {user?.userName}
         </h3>
         <p className="text-gray-500">
-          Here's what's happening with your admin panel today.
+          Here&apos;s what&apos;s happening with your admin panel today.
         </p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

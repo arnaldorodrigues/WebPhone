@@ -17,7 +17,7 @@ export const getSipServers = createAsyncThunk<
   "sip-servers/list",
   async (req, thnukAPI) => {
     try {
-      const state = thnukAPI.getState();
+      const _state = thnukAPI.getState();
 
       const response = await apiGet(SIP_SERVERS_GET_LIST, req);
 

@@ -1,4 +1,4 @@
-import mongoose, { Document, model, models, Schema, Types } from 'mongoose';
+import _mongoose, { Document, model, models, Schema, Types } from 'mongoose';
 
 export interface ISetting extends Document {
   wsServer: string;

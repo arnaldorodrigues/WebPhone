@@ -1,4 +1,4 @@
-import mongoose, { Document, model, models, Schema } from "mongoose";
+import _mongoose, { Document, model, models, Schema } from "mongoose";
 
 export interface ISipServer extends Document {
   domain: string;

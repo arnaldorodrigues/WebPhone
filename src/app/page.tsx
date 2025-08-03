@@ -4,7 +4,7 @@ import { SplashLoader } from "@/components/ui/splash";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types/common";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function HomePage() {

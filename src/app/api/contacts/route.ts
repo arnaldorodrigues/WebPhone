@@ -7,9 +7,9 @@ import mongoose from "mongoose";
 import { IContactItem } from "@/core/contacts/model";
 import { ContactType, UserRole } from "@/types/common";
 import MessageModel from "@/models/Message";
-import { current } from "@reduxjs/toolkit";
+import { _current } from "@reduxjs/toolkit";
 
-export const GET = withAuth(async (req: NextRequest, context: { params: any }, user: any) => {
+export const GET = withAuth(async (_req: NextRequest, _context: { params: any }, user: any) => {
   try {
     connectDB();
 
@@ -20,7 +20,7 @@ export const GET = withAuth(async (req: NextRequest, context: { params: any }, u
     if (!userData) {
       return NextResponse.json(
         {
-          scuccess: false,
+          success: false,
           error: "User not found",
         },
         { status: 404 }
@@ -169,7 +169,7 @@ export const POST = withAuth(async (req: NextRequest, context: { params: any }, 
   }
 })
 
-export const DELETE = withAuth(async (req: NextRequest, context: { params: any }, user: any) => {
+export const DELETE = withAuth(async (req: NextRequest, _context: { params: any }, _user: any) => {
   try {
     const { searchParams } = new URL(req.url);
 

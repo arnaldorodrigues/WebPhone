@@ -25,9 +25,9 @@ export const PhoneControl: React.FC = () => {
 
   const hasAttemptedConnect = useRef(false);
 
-  const { userData, loading, loaded } = useSelector((state: RootState) => state.userdata);
+  const { userData, loading } = useSelector((state: RootState) => state.userdata);
 
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshKey, ] = useState(0);
   const [isShowSettingDialog, setIsShowSettingDialog] = useState<boolean>(false);
   const [isUpdated, setIsUpdated] = useState<boolean>(false);
 

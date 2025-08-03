@@ -200,7 +200,7 @@ export default function SignIn() {
               href="/signup"
               className="text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-colors duration-200"
             >
-              Don't have an account? <span className="underline">Sign up</span>
+              Don&apos;t have an account? <span className="underline">Sign up</span>
             </Link>
           </div>
         </form>

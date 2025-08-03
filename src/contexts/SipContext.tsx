@@ -21,7 +21,7 @@ export const SipProvider = ({
   const [sessionTimer, setSessionTimer] = useState<SessionTimer>({});
   const [sipMessages, setSipMessages] = useState<Record<string, ISipMessage>>({});
   const [phoneState, setPhoneState] = useState<PhoneStateType>(null);
-  const [extensionNumber, setExtensionNumber] = useState<string>("");
+  const [extensionNumber, ] = useState<string>("");
   const [notification, setNotification] = useState<INotification | null>(null);
 
   const showNotification = useCallback(

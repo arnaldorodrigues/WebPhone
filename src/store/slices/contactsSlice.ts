@@ -84,7 +84,7 @@ const contactsSlice = createSlice({
       .addCase(createContact.pending, (state) => {
         state.loaded = false;
       })
-      .addCase(createContact.fulfilled, (state, action) => {
+      .addCase(createContact.fulfilled, (state, _action) => {
         state.loaded = false;
       })
       .addCase(createContact.rejected, (state) => {

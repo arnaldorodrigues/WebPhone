@@ -4,7 +4,6 @@ import { ChatBoard, ContactsList, PhoneControl } from "@/components/phone";
 import { useSip } from "@/contexts/SipContext";
 import { useSmsSocket } from "@/contexts/SmsContext";
 import { RootState } from "@/store";
-import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
 
@@ -14,7 +13,6 @@ const PhoneHome = () => {
   const { subscribe, addSmsMessage } = useSmsSocket();
   const { showNotification } = useSip();
 
-  const pathname = usePathname();
   const sidebarVisible = selectedContact !== undefined;
 
   useEffect(() => {

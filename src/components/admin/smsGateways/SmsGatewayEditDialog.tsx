@@ -88,7 +88,7 @@ export const SmsGatewayEditDialog: React.FC<Props> = ({
       } as IViConfig;
 
     const payload: IUpdateSmsGatewayRequest = {
-      id: gateway?._id!,
+      id: gateway?._id || '',
       type: selectedType.value,
       didNumber: phoneNumber,
       config: config

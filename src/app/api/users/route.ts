@@ -46,6 +46,8 @@ export const GET = withRole(UserRole.ADMIN, async (req: NextRequest) => {
 
 export const POST = withRole(UserRole.ADMIN, async (req: NextRequest) => {
   try {
+    await connectDB();
+    
     const body = await req.json();
 
     if (!body.name || !body.email) {
@@ -72,7 +74,7 @@ export const POST = withRole(UserRole.ADMIN, async (req: NextRequest) => {
       );
     }
 
-    const hashedPwd = bcrypt.hash(body.password, 10);
+    const hashedPwd = await bcrypt.hash(body.password, 10);
 
     const createdUser = await UserModel.create({
       email: body.email,
@@ -136,6 +138,8 @@ export const POST = withRole(UserRole.ADMIN, async (req: NextRequest) => {
 
 export const PUT = withRole(UserRole.ADMIN, async (req: NextRequest) => {
   try {
+    await connectDB();
+    
     const body = await req.json();
 
     if (!body.name || !body.email) {

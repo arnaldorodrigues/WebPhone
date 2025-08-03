@@ -3,7 +3,6 @@
 import { ISmsMessage } from "@/core/messages/model";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
-import { Callback } from "mongoose";
 
 
 interface SmsContextType {
@@ -90,7 +89,7 @@ export const SmsProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [connectWebSocket]);
 
-  const sendMessage = useCallback(
+  const _sendMessage = useCallback(
     (message: ISmsMessage) => {
       if (socket?.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify(message));

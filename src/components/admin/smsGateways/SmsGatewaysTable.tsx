@@ -1,6 +1,6 @@
 import { ISmsGatewayItem } from "@/core/sms-gateways/model";
 import { ISignalWireConfig, IViConfig } from "@/models/SmsGateway";
-import { SmsGatewayType, SmsGatewayTypeValues } from "@/types/common";
+import { SmsGatewayType, _SmsGatewayTypeValues } from "@/types/common";
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 type Props = {

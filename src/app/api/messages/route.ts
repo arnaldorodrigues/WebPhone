@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import mongoose, { isValidObjectId } from 'mongoose';
+import mongoose from 'mongoose';
 import SmsGatewayModel, { ISignalWireConfig, IViConfig } from '@/models/SmsGateway';
 import { withAuth } from '@/middleware/authMiddleware';
 import MessageModel from '@/models/Message';
@@ -9,7 +9,7 @@ import ContactModel from '@/models/Contact';
 import { sendSignalWireSMS, sendViSMS } from '@/lib/sendSms';
 import UserModel from '@/models/User';
 
-export const GET = withAuth(async (req: NextRequest, context: { params: any }, user: any) => {
+export const GET = withAuth(async (req: NextRequest, _: { params: any }, user: any) => {
   try {
     await connectDB();
 
@@ -157,9 +157,12 @@ export const POST = withAuth(async (req: NextRequest, context: { params: any }, 
         );
       }
 
-      smsGateway.type === SmsGatewayType.SIGNALWIRE
-        ? await sendSignalWireSMS(smsGateway.didNumber, to, message, smsGateway.config as ISignalWireConfig)
-        : await sendViSMS(smsGateway.didNumber, to, message, smsGateway.config as IViConfig);
+      // Send SMS based on gateway type
+      if (smsGateway.type === SmsGatewayType.SIGNALWIRE) {
+        await sendSignalWireSMS(smsGateway.didNumber, to, message, smsGateway.config as ISignalWireConfig);
+      } else {
+        await sendViSMS(smsGateway.didNumber, to, message, smsGateway.config as IViConfig);
+      }
     }
 
     return NextResponse.json({

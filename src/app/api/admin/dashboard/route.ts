@@ -5,7 +5,7 @@ import UserModel from "@/models/User";
 import { UserRole } from "@/types/common";
 import { NextRequest, NextResponse } from "next/server";
 
-export const GET = withRole(UserRole.ADMIN, async (req: NextRequest, user: any) => {
+export const GET = withRole(UserRole.ADMIN, async (_req: NextRequest, _user: any) => {
   try {
     await connectDB();
 

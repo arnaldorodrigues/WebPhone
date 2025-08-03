@@ -64,21 +64,26 @@ export const UserEditDialog: React.FC<Props> = ({
 
     setIsSubmitting(true);
 
-    if (user) {
-      await handleUpdate();
-    } else {
-      await handleCreate();
+    try {
+      if (user) {
+        await handleUpdate();
+      } else {
+        await handleCreate();
+      }
+      
+      setIsSubmitting(false);
+      onClose();
+    } catch (error) {
+      console.error('Error submitting user:', error);
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
-    onClose();
   }
 
   const handleUpdate = async () => {
     if (!name || !email) return;
 
     const payload: IUpdateUserRequest = {
-      id: user?._id!,
+      id: user?._id || '',
       name: name,
       email: email,
       password: password,
@@ -89,7 +94,8 @@ export const UserEditDialog: React.FC<Props> = ({
       smsGateway: selectedSmsGateway?.value
     }
 
-    dispatch(updateUser(payload));
+    // Wait for the dispatch to complete
+    await dispatch(updateUser(payload)).unwrap();
   }
 
   const handleCreate = async () => {
@@ -106,7 +112,8 @@ export const UserEditDialog: React.FC<Props> = ({
       smsGateway: selectedSmsGateway?.value
     }
 
-    dispatch(createUser(payload));
+    // Wait for the dispatch to complete
+    await dispatch(createUser(payload)).unwrap();
   }
 
   useEffect(() => {

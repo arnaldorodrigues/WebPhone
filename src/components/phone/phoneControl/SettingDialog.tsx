@@ -88,7 +88,7 @@ const SettingDialog: React.FC<Props> = ({
 
   const [isDirty, setIsDirty] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
+  const [saveSuccess, ] = useState<boolean>(false);
   const [formData, setFormData] = useState<ISettingFormData>({
     name: "",
     email: "",

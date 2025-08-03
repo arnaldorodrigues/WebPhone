@@ -18,8 +18,8 @@ const AdminSipServers = () => {
 
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [totalPages, setTotalPages] = useState<number>(0);
-  const [pageSize, setPageSize] = useState<number>(10);
+  const [totalPages] = useState<number>(0);
+  const [pageSize] = useState<number>(10);
 
   const [isOpenEditDialog, setIsOpenEditDialog] = useState<boolean>(false);
   const [isOpenConfirmDialog, setIsOpenConfirmDialog] = useState<boolean>(false);

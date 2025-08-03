@@ -43,3 +43,10 @@ next-env.d.ts
 
 certificates
 package-lock.json
+
+# Webstorm
+.idea
+
+# TS config
+tsconfig.tsbuildinfo
+tsconfig.test.tsbuildinfo
