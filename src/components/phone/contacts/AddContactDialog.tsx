@@ -20,7 +20,6 @@ const AddContactDialog: React.FC<Props> = ({
   const dispatch = useDispatch<AppDispatch>()
 
   const { candidates } = useSelector((state: RootState) => state.contactsdata);
-  const { userData, loading: userDataLoading } = useSelector((state: RootState) => state.userdata);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredCandidates, setFilteredCandidates] = useState<ICandidateItem[]>([]);
