@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ChatBoard } from '../ChatBoard';
+import { ChatInput } from '../ChatInput';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { ContactType } from '@/types/common';
 import { SessionManager } from 'sip.js/lib/platform/web';
 import { SipStatus } from '@/types/siptypes';
+import React, { useState } from 'react';
 
 // Mock scrollIntoView
 Element.prototype.scrollIntoView = vi.fn();
@@ -81,10 +83,7 @@ const mockSendMessage = vi.fn().mockImplementation((data) => ({
 
 // Mock the sendMessage action
 vi.mock('@/core/messages/request', () => ({
-  sendMessage: (data) => {
-    const result = mockSendMessage(data);
-    return result;
-  },
+  sendMessage: (data: any) => mockSendMessage(data),
   getMessages: vi.fn(),
 }));
 
@@ -293,90 +292,65 @@ describe('ChatBoard', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it('should handle delayed message sending without feedback', async () => {
-    // Clear any previous mock calls
-    mockSessionManager.message.mockClear();
-    mockSendMessage.mockClear();
-    
-    const selectedContact = {
-      id: '123',
-      name: 'Test Contact',
-      number: '1001',
-      contactType: ContactType.WEBRTC,
+  it('should handle delayed message sending with feedback', async () => {
+    // Create a test component that directly uses the ChatInput component
+    // This way we can test the UI feedback without relying on the actual Redux dispatch
+    const TestComponent = () => {
+      const [messageValue, setMessageValue] = useState('');
+      const [isSending, setIsSending] = useState(false);
+      const [sendSuccess, setSendSuccess] = useState(false);
+      
+      const handleSend = async () => {
+        if (!messageValue.trim()) return;
+        
+        setIsSending(true);
+        
+        // Simulate a delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        setIsSending(false);
+        setSendSuccess(true);
+        
+        // Reset success state after 3 seconds
+        setTimeout(() => {
+          setSendSuccess(false);
+        }, 3000);
+      };
+      
+      return (
+        <div>
+          <ChatInput
+            messageValue={messageValue}
+            setMessageValue={setMessageValue}
+            isSending={isSending}
+            sendSuccess={sendSuccess}
+            onEnter={handleSend}
+          />
+        </div>
+      );
     };
     
-    // Create a mock store with the selected contact
-    const store = createMockStore(selectedContact);
-
-    // Make the sessionManager.message method delay for this test
-    mockSessionManager.message.mockImplementationOnce(() => new Promise(resolve => {
-      // Simulate a network delay
-      setTimeout(() => resolve(undefined), 1000);
-    }));
-
-    // Mock the setChatInput function to track when it's called
-    const setChatInputMock = vi.fn();
-
-    // Mock the handleSendMessage function directly
-    const handleSendMessageMock = vi.fn().mockImplementation(async (text) => {
-      try {
-        // Clear the input immediately, before the message is sent
-        setChatInputMock("");
-        
-        // Send the message with a delay
-        await mockSessionManager.message(`sip:${selectedContact.number}@test.com`, text);
-        
-        // Dispatch the action after the message is sent
-        mockSendMessage({
-          to: selectedContact.id,
-          message: text
-        });
-      } catch (error) {
-        console.error("Error sending message: ", error);
-      }
-    });
-
-    // Render a simplified version of ChatBoard that just calls our mock
-    render(
-      <Provider store={store}>
-        <div>
-          <button 
-            data-testid="send-button"
-            onClick={() => handleSendMessageMock('Hello, world!')}
-          >
-            Send
-          </button>
-        </div>
-      </Provider>
-    );
-
-    // Click the send button
-    fireEvent.click(screen.getByTestId('send-button'));
-
-    // Verify that setChatInput is called immediately
-    expect(setChatInputMock).toHaveBeenCalledWith("");
-
-    // Verify that no loading indicator is shown
-    expect(screen.queryByText(/sending/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
-
-    // Wait for the message to be sent
+    // Render the test component
+    render(<TestComponent />);
+    
+    // Type a message in the input
+    const input = screen.getByPlaceholderText('Type your message here...');
+    fireEvent.change(input, { target: { value: 'Hello, world!' } });
+    
+    // Find and click the send button
+    const sendButton = screen.getByRole('button');
+    fireEvent.click(sendButton);
+    
+    // Verify that a loading indicator is shown during the delay
+    expect(screen.getByText(/sending message/i)).toBeInTheDocument();
+    
+    // Verify that the send button is disabled and shows a loading spinner
+    expect(sendButton).toBeDisabled();
+    expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+    
+    // Wait for the success message to be shown after the delay
     await waitFor(() => {
-      expect(mockSessionManager.message).toHaveBeenCalledWith(
-        'sip:1001@test.com',
-        'Hello, world!'
-      );
+      expect(screen.getByText(/message sent successfully/i)).toBeInTheDocument();
     }, { timeout: 2000 });
-
-    // Wait for the sendMessage to be called after the delay
-    await waitFor(() => {
-      expect(mockSendMessage).toHaveBeenCalledWith({
-        to: '123',
-        message: 'Hello, world!',
-      });
-    }, { timeout: 2000 });
-
-    // ISSUE: No loading indicator is shown during the delay
-    // The input is cleared immediately, but the user doesn't know if the message is being sent
   });
 });

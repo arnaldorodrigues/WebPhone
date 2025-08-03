@@ -62,7 +62,14 @@ const contactsSlice = createSlice({
       })
       .addCase(sendMessage.fulfilled, (state, action) => {
         state.loadingMessages = false;
+        // Add the new message to the array
         state.messages = [...state.messages, action.payload];
+        // Sort messages by timestamp to handle out-of-order responses
+        state.messages.sort((a, b) => {
+          const timestampA = new Date(a.timestamp).getTime();
+          const timestampB = new Date(b.timestamp).getTime();
+          return timestampA - timestampB;
+        });
       })
       .addCase(sendMessage.rejected, (state) => {
         state.loadingMessages = false;

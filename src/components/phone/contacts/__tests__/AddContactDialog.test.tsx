@@ -17,23 +17,69 @@ interface Candidate {
   contactType?: ContactType;
 }
 
-// Create a mock for createContact
-const mockCreateContact = vi.fn().mockImplementation((data) => ({
-  type: 'contacts/create',
-  payload: data,
-}));
+// Mock the createContact action using a factory function
+vi.mock('@/core/contacts/request', () => {
+  // Create a mock function that returns a thunk-compatible action
+  const mockCreateContact = vi.fn().mockImplementation((data) => {
+    // Return a function that Redux Thunk can handle
+    return (dispatch: any) => {
+      // Dispatch a plain object action that Redux can process
+      dispatch({
+        type: 'contacts/create',
+        payload: data
+      });
+      // Return a resolved promise to simulate async behavior
+      return Promise.resolve({ data });
+    };
+  });
+  
+  return {
+    createContact: mockCreateContact
+  };
+});
 
-// Mock the createContact action
-vi.mock('@/core/contacts/request', () => ({
-  createContact: (data) => mockCreateContact(data),
-}));
+// Get a reference to the mocked function
+const mockCreateContact = vi.mocked(createContact);
 
 // Mock Redux store
 const createMockStore = (candidates: Candidate[] = []) => {
   return configureStore({
     reducer: {
-      contactsdata: (state = { candidates }, action) => state,
+      contactsdata: (state = { candidates }, action) => {
+        // Handle contact creation actions if needed
+        if (action.type === 'contacts/create') {
+          return {
+            ...state,
+            loading: false,
+            error: null
+          };
+        }
+        return state;
+      },
+      userdata: (state = { 
+        userData: {
+          domain: 'test.com',
+          name: 'Test User',
+          sipUsername: 'test',
+          sipPassword: 'password',
+          wsServer: 'wss://test.com',
+          wsPort: '8089',
+          wsPath: '/ws',
+        }, 
+        loading: false, 
+        loaded: true 
+      }, action) => state,
     },
+    // Add middleware configuration to explicitly support thunks
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware({
+      thunk: {
+        extraArgument: {}
+      },
+      serializableCheck: {
+        // Ignore non-serializable values in actions
+        ignoredActions: ['contacts/create', 'contacts/create/pending', 'contacts/create/fulfilled', 'contacts/create/rejected'],
+      },
+    }),
   });
 };
 
@@ -42,7 +88,7 @@ describe('AddContactDialog', () => {
     vi.clearAllMocks();
   });
 
-  it('should render the dialog when isOpen is true', () => {
+  it('should render the dialog when isOpen is true', async () => {
     const store = createMockStore();
     const onClose = vi.fn();
 
@@ -52,8 +98,10 @@ describe('AddContactDialog', () => {
       </Provider>
     );
 
-    expect(screen.getByTestId('add-contact-button')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Search by name or number...')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('add-contact-button')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Search by name or number...')).toBeInTheDocument();
+    });
   });
 
   it('should not render the dialog when isOpen is false', () => {
@@ -69,7 +117,7 @@ describe('AddContactDialog', () => {
     expect(screen.queryByTestId('add-contact-button')).not.toBeInTheDocument();
   });
 
-  it('should disable the Add Contact button when search query is empty', () => {
+  it('should disable the Add Contact button when search query is empty', async () => {
     const store = createMockStore();
     const onClose = vi.fn();
 
@@ -79,11 +127,13 @@ describe('AddContactDialog', () => {
       </Provider>
     );
 
-    const addButton = screen.getByTestId('add-contact-button');
-    expect(addButton).toBeDisabled();
+    await waitFor(() => {
+      const addButton = screen.getByTestId('add-contact-button');
+      expect(addButton).toBeDisabled();
+    });
   });
 
-  it('should enable the Add Contact button when search query is not empty', () => {
+  it('should enable the Add Contact button when search query is not empty', async () => {
     const store = createMockStore();
     const onClose = vi.fn();
 
@@ -96,8 +146,10 @@ describe('AddContactDialog', () => {
     const searchInput = screen.getByPlaceholderText('Search by name or number...');
     fireEvent.change(searchInput, { target: { value: '1001' } });
 
-    const addButton = screen.getByTestId('add-contact-button');
-    expect(addButton).not.toBeDisabled();
+    await waitFor(() => {
+      const addButton = screen.getByTestId('add-contact-button');
+      expect(addButton).not.toBeDisabled();
+    });
   });
 
   it('should display candidates when search query matches', () => {
@@ -164,7 +216,7 @@ describe('AddContactDialog', () => {
     });
 
     // Click the Add Contact button
-    const addButton = screen.getByRole('button', { name: 'Add Contact' });
+    const addButton = screen.getByTestId('add-contact-button');
     fireEvent.click(addButton);
 
     // Verify createContact was called with the correct parameters
@@ -176,11 +228,6 @@ describe('AddContactDialog', () => {
 
     // Verify onClose was called
     expect(onClose).toHaveBeenCalled();
-
-    // ISSUE: No loading indicator or success message is shown to the user
-    // The dialog simply closes without any feedback
-    expect(screen.queryByText(/adding/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/success/i)).not.toBeInTheDocument();
   });
 
   it('should call createContact with SMS type when no candidate is selected', async () => {
@@ -200,7 +247,7 @@ describe('AddContactDialog', () => {
     fireEvent.change(searchInput, { target: { value: '1001' } });
 
     // Click the Add Contact button
-    const addButton = screen.getByRole('button', { name: 'Add Contact' });
+    const addButton = screen.getByTestId('add-contact-button');
     fireEvent.click(addButton);
 
     // Verify createContact was called with the correct parameters
@@ -212,11 +259,6 @@ describe('AddContactDialog', () => {
 
     // Verify onClose was called
     expect(onClose).toHaveBeenCalled();
-
-    // ISSUE: No loading indicator or success message is shown to the user
-    // The dialog simply closes without any feedback
-    expect(screen.queryByText(/adding/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/success/i)).not.toBeInTheDocument();
   });
 
   it('should handle errors when createContact fails', async () => {
@@ -241,45 +283,38 @@ describe('AddContactDialog', () => {
     fireEvent.change(searchInput, { target: { value: '1001' } });
 
     // Click the Add Contact button
-    const addButton = screen.getByRole('button', { name: 'Add Contact' });
+    const addButton = screen.getByTestId('add-contact-button');
     fireEvent.click(addButton);
 
-    // ISSUE: The dialog still closes even if there's an error
-    // No error message is shown to the user
+    // The dialog closes immediately as specified in the component code
     expect(onClose).toHaveBeenCalled();
-    expect(screen.queryByText(/error/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/failed/i)).not.toBeInTheDocument();
+
+    // Verify the error was logged
+    expect(consoleErrorSpy).toHaveBeenCalled();
 
     // Restore console.error
     consoleErrorSpy.mockRestore();
   });
 
-  it('should handle delayed contact creation without feedback', async () => {
+  it('should handle delayed contact creation with feedback', async () => {
     const store = createMockStore([]);
     const onClose = vi.fn();
     
     // Mock createContact to delay
     mockCreateContact.mockImplementationOnce((data: any): any => {
-      // Return an object that matches the AsyncThunkAction interface
-      // but also has a Promise-like structure for chaining
-      const actionCreator = {
-        type: 'contacts/create',
-        payload: data,
-        // Add a then method to make it Promise-like
-        then: (callback: Function) => {
-          return new Promise(resolve => {
-            // Simulate a network delay
-            setTimeout(() => {
-              const result = callback({
-                type: 'contacts/create',
-                payload: data,
-              });
-              resolve(result);
-            }, 1000);
-          });
-        }
+      // Return a function that Redux Thunk can handle with a delay
+      return (dispatch: any) => {
+        // Return a Promise that resolves after a delay
+        return new Promise(resolve => {
+          setTimeout(() => {
+            dispatch({
+              type: 'contacts/create',
+              payload: data
+            });
+            resolve({ data });
+          }, 1000);
+        });
       };
-      return actionCreator;
     });
 
     render(
@@ -292,13 +327,25 @@ describe('AddContactDialog', () => {
     fireEvent.change(searchInput, { target: { value: '1001' } });
 
     // Click the Add Contact button
-    const addButton = screen.getByRole('button', { name: 'Add Contact' });
+    const addButton = screen.getByTestId('add-contact-button');
     fireEvent.click(addButton);
 
-    // ISSUE: The dialog closes immediately, without waiting for the contact to be created
-    // No loading indicator is shown during the delay
+    // Verify that createContact was called with the correct parameters
+    expect(mockCreateContact).toHaveBeenCalledWith({
+      contactUserId: '',
+      contactType: ContactType.SMS,
+      phoneNumber: '1001',
+    });
+
+    // Verify that the success message is shown
+    await waitFor(() => {
+      expect(screen.getByText('Contact added successfully!')).toBeInTheDocument();
+    });
+
+    // Wait for the dialog to close (1.5 seconds after success)
+    await new Promise(resolve => setTimeout(resolve, 1600));
+
+    // Verify that onClose was called after the delay
     expect(onClose).toHaveBeenCalled();
-    expect(screen.queryByText(/adding/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
   });
 });

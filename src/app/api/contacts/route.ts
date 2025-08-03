@@ -7,7 +7,6 @@ import mongoose from "mongoose";
 import { IContactItem } from "@/core/contacts/model";
 import { ContactType, UserRole } from "@/types/common";
 import MessageModel from "@/models/Message";
-import { _current } from "@reduxjs/toolkit";
 
 export const GET = withAuth(async (_req: NextRequest, _context: { params: any }, user: any) => {
   try {
