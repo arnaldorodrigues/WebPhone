@@ -16,9 +16,10 @@
     "start:next": "next start",
     "dev:next": "next dev --turbopack --experimental-https",
     "start-sms": "node --loader ts-node/esm sms-server.js",
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "test:watch:ui": "vitest --ui"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.4",

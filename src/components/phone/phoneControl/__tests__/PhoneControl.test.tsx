@@ -6,6 +6,11 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { IUserData } from '@/core/users/model';
 
+// Import the modules that will be mocked
+import { useSip } from '@/contexts/SipContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { getUserData } from '@/core/users/request';
+
 // Create a partial type for test userData objects
 type TestUserData = Partial<IUserData> & {
   name: string;
@@ -17,27 +22,64 @@ type TestUserData = Partial<IUserData> & {
   domain: string;
 };
 
+// Create a mock for the logout function
+const mockLogout = vi.fn();
+
 // Mock the contexts
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
     user: { userId: '123', userName: 'Test User' },
-    logout: vi.fn(),
+    logout: mockLogout,
+    loading: false,
   }),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+// Create mock functions for SipContext
+const mockConnectAndRegister = vi.fn();
+const mockDisconnect = vi.fn();
+const mockSetPhoneState = vi.fn();
+
+// Create a mock sessionManager
+const mockSessionManager = {
+  message: vi.fn().mockResolvedValue(undefined),
+  call: vi.fn().mockResolvedValue({ id: 'call-123' }),
+  hangup: vi.fn().mockResolvedValue(undefined),
+  connect: vi.fn(),
+  disconnect: vi.fn(),
+  register: vi.fn(),
+  unregister: vi.fn(),
+};
+
+// Create a mock for useSip that we can update in each test
+const mockUseSip = vi.fn().mockReturnValue({
+  sessionManager: mockSessionManager,
+  connectAndRegister: mockConnectAndRegister,
+  disconnect: mockDisconnect,
+  sipStatus: SipStatus.UNREGISTERED,
+  setPhoneState: mockSetPhoneState,
+  phoneState: null,
+  sessions: {},
+  sipMessages: {},
+  extensionNumber: '',
+  sessionTimer: {},
+  showNotification: vi.fn(),
+});
+
 vi.mock('@/contexts/SipContext', () => ({
-  useSip: () => ({
-    connectAndRegister: vi.fn(),
-    disconnect: vi.fn(),
-    sipStatus: vi.mocked(sipStatus),
-    setPhoneState: vi.fn(),
-    phoneState: null,
-  }),
+  useSip: () => mockUseSip(),
+  SipProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+// Create a mock for getUserData that we can reference directly in tests
+const mockGetUserData = vi.fn().mockImplementation((userId) => ({
+  type: 'users/getUserData',
+  payload: { userId },
 }));
 
 // Mock the getUserData request
 vi.mock('@/core/users/request', () => ({
-  getUserData: vi.fn(),
+  getUserData: (userId) => mockGetUserData(userId),
 }));
 
 // Mock Redux store
@@ -49,13 +91,23 @@ const createMockStore = (userData: TestUserData | null = null, loading = false, 
   });
 };
 
-// Mock SIP status
-let sipStatus = SipStatus.UNREGISTERED;
-
 describe('PhoneControl', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    sipStatus = SipStatus.UNREGISTERED;
+    // Reset mockUseSip to default values
+    mockUseSip.mockReturnValue({
+      sessionManager: mockSessionManager,
+      connectAndRegister: mockConnectAndRegister,
+      disconnect: mockDisconnect,
+      sipStatus: SipStatus.UNREGISTERED,
+      setPhoneState: mockSetPhoneState,
+      phoneState: null,
+      sessions: {},
+      sipMessages: {},
+      extensionNumber: '',
+      sessionTimer: {},
+      showNotification: vi.fn(),
+    });
   });
 
   it('should display offline status when SIP is unregistered', () => {
@@ -80,7 +132,20 @@ describe('PhoneControl', () => {
   });
 
   it('should display online status when SIP is registered', () => {
-    sipStatus = SipStatus.REGISTERED;
+    // Update mockUseSip to return REGISTERED status
+    mockUseSip.mockReturnValue({
+      sessionManager: mockSessionManager,
+      connectAndRegister: mockConnectAndRegister,
+      disconnect: mockDisconnect,
+      sipStatus: SipStatus.REGISTERED,
+      setPhoneState: mockSetPhoneState,
+      phoneState: null,
+      sessions: {},
+      sipMessages: {},
+      extensionNumber: '',
+      sessionTimer: {},
+      showNotification: vi.fn(),
+    });
     
     const store = createMockStore({ 
       name: 'Test User', 
@@ -137,11 +202,22 @@ describe('PhoneControl', () => {
   });
 
   it('should call connectAndRegister when register button is clicked', async () => {
-    const { useSip } = await import('@/contexts/SipContext');
-    const mockConnectAndRegister = vi.fn();
-    vi.mocked(useSip).mockReturnValue({
-      ...vi.mocked(useSip)(),
+    // Reset the mock before the test
+    mockConnectAndRegister.mockClear();
+    
+    // Update mockUseSip to use the current sipStatus
+    mockUseSip.mockReturnValue({
+      sessionManager: mockSessionManager,
       connectAndRegister: mockConnectAndRegister,
+      disconnect: mockDisconnect,
+      sipStatus: SipStatus.UNREGISTERED,
+      setPhoneState: mockSetPhoneState,
+      phoneState: null,
+      sessions: {},
+      sipMessages: {},
+      extensionNumber: '',
+      sessionTimer: {},
+      showNotification: vi.fn(),
     });
 
     const store = createMockStore({ 
@@ -176,14 +252,22 @@ describe('PhoneControl', () => {
   });
 
   it('should call disconnect when unregister button is clicked', async () => {
-    sipStatus = SipStatus.REGISTERED;
+    // Reset the mock before the test
+    mockDisconnect.mockClear();
     
-    const { useSip } = await import('@/contexts/SipContext');
-    const mockDisconnect = vi.fn();
-    vi.mocked(useSip).mockReturnValue({
-      ...vi.mocked(useSip)(),
-      sipStatus: SipStatus.REGISTERED,
+    // Update mockUseSip to use REGISTERED status
+    mockUseSip.mockReturnValue({
+      sessionManager: mockSessionManager,
+      connectAndRegister: mockConnectAndRegister,
       disconnect: mockDisconnect,
+      sipStatus: SipStatus.REGISTERED,
+      setPhoneState: mockSetPhoneState,
+      phoneState: null,
+      sessions: {},
+      sipMessages: {},
+      extensionNumber: '',
+      sessionTimer: {},
+      showNotification: vi.fn(),
     });
 
     const store = createMockStore({ 
@@ -236,11 +320,22 @@ describe('PhoneControl', () => {
   });
 
   it('should set phone state to "dialing" when call button is clicked', async () => {
-    const { useSip } = await import('@/contexts/SipContext');
-    const mockSetPhoneState = vi.fn();
-    vi.mocked(useSip).mockReturnValue({
-      ...vi.mocked(useSip)(),
+    // Reset the mock before the test
+    mockSetPhoneState.mockClear();
+    
+    // Update mockUseSip to use the default status
+    mockUseSip.mockReturnValue({
+      sessionManager: mockSessionManager,
+      connectAndRegister: mockConnectAndRegister,
+      disconnect: mockDisconnect,
+      sipStatus: SipStatus.UNREGISTERED,
       setPhoneState: mockSetPhoneState,
+      phoneState: null,
+      sessions: {},
+      sipMessages: {},
+      extensionNumber: '',
+      sessionTimer: {},
+      showNotification: vi.fn(),
     });
 
     const store = createMockStore({ 
@@ -267,12 +362,8 @@ describe('PhoneControl', () => {
   });
 
   it('should call logout when logout button is clicked', async () => {
-    const { useAuth } = await import('@/contexts/AuthContext');
-    const mockLogout = vi.fn();
-    vi.mocked(useAuth).mockReturnValue({
-      ...vi.mocked(useAuth)(),
-      logout: mockLogout,
-    });
+    // Reset the mock before the test
+    mockLogout.mockClear();
 
     const store = createMockStore({ 
       name: 'Test User', 

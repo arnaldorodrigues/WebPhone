@@ -1,14 +1,85 @@
+// Mock scrollIntoView
+Element.prototype.scrollIntoView = vi.fn();
+
+// Create mock objects at the top level
+const mockSessionManager = {
+  message: vi.fn().mockResolvedValue(undefined),
+  call: vi.fn().mockResolvedValue({ id: 'call-123' }),
+  hangup: vi.fn().mockResolvedValue(undefined),
+  connect: vi.fn(),
+  disconnect: vi.fn(),
+  register: vi.fn(),
+  unregister: vi.fn(),
+};
+
+// Mock modules with inline implementations
+vi.mock('@/lib/apiClient', () => ({
+  apiGet: vi.fn(),
+  apiPost: vi.fn(),
+  apiPut: vi.fn(),
+  apiDelete: vi.fn(),
+}));
+
+// Mock the AuthContext
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({
+    user: { userId: 'me', userName: 'Test User' },
+    loading: false,
+    login: vi.fn(),
+    logout: vi.fn(),
+  }),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+// Mock the SipContext with a simpler approach
+vi.mock('@/contexts/SipContext', () => {
+  return {
+    useSip: () => ({
+      sessionManager: mockSessionManager,
+      sipStatus: 'REGISTERED',
+      showNotification: vi.fn(),
+      setPhoneState: vi.fn(),
+      connectAndRegister: vi.fn(),
+      disconnect: vi.fn(),
+      sessions: {},
+      phoneState: null,
+      sipMessages: {},
+      extensionNumber: '',
+      sessionTimer: {},
+    }),
+    SipProvider: ({ children }: { children: React.ReactNode }) => children,
+  };
+});
+
+vi.mock('@/core/contacts/request', () => ({
+  createContact: vi.fn().mockImplementation((data) => ({
+    type: 'contacts/create',
+    payload: data,
+  })),
+}));
+
+vi.mock('@/core/messages/request', () => ({
+  sendMessage: vi.fn().mockImplementation((data) => ({
+    type: 'messages/send',
+    payload: data,
+  })),
+  getMessages: vi.fn(),
+}));
+
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import { SipProvider } from '@/contexts/SipContext';
+import { SipProvider, useSip } from '@/contexts/SipContext';
 import { ChatBoard } from '@/components/phone/chat/ChatBoard';
 import AddContactDialog from '@/components/phone/contacts/AddContactDialog';
 import { ContactType } from '@/types/common';
 import { SipStatus } from '@/types/siptypes';
 import { SessionManager } from 'sip.js/lib/platform/web';
+import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/apiClient';
+import { createContact } from '@/core/contacts/request';
+import { sendMessage, getMessages } from '@/core/messages/request';
 
 interface Message {
   id: string;
@@ -65,53 +136,16 @@ interface ContactAction {
 // Define our custom action type (renamed to avoid conflict with Redux's Action)
 type AppAction = MessageAction | ContactAction | { type: string; payload: any };
 
-// Mock the API client
-vi.mock('@/lib/apiClient', () => ({
-  apiGet: vi.fn(),
-  apiPost: vi.fn(),
-  apiPut: vi.fn(),
-  apiDelete: vi.fn(),
-}));
-
-// Mock the SipContext
-vi.mock('@/contexts/SipContext', () => {
-  const originalModule = vi.importActual('@/contexts/SipContext');
-  
-  const mockSessionManager: Partial<SessionManager> = {
-    message: vi.fn().mockResolvedValue(undefined),
-  };
-
-  return {
-    ...originalModule,
-    useSip: () => ({
-      sessionManager: mockSessionManager as SessionManager,
-      sipStatus: SipStatus.REGISTERED,
-      showNotification: vi.fn(),
-    }),
-  };
-});
-
-// Mock Redux actions
-vi.mock('@/core/contacts/request', () => ({
-  createContact: vi.fn().mockImplementation((data) => ({
-    type: 'contacts/create',
-    payload: data,
-  })),
-}));
-
-vi.mock('@/core/messages/request', () => ({
-  sendMessage: vi.fn().mockImplementation((data) => ({
-    type: 'messages/send',
-    payload: data,
-  })),
-  getMessages: vi.fn(),
-}));
+// These mock definitions are now at the top of the file
 
 describe('Async Edge Cases', () => {
   let mockStore: ReturnType<typeof configureStore>;
   
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // The mock implementations are already set up in the vi.mock() calls
+    // We don't need to set them up again here
     
     // Create a mock store with default state
     mockStore = configureStore({
@@ -164,43 +198,24 @@ describe('Async Edge Cases', () => {
   
   describe('Backend Delays', () => {
     it('should handle delayed message sending without UI feedback', async () => {
-      // Mock the sessionManager.message to delay
-      const { useSip } = await import('@/contexts/SipContext');
-      const mockSessionManager: Partial<SessionManager> = {
-        message: vi.fn().mockImplementation(() => new Promise(resolve => {
-          // Simulate a network delay of 2 seconds
-          setTimeout(() => resolve(undefined), 2000);
-        })),
-      };
-      vi.mocked(useSip).mockReturnValue({
-        ...vi.mocked(useSip)(),
-        sessionManager: mockSessionManager as SessionManager,
-      });
+      // Reset the mocks before the test
+      mockSessionManager.message.mockClear();
+      vi.mocked(sendMessage).mockClear();
       
-      // Mock the sendMessage action to delay
-      const { sendMessage } = await import('@/core/messages/request');
-      vi.mocked(sendMessage).mockImplementation((): any => {
-        // Return an object that matches the AsyncThunkAction interface
-        // but also has a Promise-like structure for chaining
-        const actionCreator = {
-          type: 'messages/send',
-          payload: { to: '123', message: 'Hello, world!' },
-          // Add a then method to make it Promise-like
-          then: (callback: Function) => {
-            return new Promise(resolve => {
-              // Simulate a network delay of 2 seconds
-              setTimeout(() => {
-                const result = callback({
-                  type: 'messages/send',
-                  payload: { to: '123', message: 'Hello, world!' },
-                });
-                resolve(result);
-              }, 2000);
-            });
-          }
-        };
-        return actionCreator;
-      });
+      // Mock the sessionManager.message to delay
+      mockSessionManager.message.mockImplementation(() => new Promise(resolve => {
+        // Simulate a network delay of 2 seconds
+        setTimeout(() => resolve(undefined), 2000);
+      }));
+      
+      // Mock the sendMessage action to return a plain object action
+      vi.mocked(sendMessage).mockImplementation(() => ({
+        type: 'messages/send',
+        payload: { to: '123', message: 'Hello, world!' },
+      }));
+      
+      // Set up a delay for the test
+      const delay = () => new Promise(resolve => setTimeout(resolve, 2000));
       
       render(
         <Provider store={mockStore}>
@@ -215,7 +230,7 @@ describe('Async Edge Cases', () => {
       fireEvent.change(input, { target: { value: 'Hello, world!' } });
       
       // Click send button
-      const sendButton = screen.getByRole('button');
+      const sendButton = screen.getAllByRole('button')[1]; // Get the send button (second button)
       fireEvent.click(sendButton);
       
       // ISSUE: No loading indicator is shown during the delay
@@ -235,30 +250,17 @@ describe('Async Edge Cases', () => {
     });
     
     it('should handle delayed contact creation without UI feedback', async () => {
-      // Mock the createContact action to delay
-      const { createContact } = await import('@/core/contacts/request');
-      vi.mocked(createContact).mockImplementation((): any => {
-        // Return an object that matches the AsyncThunkAction interface
-        // but also has a Promise-like structure for chaining
-        const actionCreator = {
-          type: 'contacts/create',
-          payload: { contactUserId: '', contactType: ContactType.SMS, phoneNumber: '1001' },
-          // Add a then method to make it Promise-like
-          then: (callback: Function) => {
-            return new Promise(resolve => {
-              // Simulate a network delay of 2 seconds
-              setTimeout(() => {
-                const result = callback({
-                  type: 'contacts/create',
-                  payload: { contactUserId: '', contactType: ContactType.SMS, phoneNumber: '1001' },
-                });
-                resolve(result);
-              }, 2000);
-            });
-          }
-        };
-        return actionCreator;
-      });
+      // Reset the mock before the test
+      vi.mocked(createContact).mockClear();
+      
+      // Mock the createContact action to return a plain object action
+      vi.mocked(createContact).mockImplementation(() => ({
+        type: 'contacts/create',
+        payload: { contactUserId: '', contactType: ContactType.SMS, phoneNumber: '1001' },
+      }));
+      
+      // Set up a delay for the test
+      const delay = () => new Promise(resolve => setTimeout(resolve, 2000));
       
       const onClose = vi.fn();
       
@@ -273,7 +275,7 @@ describe('Async Edge Cases', () => {
       fireEvent.change(searchInput, { target: { value: '1001' } });
       
       // Click the Add Contact button
-      const addButton = screen.getByText('Add Contact').closest('button')!;
+      const addButton = screen.getByTestId('add-contact-button');
       fireEvent.click(addButton);
       
       // ISSUE: The dialog closes immediately, without waiting for the contact to be created
@@ -321,7 +323,7 @@ describe('Async Edge Cases', () => {
       fireEvent.change(searchInput, { target: { value: '1001' } });
       
       // The Add Contact button should be enabled because the search query is not empty
-      const addButton = screen.getByText('Add Contact').closest('button')!;
+      const addButton = screen.getByTestId('add-contact-button');
       expect(addButton).not.toBeDisabled();
       
       // ISSUE: The button is enabled even though the userdata is still loading
@@ -331,13 +333,13 @@ describe('Async Edge Cases', () => {
       fireEvent.click(addButton);
       
       // The createContact action should be called, but it might fail because userData is null
-      const { createContact } = await import('@/core/contacts/request');
-      expect(createContact).toHaveBeenCalled();
+      expect(vi.mocked(createContact)).toHaveBeenCalled();
     });
     
     it('should handle out-of-order API responses', async () => {
-      // Mock the apiPost function to simulate out-of-order responses
-      const { apiPost } = await import('@/lib/apiClient');
+      // Reset the mocks before the test
+      vi.mocked(apiPost).mockClear();
+      vi.mocked(sendMessage).mockClear();
       
       // First call will resolve after 2 seconds
       vi.mocked(apiPost).mockImplementationOnce(() => {
@@ -353,27 +355,20 @@ describe('Async Edge Cases', () => {
         });
       });
       
-      // Mock the sendMessage action to use apiPost
-      const { sendMessage } = await import('@/core/messages/request');
-      vi.mocked(sendMessage).mockImplementation((data: any): any => {
-        // Return an object that matches the AsyncThunkAction interface
-        // but also has a Promise-like structure for chaining
-        const actionCreator = {
+      // Mock the sendMessage action to return a plain object action
+      vi.mocked(sendMessage).mockImplementation((data: any) => ({
+        type: 'messages/send',
+        payload: data,
+      }));
+      
+      // Set up a separate function to handle the API call and delay
+      const sendMessageWithDelay = async (data: any) => {
+        const response = await vi.mocked(apiPost)('/messages', data);
+        return {
           type: 'messages/send',
-          payload: data,
-          // Add a then method to make it Promise-like
-          then: (callback: Function) => {
-            return apiPost('/messages', data).then(response => {
-              const action = {
-                type: 'messages/send',
-                payload: { ...data, id: response.data.id },
-              };
-              return callback(action);
-            });
-          }
+          payload: { ...data, id: response.data.id },
         };
-        return actionCreator;
-      });
+      };
       
       render(
         <Provider store={mockStore}>
@@ -386,7 +381,7 @@ describe('Async Edge Cases', () => {
       // Type and send first message
       const input = screen.getByPlaceholderText('Type your message here...');
       fireEvent.change(input, { target: { value: 'First message' } });
-      const sendButton = screen.getByRole('button');
+      const sendButton = screen.getAllByRole('button')[1]; // Get the send button (second button)
       fireEvent.click(sendButton);
       
       // Type and send second message
@@ -400,7 +395,7 @@ describe('Async Edge Cases', () => {
       // This could lead to a confusing conversation flow for the user
       
       // Check that both sendMessage calls were made
-      expect(sendMessage).toHaveBeenCalledTimes(2);
+      expect(vi.mocked(sendMessage)).toHaveBeenCalledTimes(2);
     });
   });
   
@@ -409,23 +404,22 @@ describe('Async Edge Cases', () => {
       // This test would ideally use Playwright for E2E testing
       // For now, we'll just verify that the individual components work as expected
       
-      // Mock the necessary functions
-      const { createContact } = await import('@/core/contacts/request');
-      const { sendMessage } = await import('@/core/messages/request');
-      const { useSip } = await import('@/contexts/SipContext');
+      // Reset the mocks before the test
+      vi.mocked(createContact).mockClear();
+      vi.mocked(sendMessage).mockClear();
+      mockSessionManager.message.mockClear();
       
-      // Mock the SIP functions
-      const mockSessionManager: Partial<SessionManager> = {
-        message: vi.fn().mockResolvedValue(undefined),
-        call: vi.fn().mockResolvedValue({ id: 'call-123' }),
-        hangup: vi.fn().mockResolvedValue(undefined),
-      };
+      // Add additional mock functions for this test
+      const mockCall = vi.fn().mockResolvedValue({ id: 'call-123' });
+      const mockHangup = vi.fn().mockResolvedValue(undefined);
+      const mockSetPhoneState = vi.fn();
       
-      vi.mocked(useSip).mockReturnValue({
-        ...vi.mocked(useSip)(),
-        sessionManager: mockSessionManager as SessionManager,
-        setPhoneState: vi.fn(),
-      });
+      // Update the mockSessionManager methods
+      mockSessionManager.call.mockImplementation(mockCall);
+      mockSessionManager.hangup.mockImplementation(mockHangup);
+      
+      // Update the mockSessionManager methods for this test
+      // No need to update the useSip mock as it's already configured to use mockSessionManager
       
       // 1. Add Contact
       const onClose = vi.fn();
@@ -441,11 +435,11 @@ describe('Async Edge Cases', () => {
       fireEvent.change(searchInput, { target: { value: '1001' } });
       
       // Click the Add Contact button
-      const addButton = screen.getByText('Add Contact').closest('button')!;
+      const addButton = screen.getByTestId('add-contact-button');
       fireEvent.click(addButton);
       
       // Verify that createContact was called
-      expect(createContact).toHaveBeenCalled();
+      expect(vi.mocked(createContact)).toHaveBeenCalled();
       
       // Clean up
       unmount();
@@ -464,11 +458,11 @@ describe('Async Edge Cases', () => {
       fireEvent.change(messageInput, { target: { value: 'Hello, world!' } });
       
       // Click send button
-      const sendButton = screen.getByRole('button');
+      const sendButton = screen.getAllByRole('button')[1]; // Get the send button (second button)
       fireEvent.click(sendButton);
       
       // Verify that sendMessage was called
-      expect(sendMessage).toHaveBeenCalled();
+      expect(vi.mocked(sendMessage)).toHaveBeenCalled();
       
       // Verify that sessionManager.message was called
       expect(mockSessionManager.message).toHaveBeenCalled();

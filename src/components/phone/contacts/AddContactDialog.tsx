@@ -119,6 +119,7 @@ const AddContactDialog: React.FC<Props> = ({
           <button
             onClick={handleAddContact}
             disabled={searchQuery.length === 0}
+            data-testid="add-contact-button"
             className={`flex items-center px-4 py-2 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200 ${searchQuery.length > 0
               ? "bg-indigo-500 hover:bg-indigo-600"
               : "bg-gray-400 cursor-not-allowed"

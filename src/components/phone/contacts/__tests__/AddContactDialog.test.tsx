@@ -6,6 +6,9 @@ import { configureStore } from '@reduxjs/toolkit';
 import { ContactType } from '@/types/common';
 import { ICandidateItem } from '@/core/contacts/model';
 
+// Import the modules that will be mocked
+import { createContact } from '@/core/contacts/request';
+
 // Define interface for typing
 interface Candidate {
   id: string;
@@ -14,12 +17,15 @@ interface Candidate {
   contactType?: ContactType;
 }
 
+// Create a mock for createContact
+const mockCreateContact = vi.fn().mockImplementation((data) => ({
+  type: 'contacts/create',
+  payload: data,
+}));
+
 // Mock the createContact action
 vi.mock('@/core/contacts/request', () => ({
-  createContact: vi.fn().mockImplementation((data) => ({
-    type: 'contacts/create',
-    payload: data,
-  })),
+  createContact: (data) => mockCreateContact(data),
 }));
 
 // Mock Redux store
@@ -46,7 +52,7 @@ describe('AddContactDialog', () => {
       </Provider>
     );
 
-    expect(screen.getByText('Add Contact')).toBeInTheDocument();
+    expect(screen.getByTestId('add-contact-button')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Search by name or number...')).toBeInTheDocument();
   });
 
@@ -60,7 +66,7 @@ describe('AddContactDialog', () => {
       </Provider>
     );
 
-    expect(screen.queryByText('Add Contact')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('add-contact-button')).not.toBeInTheDocument();
   });
 
   it('should disable the Add Contact button when search query is empty', () => {
@@ -73,7 +79,7 @@ describe('AddContactDialog', () => {
       </Provider>
     );
 
-    const addButton = screen.getByText('Add Contact').closest('button');
+    const addButton = screen.getByTestId('add-contact-button');
     expect(addButton).toBeDisabled();
   });
 
@@ -90,7 +96,7 @@ describe('AddContactDialog', () => {
     const searchInput = screen.getByPlaceholderText('Search by name or number...');
     fireEvent.change(searchInput, { target: { value: '1001' } });
 
-    const addButton = screen.getByText('Add Contact').closest('button');
+    const addButton = screen.getByTestId('add-contact-button');
     expect(addButton).not.toBeDisabled();
   });
 
@@ -128,6 +134,9 @@ describe('AddContactDialog', () => {
   });
 
   it('should call createContact with WebRTC type when a candidate is selected', async () => {
+    // Reset the mock before the test
+    mockCreateContact.mockClear();
+    
     const candidates = [
       {
         id: '1',
@@ -138,7 +147,6 @@ describe('AddContactDialog', () => {
     
     const store = createMockStore(candidates);
     const onClose = vi.fn();
-    const { createContact } = await import('@/core/contacts/request');
 
     render(
       <Provider store={store}>
@@ -156,11 +164,11 @@ describe('AddContactDialog', () => {
     });
 
     // Click the Add Contact button
-    const addButton = screen.getByText('Add Contact').closest('button')!;
+    const addButton = screen.getByRole('button', { name: 'Add Contact' });
     fireEvent.click(addButton);
 
     // Verify createContact was called with the correct parameters
-    expect(createContact).toHaveBeenCalledWith({
+    expect(mockCreateContact).toHaveBeenCalledWith({
       contactUserId: '1',
       contactType: ContactType.WEBRTC,
       sipNumber: '1001',
@@ -176,9 +184,11 @@ describe('AddContactDialog', () => {
   });
 
   it('should call createContact with SMS type when no candidate is selected', async () => {
+    // Reset the mock before the test
+    mockCreateContact.mockClear();
+    
     const store = createMockStore([]);
     const onClose = vi.fn();
-    const { createContact } = await import('@/core/contacts/request');
 
     render(
       <Provider store={store}>
@@ -190,11 +200,11 @@ describe('AddContactDialog', () => {
     fireEvent.change(searchInput, { target: { value: '1001' } });
 
     // Click the Add Contact button
-    const addButton = screen.getByText('Add Contact').closest('button')!;
+    const addButton = screen.getByRole('button', { name: 'Add Contact' });
     fireEvent.click(addButton);
 
     // Verify createContact was called with the correct parameters
-    expect(createContact).toHaveBeenCalledWith({
+    expect(mockCreateContact).toHaveBeenCalledWith({
       contactUserId: '',
       contactType: ContactType.SMS,
       phoneNumber: '1001',
@@ -214,8 +224,7 @@ describe('AddContactDialog', () => {
     const onClose = vi.fn();
     
     // Mock createContact to throw an error
-    const { createContact } = await import('@/core/contacts/request');
-    vi.mocked(createContact).mockImplementationOnce(() => {
+    mockCreateContact.mockImplementationOnce(() => {
       throw new Error('Failed to create contact');
     });
 
@@ -232,7 +241,7 @@ describe('AddContactDialog', () => {
     fireEvent.change(searchInput, { target: { value: '1001' } });
 
     // Click the Add Contact button
-    const addButton = screen.getByText('Add Contact').closest('button')!;
+    const addButton = screen.getByRole('button', { name: 'Add Contact' });
     fireEvent.click(addButton);
 
     // ISSUE: The dialog still closes even if there's an error
@@ -250,8 +259,7 @@ describe('AddContactDialog', () => {
     const onClose = vi.fn();
     
     // Mock createContact to delay
-    const { createContact } = await import('@/core/contacts/request');
-    vi.mocked(createContact).mockImplementationOnce((data: any): any => {
+    mockCreateContact.mockImplementationOnce((data: any): any => {
       // Return an object that matches the AsyncThunkAction interface
       // but also has a Promise-like structure for chaining
       const actionCreator = {
@@ -284,7 +292,7 @@ describe('AddContactDialog', () => {
     fireEvent.change(searchInput, { target: { value: '1001' } });
 
     // Click the Add Contact button
-    const addButton = screen.getByText('Add Contact').closest('button')!;
+    const addButton = screen.getByRole('button', { name: 'Add Contact' });
     fireEvent.click(addButton);
 
     // ISSUE: The dialog closes immediately, without waiting for the contact to be created

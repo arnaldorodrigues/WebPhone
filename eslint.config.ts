@@ -18,6 +18,14 @@ export default [
     plugins: {
       react: pluginReact
     },
+    languageOptions: {
+      globals: globals.browser
+    },
+    settings: {
+      react: {
+        version: "19.0.0"
+      }
+    },
     rules: {
       ...pluginReact.configs.recommended.rules,
       // Enforce React guidelines from memory bank
