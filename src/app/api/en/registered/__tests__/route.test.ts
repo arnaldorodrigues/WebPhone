@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from 'vites
 import { NextRequest } from 'next/server';
 import { Connection } from 'modesl';
 import { GET } from '../route';
-import { ESLConnection, ESLResponse } from '@/types/esl';
+import { ESLResponse } from '@/types/esl';
 
 // Mock the modesl Connection class
 vi.mock('modesl', () => {
@@ -230,12 +230,26 @@ describe('GET /api/en/registered', () => {
   });
   
   it('should handle connection timeout', async () => {
-    // Mock the global setTimeout function
-    const originalSetTimeout = global.setTimeout;
-    global.setTimeout = vi.fn((callback, timeout) => {
+    // IMPORTANT: When mocking setTimeout in TypeScript, we need to include the __promisify__ property
+    // This property is required by the Node.js type definitions (see timers.d.ts)
+    // Without it, TypeScript will throw an error:
+    // TS2741: Property __promisify__ is missing in type Mock<...> but required in type typeof setTimeout
+    
+    // Use vi.spyOn to mock setTimeout without affecting other tests
+    const setTimeoutSpy = vi.spyOn(global, 'setTimeout');
+    
+    // Create a mock implementation that calls the callback immediately
+    const mockImplementation = (callback: any, _timeout: any) => {
       callback();
       return 1 as unknown as NodeJS.Timeout;
-    });
+    };
+    
+    // Add the __promisify__ property to match the Node.js type definition
+    // This is a reference to the Promise-based version of setTimeout from timers/promises
+    mockImplementation.__promisify__ = (_timeout: any) => Promise.resolve();
+    
+    // Apply the mock implementation
+    setTimeoutSpy.mockImplementation(mockImplementation as any);
     
     // Create a mock request
     const request = new NextRequest('http://localhost:3000/api/en/registered');
@@ -255,6 +269,6 @@ describe('GET /api/en/registered', () => {
     });
     
     // Restore the original setTimeout
-    global.setTimeout = originalSetTimeout;
+    setTimeoutSpy.mockRestore();
   });
 });
